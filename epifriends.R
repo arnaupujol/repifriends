@@ -42,7 +42,7 @@ find_indeces <- function(positions, link_d, tree){
     #     position
   indeces <- list()
   for(i in 1:dim(positions)[1]){
-    indeces[i] <- c()
+    indecesaux <- c()
     dist = 0
     kth = 0
     while(dist <= link_d){
@@ -51,12 +51,14 @@ find_indeces <- function(positions, link_d, tree){
       index <- query$nn.idx[length(query$nn.idx)]
       dist <- query$nn.dists[length(query$nn.dists)]
       if(dist[length(dist)] <= link_d){
-        append(indeces[i],index)
+        indecesaux <- append(indecesaux,index)
       }else{
+        indeces[[i]] <- indecesaux
         break
       }
     }
-    return(indeces)
   }
-  
+  return(indeces)
 }
+
+ind <- find_indeces(position_rand, 0.01, position_rand)
