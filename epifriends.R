@@ -11,6 +11,8 @@ dataclus <- read.csv("mock_data_clustered.csv")
 
 position_rand <- datarand[3:4]
 
+typeof(position_rand)
+
 #Prouebas
 dim(datarand)[2]
 indecesp <- list()
@@ -27,19 +29,19 @@ find_indeces <- function(positions, link_d, tree){
     # 
     # Parameters:
     # -----------
-    # positions: np.ndarray
-    #     An array with the position parameters with shape (n,2),
-    #     where n is the number of positions
+    # positions: list
+    #   A list with the position parameters we want to query with shape (n,2),
+    #   where n is the number of positions
     # link_d: float
-    #     The linking distance to label friends
-    # tree: scipy.spatial.KDTree
-    #     A KDTree build from the positions of the target data
+    #   The linking distance to label friends
+    # tree: list
+    #   A list build with the positions of the target data
     # 
     # Returns:
     # --------
     # indeces: list
-    #     List with an array of the indeces of the friends of each
-    #     position
+    #   List with an array of the indeces of the friends of each
+    #   position
   indeces <- list()
   for(i in 1:dim(positions)[1]){
     indecesaux <- c()
