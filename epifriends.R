@@ -42,19 +42,27 @@ find_indeces <- function(positions, link_d, tree){
     # indeces: list
     #   List with an array of the indeces of the friends of each
     #   position
+  #Creation of empty list where the clusters of points will be saved
   indeces <- list()
+  #loop for each position
   for(i in 1:dim(positions)[1]){
+    #creatios of list where the linked positions of the given position will be saved
     indecesaux <- c()
+    #inicialitation of distance and k number of nearest positions
     dist = 0
     kth = 0
+    #loop which stops when the maximum linking distance is overcomed
     while(dist <= link_d){
+      #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
       kth = kth + 1
       query <- nn2(tree, positions[i,], kth)
       index <- query$nn.idx[length(query$nn.idx)]
       dist <- query$nn.dists[length(query$nn.dists)]
+      #Addition of the last point to the indeces list if its in the wanted range
       if(dist[length(dist)] <= link_d){
         indecesaux <- append(indecesaux,index)
       }else{
+        #Final list for the position i
         indeces[[i]] <- indecesaux
         break
       }
