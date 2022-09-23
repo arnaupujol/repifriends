@@ -72,3 +72,81 @@ find_indeces <- function(positions, link_d, tree){
 }
 
 ind <- find_indeces(position_rand, 0.01, position_rand)
+
+dbscan <- function(positions, link_d, min_neighbours = 2){
+  # This method finds the DBSCAN clusters from a set of positions and
+  # returns their cluster IDs.
+  # 
+  # Parameters:
+  #   -----------
+  # positions: list
+  #   A list with the position parameters we want to query with shape (n,2),
+  #   where n is the number of positions
+  # link_d: float
+  #   The linking distance of the DBSCAN algorithm
+  # min_neighbours: int
+  #   Minium number of neighbours in the radius < link_d needed to link cases
+  #   as friends
+  # 
+  # Returns:
+  #   --------
+  # cluster_id: list
+  #   List of the cluster IDs of each position, with 0 for those
+  #   without a cluster.
+  
+  #Create cluster id
+  cluster_id <- integer(dim(positions)[1])
+  #Query KDTree
+  indeces <- find_indeces(positions, link_d, positions)
+  #inicialize ID variable
+  last_cluster_id = 0
+  for(i in 1:dim(positions)[1]){
+    #check if ith position has the minimum neighbours
+    if(length(indeces[[i]]) >= min_neighbours){
+      indeces_friends <- indeces[[i]]
+      #cluster_ids of these friends
+      cluster_id_friends <- cluster_id[indeces_friends]
+      #Unique values of cluster_ids
+      unique_cluster_ids <- unique(cluster_id_friends)
+      #check values of cluster_id in these neighbours
+      if(length(unique_cluster_ids) == 1){
+        if(unique_cluster_ids[1] == 0){
+          #assign to ith and friends last_cluster_id
+          cluster_id[indeces_friends] = last_cluster_id + 1
+          last_cluster_id = last_cluster_id + 1
+        }else{
+          #if one cluster_id different than 0, assign it to ith and friends
+          cluster_id[indeces_friends] = unique_cluster_ids[1]
+        }
+      }else{
+        #Define the cluster_id to assign for merging several clusters
+        min_cluster_id = min(unique_cluster_ids[unique_cluster_ids != 0])
+        #Assign this cluster_id to ith and its friends
+        cluster_id[indeces_friends] = min_cluster_id
+        for(j in unique_cluster_ids[unique_cluster_ids != 0]){
+          cluster_id[cluster_id == j] = min_cluster_id
+        }
+      }
+    }
+  }
+  #Rename cluster_id to continuous integers
+  sort_unici <- sort(unique(cluster_id[cluster_id>0]))
+  for(i in 1:length(sort_unici)){
+    cluster_id[cluster_id == sort_unici[i]] = i
+  }
+  return(cluster_id)
+}
+
+#Pruebas
+position_rand
+last_cluster_id = 0
+indeces_friends <- ind[[1]]
+cluster_id = integer(dim(position_rand)[1])
+cluster_id[ind[[1]]]
+cluster_id_friends <- cluster_id[indeces_friends]
+unique_cluster_ids <- unique(cluster_id_friends)
+length(unique_cluster_ids)
+cluster_id[indeces_friends] = last_cluster_id + 1
+last_cluster_id = last_cluster_id + 1
+
+db <- dbscan(position_rand, 0.05 ,2)
