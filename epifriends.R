@@ -1,9 +1,11 @@
 #This module contains methods to identify EpiFRIenDs clusters.
 
 install.packages("RANN")  #KDTree method package for R. Documentation: https://cran.r-project.org/web/packages/RANN/RANN.pdf
+install.packages("chron")
 
 library("RANN")
 library("readxl")
+library("chron")
 
 datarand <- read.csv("mock_data_rand.csv")
 datasin <- read.csv("mock_data_sin.csv")
@@ -14,7 +16,7 @@ test <- datarand[5]
 
 typeof(position_rand)
 
-#Prouebas
+#Pruebas
 # dim(datarand)[2]
 # indecesp <- list()
 # indecesp[0] <- c()
@@ -186,6 +188,8 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   # 
   # Returns:
   #   --------
+  # return: list 
+  #   List which contains all the values to be returned
   # cluster_id: list
   #   List of the cluster IDs of each position, with 0 for those
   #   without a cluster.
@@ -193,7 +197,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   #   Mean PR corresponding to cluster_id
   # pval_fof: list
   #   P-value corresponding to cluster_id
-  # epifriends_catalogue: geopandas.DataFrame
+  # epifriends_catalogue: List of lists
   #   Catalogue of the epifriends clusters and their main characteristics
   
   #Define positions of positive cases
@@ -279,4 +283,127 @@ cat <- catalogue(position_rand, test, 0.05)
 # mean_pr <- mean(test[total_friends_indeces,])
 # npos <- sum(test[total_friends_indeces,])
 # total <- length(total_friends_indeces)
-append(c(c(1,2)), c(c(2,3)))
+
+datarandtemp <- read.csv("mock_data_rand_temp.csv")
+
+position_randtemp <- datarandtemp[3:4]
+testtemp <- datarandtemp[5]
+datetemp <- datarandtemp[7]
+
+temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighbours = 2,
+                   time_width, min_date = NULL, max_date = NULL, time_steps = 1,
+                   max_p = 1, min_pos = 2, min_total = 2, min_pr = 0){
+  # This method generates a list of EpiFRIenDs catalogues representing different time frames
+  # by including only cases within a time window that moves within each time step.
+  # 
+  # Parameters:
+  #   -----------
+  # positions: list
+  #   A list with the position parameters we want to query with shape (n,2),
+  #   where n is the number of positions
+  # test_result: list
+  #   A list with the test results (0 or 1)
+  # dates: list
+  #   List of the date times of the corresponding data
+  # link_d: float
+  #   The linking distance to connect cases
+  # min_neighbours: int
+  #   Minium number of neighbours in the radius < link_d needed to link cases
+  #   as friends
+  # time_width: int
+  #   Number of days of the time window used to select cases in each time step
+  # min_date: pd.DateTimeIndex
+  #   Initial date used in the first time step and time window selection
+  # max_date: pd.DateTimeIndex
+  #   Final date to analyse, defining the last time window as the one fully overlapping
+  #   the data
+  # time_steps: int
+  #   Number of days that the time window is shifted in each time step
+  # max_p: float
+  #   Maximum value of the p-value to consider the cluster detection
+  # min_pos: int
+  #   Threshold of minimum number of positive cases in clusters applied
+  # min_total: int
+  #   Threshold of minimum number of cases in clusters applied
+  # min_pr: float
+  #   Threshold of minimum positivity rate in clusters applied
+  # 
+  # Returns:
+  #   --------
+  # returns: list
+  #   List that contais the two return variables
+  # temporal_catalogues: list of catalogues
+  #   List of EpiFRIenDs catalogues, where each element contains the catalogue in each
+  #   time step
+  # mean_date: list
+  #   List of dates corresponding to the median time in each time window
+  #   Save dates in a temporal format
+  dtparts = t(as.data.frame(strsplit(dates," ")))
+  row.names(dtparts) = NULL
+  dates <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+  #Defining temporal range
+  if(is.null(min_date)){
+    min_date <- min(dates)
+  } 
+  if(is.null(max_date)){
+    max_date <- max(dates)
+  }
+  #temporal loop until the last time frame that fully overlaps the data
+  temporal_catalogues <- list()
+  #Mean dates defines as the median time in each time window
+  mean_date <- list()
+  step_num <- 0
+  while(min_date + time_steps*step_num + time_width <= max_date){
+    #select data in time window
+    selected_data <- (dates >= min_date + time_steps*step_num)&
+                     (dates <= min_date + time_steps*step_num + time_width)
+    selected_positions <- positions[selected_data,]
+    selected_test_results <- as.data.frame(test_result[selected_data,])
+    
+    #get catalogue
+    Newcatalogue <- catalogue(selected_positions, selected_test_results,
+                                     link_d, min_neighbours = min_neighbours,
+                                     max_p = max_p, min_pos = min_pos,
+                                     min_total = min_total, min_pr = min_pr)
+    mean_date <- append(mean_date, min_date + time_steps*step_num + 0.5*time_width)
+    Newcatalogue$epifriends_catalogue["Date"] <- min_date + time_steps*step_num + 0.5*time_width
+    
+    temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
+    
+    step_num = step_num + 1
+  }
+  returns <- list(temporal_catalogues, mean_date)
+  names(returns) <- c("temporal_catalogues", "mean_date")
+  return(returns)
+}
+
+tcat <- temporal_catalogue(position_randtemp, testtemp, datarandtemp$date, 0.05, time_width = 180, time_steps = 90)
+Newcatalogue <- catalogue(selected_positions, selected_test_results,0.05)
+
+tcat[1]
+
+#Proves
+# dtimes <- datarandtemp$date
+# dtparts = t(as.data.frame(strsplit(dtimes," ")))
+# row.names(dtparts) = NULL
+# dates = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+# 
+# min_date <- min(dates)
+# max_date <- max(dates)
+# 
+# temporal_catalogues <- list()
+# mean_date <- list()
+# 
+# min(dates) + 10*70 + 31 <= max(dates)
+# max(dates) - min(dates)
+# selected_data <- (dates >= min_date)&(dates <= min_date + 180)
+# selected_positions <- position_randtemp[selected_data,]
+# selected_test_results <- as.data.frame(testtemp[selected_data,])
+# Newcatalogue <- catalogue(selected_positions, selected_test_results,
+#                           0.05, min_neighbours = 2,
+#                           max_p = 1, min_pos = 2,
+#                           min_total = 2, min_pr = 0)
+# mean_date <- append(mean_date, min_date + 0.5*180)
+# Newcatalogue$epifriends_catalogue["Date"] <- min_date + 0.5*180
+# 
+# temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
