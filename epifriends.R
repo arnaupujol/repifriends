@@ -7,9 +7,9 @@ library("RANN")
 library("readxl")
 library("chron")
 
-datarand <- read.csv("mock_data_rand.csv")
-datasin <- read.csv("mock_data_sin.csv")
-dataclus <- read.csv("mock_data_clustered.csv")
+datarand <- read.csv("data\\mock_data_rand.csv")
+datasin <- read.csv("data\\mock_data_sin.csv")
+dataclus <- read.csv("data\\mock_data_clustered.csv")
 
 position_rand <- datarand[3:4]
 test <- datarand[5]
@@ -284,11 +284,34 @@ cat <- catalogue(position_rand, test, 0.05)
 # npos <- sum(test[total_friends_indeces,])
 # total <- length(total_friends_indeces)
 
-datarandtemp <- read.csv("mock_data_rand_temp.csv")
+datarandtemp <- read.csv("data\\mock_data_rand_temp.csv")
 
 position_randtemp <- datarandtemp[3:4]
 testtemp <- datarandtemp[5]
 datetemp <- datarandtemp[7]
+
+distance <- function(pos_a, pos_b){
+    # This method calculates the Euclidean distance between two positions.
+    # 
+    # Parameters:
+    # -----------
+    # pos_a: vector
+    #     First position
+    # pos_b: vector
+    #     Second position
+    # 
+    # Returns:
+    # --------
+    # dist: float
+    #     Distance between positions
+  dist = sqrt(sum((pos_a - pos_b)**2))
+  return(dist)
+}
+
+a <- c(1,2)
+b <- c(4,1)
+
+distance(a,b)
 
 temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighbours = 2,
                    time_width, min_date = NULL, max_date = NULL, time_steps = 1,
@@ -366,9 +389,8 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
                                      max_p = max_p, min_pos = min_pos,
                                      min_total = min_total, min_pr = min_pr)
     mean_date <- append(mean_date, min_date + time_steps*step_num + 0.5*time_width)
-    Newcatalogue$epifriends_catalogue["Date"] <- min_date + time_steps*step_num + 0.5*time_width
-    
-    temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
+    Newcatalogue$epifriends_catalogue["Date"] <- toString(min_date + time_steps*step_num + 0.5*time_width)
+    temporal_catalogues[[step_num+1]] <- Newcatalogue$epifriends_catalogue
     
     step_num = step_num + 1
   }
@@ -380,7 +402,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
 tcat <- temporal_catalogue(position_randtemp, testtemp, datarandtemp$date, 0.05, time_width = 180, time_steps = 90)
 Newcatalogue <- catalogue(selected_positions, selected_test_results,0.05)
 
-tcat[1]
+tcat$temporal_catalogues[[1]]
 
 #Proves
 # dtimes <- datarandtemp$date
@@ -405,5 +427,42 @@ tcat[1]
 #                           min_total = 2, min_pr = 0)
 # mean_date <- append(mean_date, min_date + 0.5*180)
 # Newcatalogue$epifriends_catalogue["Date"] <- min_date + 0.5*180
-# 
+# chron(18892.42,format=c('y-m-d','h:m:s'))
+#
 # temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
+
+
+t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
+
+add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
+  #setting empty values of temp_id
+  for(t in 1:length(catalogue_list)){
+    catalogue_list[t]['tempID'] = data.frame()
+  }
+  #Initialising tempID value to assign
+  next_temp_id = 0
+  #Loop over all timesteps
+  for(t in 1:length(catalogue_list)){
+    #Loop over all clusters in a timestep
+    for (f in t(catalogue_list[t])){
+      #Loop over all timesteps within linking_time
+      for (t2 in (t + 1):min(t + linking_time, len(catalogue_list))){
+        #Loop over all clusters in the linked timesteps
+        for(f2 in t(catalogue_list[t2])){
+          
+        }
+      }
+      
+    }
+  }
+}
+
+a <- c(1,2,3)
+b <- c(4,5,6)
+c <- c(7,8,9)
+d <- c("a","b","c")
+ab <- append(a,b)
+cd <- append(c,d)
+ac <- append(a,c)
+bd <- append(b,d)
+abcd <- append(ab, cd)
