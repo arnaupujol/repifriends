@@ -32,12 +32,12 @@ find_indeces <- function(positions, link_d, tree){
     # 
     # Parameters:
     # -----------
-    # positions: list
+    # positions: DataFrame
     #   A list with the position parameters we want to query with shape (n,2),
     #   where n is the number of positions
     # link_d: float
     #   The linking distance to label friends
-    # tree: list
+    # tree: DataFrame
     #   A list build with the positions of the target data
     # 
     # Returns:
@@ -74,7 +74,7 @@ find_indeces <- function(positions, link_d, tree){
   return(indeces)
 }
 
-ind <- find_indeces(position_rand, 0.01, position_rand)
+ind <- find_indeces(position_rand, 0.05, position_rand)
 
 dbscan <- function(positions, link_d, min_neighbours = 2){
   # This method finds the DBSCAN clusters from a set of positions and
@@ -82,7 +82,7 @@ dbscan <- function(positions, link_d, min_neighbours = 2){
   # 
   # Parameters:
   #   -----------
-  # positions: list
+  # positions: DataFrame
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions
   # link_d: float
@@ -165,7 +165,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   # 
   # Parameters:
   #   -----------
-  # positions: list
+  # positions: DataFrame
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions
   # test_result: list
@@ -321,7 +321,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   # 
   # Parameters:
   #   -----------
-  # positions: list
+  # positions: DataFrame
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions
   # test_result: list
@@ -402,7 +402,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
 tcat <- temporal_catalogue(position_randtemp, testtemp, datarandtemp$date, 0.05, time_width = 180, time_steps = 90)
 Newcatalogue <- catalogue(selected_positions, selected_test_results,0.05)
 
-tcat$temporal_catalogues[[1]]
+tcat$temporal_catalogues[[2]]
 
 #Proves
 # dtimes <- datarandtemp$date
@@ -432,37 +432,138 @@ tcat$temporal_catalogues[[1]]
 # temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
 
 
-t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
+
+# add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
+#   #setting empty values of temp_id
+#   for(t in 1:length(catalogue_list)){
+#     aux <- data.frame(matrix(NA,length(catalogue_list[[t]]$id)))
+#     colnames(aux) <- "tempID"
+#     catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
+#     #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
+#   }
+#   #Initialising tempID value to assign
+#   next_temp_id = 0
+#   #Loop over all timesteps
+#   for(t in 1:length(catalogue_list)){
+#     #Loop over all clusters in a timestep
+#     for (f in t(catalogue_list[t])){
+#       print(f)
+#       #Loop over all timesteps within linking_time
+#       for (t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+#         print(t2)
+#         #Loop over all clusters in the linked timesteps
+#         for(f2 in t(catalogue_list[t2])){
+#           #Calculating distance between clusters
+#           dist <- distance(f[[1]]["mean_position_pos"][[1]][[t]], f2[[1]]["mean_position_pos"][[1]][[t2]])  #To improve. Better not to use [[1]]
+#           if(dist <= linking_dist){
+#             temp_id1 <- f[[1]]["tempID"][[t]] 
+#             temp_id2 <- f2[[1]]["tempID"][[t2]]
+#             #Assign tempIDs to linked clusters
+#             if(is.null(temp_id1) && is.null(temp_id2)){
+#               f[[1]]["tempID"][[t]] <- next_temp_id
+#               f2[[1]]["tempID"][[t2]] <- next_temp_id
+#               next_temp_id = next_temp_id + 1
+#             }else if(is.null(temp_id1)){
+#               f[[1]]["tempID"][[t]] <- temp_id2
+#             }else if(is.null(temp_id2)){
+#               f2[[1]]["tempID"][[t2]] <- temp_id1 
+#             }else if(temp_id1 != temp_id2){
+#               for(t3 in 1:length(catalogue_list)){
+#                 catalogue_list[[t3]]["tempID"][catalogue_list[[t3]]["tempID"] == temp_id2] <- temp_id1
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+#   # if(get_timelife){
+#   #   catalogue_list <- get_lifetimes(catalogue_list)
+#   # }
+#   return(catalogue_list)
+# }
 
 add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
   #setting empty values of temp_id
   for(t in 1:length(catalogue_list)){
-    catalogue_list[t]['tempID'] = data.frame()
+    aux <- data.frame(matrix(0,length(catalogue_list[[t]]$id)))
+    colnames(aux) <- "tempID"
+    catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
+    #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
   }
   #Initialising tempID value to assign
   next_temp_id = 0
   #Loop over all timesteps
   for(t in 1:length(catalogue_list)){
-    #Loop over all clusters in a timestep
-    for (f in t(catalogue_list[t])){
-      #Loop over all timesteps within linking_time
-      for (t2 in (t + 1):min(t + linking_time, len(catalogue_list))){
-        #Loop over all clusters in the linked timesteps
-        for(f2 in t(catalogue_list[t2])){
-          
+    #Loop over all timesteps within linking_time
+    for (t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+      #Loop over all points of catalogue number 1
+        for(f in 1:length(catalogue_list[[t]]$id)){
+          #Loop over all points of catalogue number 2
+          for(f2 in 1:length(catalogue_list[[t2]]$id))
+          #Calculating distance between clusters
+          dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])  #To improve. Better not to use [[1]]
+          if(dist <= linking_dist){
+            temp_id1 <- catalogue_list[[t]]["tempID"][[1]][[f]] 
+            temp_id2 <- catalogue_list[[t2]]["tempID"][[1]][[f2]] 
+            #Assign tempIDs to linked clusters
+            if((temp_id1 == 0) && (temp_id2 == 0)){
+              catalogue_list[[t]]["tempID"][[1]][[f]]  <- next_temp_id + 1
+              catalogue_list[[t2]]["tempID"][[1]][[f2]] <- next_temp_id + 1
+              next_temp_id = next_temp_id + 1
+            }else if((temp_id1 == 0)){
+              catalogue_list[[t]]["tempID"][[1]][[f]]  <- temp_id2
+            }else if((temp_id2 == 0)){
+              catalogue_list[[t2]]["tempID"][[1]][[f2]] <- temp_id1 
+              }else if(temp_id1 != temp_id2){
+                for(t3 in 1:length(catalogue_list)){
+                  catalogue_list[[t3]]["tempID"][catalogue_list[[t3]]["tempID"] == temp_id2] <- temp_id1
+                }
+              }
+          }
         }
       }
-      
     }
-  }
+  # if(get_timelife){
+  #   catalogue_list <- get_lifetimes(catalogue_list)
+  # }
+  return(catalogue_list)
 }
 
-a <- c(1,2,3)
-b <- c(4,5,6)
-c <- c(7,8,9)
-d <- c("a","b","c")
-ab <- append(a,b)
-cd <- append(c,d)
-ac <- append(a,c)
-bd <- append(b,d)
-abcd <- append(ab, cd)
+tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = FALSE)
+
+tcat$temporal_catalogues[[1]]["tempID"][[1]][1]
+t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
+length(tcat$temporal_catalogues[[3]]$id)
+
+#Pruebas replica add_temporal_id
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   tcat$temporal_catalogues[1]["tempID"] = vector(mode="list", length=length(tcat$temporal_catalogues[[1]]["id"]))
+# }
+# 
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   tcat$temporal_catalogues[1]["tempID"] = vector(mode="list", length=length(tcat$temporal_catalogues[[1]]["id"]))
+# }
+
+for(t in 1:length(tcat$temporal_catalogues)){
+  aux <- data.frame(matrix(NA,length(tcat$temporal_catalogues[[t]]$id)))
+  colnames(aux) <- "tempID"
+  tcat$temporal_catalogues[[t]] <- append(tcat$temporal_catalogues[[t]],aux)
+  #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
+}
+
+#Initialising tempID value to assign
+
+tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
+
+#VALIDATIONS
+
+x <- c(1,2,5,6,8)
+y <- c(1,2,5,6,8)
+
+pos <- data.frame(x,y)
+
+db <- dbscan(pos, 0.05 ,2)
+
+typeof(position_rand)
+typeof(pos)
