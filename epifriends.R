@@ -47,6 +47,15 @@ find_indeces <- function(positions, link_d, tree){
     #   position
   #Creation of empty list where the clusters of points will be saved
   indeces <- list()
+  #Have in count the posible exception of not having any positions
+  if(dim(positions)[1] == 0){
+    return(indeces)
+  }
+  #Case if there is only one position
+  if(dim(positions)[1] == 1){
+    indeces[[1]] <- 1
+    return(indeces)
+  }
   #loop for each position
   for(i in 1:dim(positions)[1]){
     #creatios of list where the linked positions of the given position will be saved
@@ -55,14 +64,14 @@ find_indeces <- function(positions, link_d, tree){
     dist = 0
     kth = 0
     #loop which stops when the maximum linking distance is overcomed
-    while(dist <= link_d){
+    while((dist <= link_d) && (kth < dim(positions)[1])){
       #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
       kth = kth + 1
       query <- nn2(tree, positions[i,], kth)
       index <- query$nn.idx[length(query$nn.idx)]
       dist <- query$nn.dists[length(query$nn.dists)]
-      #Addition of the last point to the indeces list if its in the wanted range
-      if(dist[length(dist)] <= link_d){
+      #Addition of the last point to the indeces list if it is in the wanted range
+      if((dist[length(dist)] <= link_d) && (kth < dim(positions)[1])){
         indecesaux <- append(indecesaux,index)
       }else{
         #Final list for the position i
@@ -103,6 +112,10 @@ dbscan <- function(positions, link_d, min_neighbours = 2){
   indeces <- find_indeces(positions, link_d, positions)
   #inicialize ID variable
   last_cluster_id = 0
+  #Have in count the posible exception of not having any positions
+  if(dim(positions)[1] == 0){
+    return(cluster_id)
+  }
   for(i in 1:dim(positions)[1]){
     #check if ith position has the minimum neighbours
     if(length(indeces[[i]]) >= min_neighbours){
@@ -168,7 +181,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   # positions: DataFrame
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions
-  # test_result: list
+  # test_result: DataFrame
   #   A list with the test results (0 or 1)
   # link_d: float
   #   The linking distance to connect cases
@@ -191,7 +204,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   # return: list 
   #   List which contains all the values to be returned
   # cluster_id: list
-  #   List of the cluster IDs of each position, with 0 for those
+  #   List of the cluster IDs of each position with positive test, with 0 for those
   #   without a cluster.
   # mean_pr_fof: list
   #   Mean PR corresponding to cluster_id
@@ -211,8 +224,8 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   #Define total number of cases
   total_n = dim(test_result)[1]
   #Initialising mean PR and p-value for the positive cases in clusters
-  mean_pr_cluster <- numeric(length(cluster_id))                       #!!!!!!!!!!!!!
-  pval_cluster <- rep(1, length(cluster_id))                           #!!!!!!!!!!!!!
+  mean_pr_cluster <- numeric(length(cluster_id))                       
+  pval_cluster <- rep(1, length(cluster_id))                           
   #EpiFRIenDs cluster catalogue
   epifriends_catalogue <- vector(mode='list', length=9)
   names(epifriends_catalogue) <- c("id",                  #EpiFRIenDs id
@@ -226,7 +239,16 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
                                    "p"                    #p-value of detection
                                    )
   next_id <- 1
-  sort_unici <- sort(unique(cluster_id[cluster_id>0]))
+  sort_unici <- sort(unique(cluster_id[cluster_id>0]))      
+  #Case where there are not positive positions
+  if(dim(positive_positions)[1] == 0){
+    return(epifriends_catalogue)
+  }
+  
+  #Case without any clusters
+  if(length(sort_unici) == 0){
+    return(epifriends_catalogue)
+  }
   for(i in 1:length(sort_unici)){
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
@@ -236,9 +258,11 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     total_friends_indeces <- sort(unique(unlist(all_friends_indeces)))
     #get positivity rate from all the unique indeces
     mean_pr <- mean(test_result[total_friends_indeces,])
+    print(mean_pr)
     npos <- sum(test_result[total_friends_indeces,])
     ntotal <- length(total_friends_indeces)
     pval <- 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
+    print(pval)
     #setting EpiFRIenDs catalogue
     if(pval < max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)
@@ -558,12 +582,98 @@ tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
 
 #VALIDATIONS
 
-x <- c(1,2,5,6,8)
-y <- c(1,2,5,6,8)
-
+x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,16)
+y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,16)
+length(x)
 pos <- data.frame(x,y)
 
-db <- dbscan(pos, 0.05 ,2)
+ind <- find_indeces(pos, 2 ,pos)
+ind
 
-typeof(position_rand)
-typeof(pos)
+db <- dbscan(pos, 2 ,2)
+db
+
+test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,0,1))
+length(test)
+cat <- catalogue(pos, test, 2)
+cat
+
+dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
+           "2021-06-09 07:50:30","2021-09-18 05:53:26","2020-03-19 17:16:56","2021-06-08 12:40:46","2020-06-26 05:01:31",
+           "2020-10-15 04:40:27","2021-05-28 15:23:23","2020-05-01 02:56:54","2020-08-19 22:45:35","2021-10-23 18:56:35",
+           "2020-10-19 00:01:25")
+
+dtparts = t(as.data.frame(strsplit(dates," ")))
+row.names(dtparts) = NULL
+dates <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+
+typeof(dates)
+typeof(datarandtemp$date)
+tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
+tcat
+
+#VALIDATION with no positions
+x <- c()
+y <- c()
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 2 ,pos)
+ind
+#ind[1,]
+sort(unique(unlist(ind)))
+
+db <- dbscan(pos, 2 ,2)
+db
+
+test <- c()
+cat <- catalogue(pos, test, 2)
+cat
+
+dates <- c()
+tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
+
+#VALIDATION with only one position
+x <- c(1)
+y <- c(1)
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 2 ,pos)
+ind
+
+db <- dbscan(pos, 2 ,2)
+db
+
+test <- data.frame(c(1))
+cat <- catalogue(pos, test, 2)
+cat
+
+#VALIDATION with two positions
+x <- c(1,3)
+y <- c(1,3)
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 4 ,pos)
+ind
+
+db <- dbscan(pos, 4 ,2)
+db
+
+test <- data.frame(c(1,0))
+cat <- catalogue(pos, test, 4)
+cat
+
+#VALIDATION with repetition of positions
+
+x <- c(1,1,1,3)
+y <- c(1,1,1,3)
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 4 ,pos)
+ind
+
+db <- dbscan(pos, 4 ,2)
+db
+
+test <- data.frame(c(1,1,1,0))
+cat <- catalogue(pos, test, 4)
+cat
