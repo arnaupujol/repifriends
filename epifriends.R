@@ -64,14 +64,14 @@ find_indeces <- function(positions, link_d, tree){
     dist = 0
     kth = 0
     #loop which stops when the maximum linking distance is overcomed
-    while((dist <= link_d) && (kth < dim(positions)[1])){
+    while((dist <= link_d) && (kth < dim(tree)[1])){
       #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
       kth = kth + 1
       query <- nn2(tree, positions[i,], kth)
       index <- query$nn.idx[length(query$nn.idx)]
       dist <- query$nn.dists[length(query$nn.dists)]
       #Addition of the last point to the indeces list if it is in the wanted range
-      if((dist[length(dist)] <= link_d) && (kth < dim(positions)[1])){
+      if((dist[length(dist)] <= link_d) && (kth < dim(tree)[1])){
         indecesaux <- append(indecesaux,index)
       }else{
         #Final list for the position i
@@ -258,11 +258,9 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     total_friends_indeces <- sort(unique(unlist(all_friends_indeces)))
     #get positivity rate from all the unique indeces
     mean_pr <- mean(test_result[total_friends_indeces,])
-    print(mean_pr)
     npos <- sum(test_result[total_friends_indeces,])
     ntotal <- length(total_friends_indeces)
     pval <- 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
-    print(pval)
     #setting EpiFRIenDs catalogue
     if(pval < max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)
@@ -385,6 +383,11 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   # mean_date: list
   #   List of dates corresponding to the median time in each time window
   #   Save dates in a temporal format
+  #Case of empty list of dates
+  if(length(dates) == 0){
+    print("There are no dates")
+    return()
+  }
   dtparts = t(as.data.frame(strsplit(dates," ")))
   row.names(dtparts) = NULL
   dates <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
@@ -508,6 +511,11 @@ tcat$temporal_catalogues[[2]]
 # }
 
 add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
+  #Case of empty catalogue list
+  if(length(catalogue_list) == 0){
+    print("There are no catalogues")
+    return()
+  }
   #setting empty values of temp_id
   for(t in 1:length(catalogue_list)){
     aux <- data.frame(matrix(0,length(catalogue_list[[t]]$id)))
@@ -518,7 +526,7 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
   #Initialising tempID value to assign
   next_temp_id = 0
   #Loop over all timesteps
-  for(t in 1:length(catalogue_list)){
+  for(t in 1:(length(catalogue_list)-1)){
     #Loop over all timesteps within linking_time
     for (t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
       #Loop over all points of catalogue number 1
@@ -555,10 +563,12 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
 }
 
 tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = FALSE)
+tcatid
 
 tcat$temporal_catalogues[[1]]["tempID"][[1]][1]
 t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
-length(tcat$temporal_catalogues[[3]]$id)
+length(tcat$temporal_catalogues[[1]]$id)
+length(tcat$temporal_catalogues)
 
 #Pruebas replica add_temporal_id
 # for(t in 1:length(tcat$temporal_catalogues)){
@@ -603,10 +613,6 @@ dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","20
            "2020-10-15 04:40:27","2021-05-28 15:23:23","2020-05-01 02:56:54","2020-08-19 22:45:35","2021-10-23 18:56:35",
            "2020-10-19 00:01:25")
 
-dtparts = t(as.data.frame(strsplit(dates," ")))
-row.names(dtparts) = NULL
-dates <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
-
 typeof(dates)
 typeof(datarandtemp$date)
 tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
@@ -625,7 +631,7 @@ sort(unique(unlist(ind)))
 db <- dbscan(pos, 2 ,2)
 db
 
-test <- c()
+test <- data.frame(c())
 cat <- catalogue(pos, test, 2)
 cat
 
@@ -646,6 +652,10 @@ db
 test <- data.frame(c(1))
 cat <- catalogue(pos, test, 2)
 cat
+
+dates <- c("2020-11-03 05:33:07")
+tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
+tcat
 
 #VALIDATION with two positions
 x <- c(1,3)
