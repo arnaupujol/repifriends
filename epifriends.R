@@ -565,10 +565,10 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
 tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = FALSE)
 tcatid
 
-tcat$temporal_catalogues[[1]]["tempID"][[1]][1]
-t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
-length(tcat$temporal_catalogues[[1]]$id)
-length(tcat$temporal_catalogues)
+# tcat$temporal_catalogues[[1]]["tempID"][[1]][1]
+# t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
+# length(tcat$temporal_catalogues[[1]]$id)
+# length(tcat$temporal_catalogues)
 
 #Pruebas replica add_temporal_id
 # for(t in 1:length(tcat$temporal_catalogues)){
@@ -579,16 +579,18 @@ length(tcat$temporal_catalogues)
 #   tcat$temporal_catalogues[1]["tempID"] = vector(mode="list", length=length(tcat$temporal_catalogues[[1]]["id"]))
 # }
 
-for(t in 1:length(tcat$temporal_catalogues)){
-  aux <- data.frame(matrix(NA,length(tcat$temporal_catalogues[[t]]$id)))
-  colnames(aux) <- "tempID"
-  tcat$temporal_catalogues[[t]] <- append(tcat$temporal_catalogues[[t]],aux)
-  #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
-}
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   aux <- data.frame(matrix(NA,length(tcat$temporal_catalogues[[t]]$id)))
+#   colnames(aux) <- "tempID"
+#   tcat$temporal_catalogues[[t]] <- append(tcat$temporal_catalogues[[t]],aux)
+#   #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
+# }
 
 #Initialising tempID value to assign
 
-tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
+#tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
+
+
 
 #VALIDATIONS
 
@@ -616,7 +618,11 @@ dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","20
 typeof(dates)
 typeof(datarandtemp$date)
 tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
-tcat
+tcat$temporal_catalogues
+length(tcat$temporal_catalogues)
+
+tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = FALSE)
+tcatid
 
 #VALIDATION with no positions
 x <- c()
