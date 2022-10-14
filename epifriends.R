@@ -382,7 +382,7 @@ Newcatalogue <- catalogue(selected_positions, selected_test_results,0.05)
 
 tcat[1]
 
-#Proves
+#Proves1
 # dtimes <- datarandtemp$date
 # dtparts = t(as.data.frame(strsplit(dtimes," ")))
 # row.names(dtparts) = NULL
