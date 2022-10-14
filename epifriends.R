@@ -458,6 +458,90 @@ tcat$temporal_catalogues[[2]]
 #
 # temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
 
+<<<<<<< HEAD
+=======
+
+add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
+  #Case of empty catalogue list
+  if(length(catalogue_list) == 0){
+    print("There are no catalogues")
+    return()
+  }
+  #setting empty values of temp_id
+  for(t in 1:length(catalogue_list)){
+    aux <- data.frame(matrix(0,length(catalogue_list[[t]]$id)))
+    colnames(aux) <- "tempID"
+    catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
+    #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
+  }
+  #Initialising tempID value to assign
+  next_temp_id = 0
+  #Loop over all timesteps
+  for(t in 1:(length(catalogue_list)-1)){
+    #Loop over all timesteps within linking_time
+    for (t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+      #Loop over all points of catalogue number 1
+        for(f in 1:length(catalogue_list[[t]]$id)){
+          #Loop over all points of catalogue number 2
+          for(f2 in 1:length(catalogue_list[[t2]]$id))
+          #Calculating distance between clusters
+          dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])  #To improve. Better not to use [[1]]
+          if(dist <= linking_dist){
+            temp_id1 <- catalogue_list[[t]]["tempID"][[1]][[f]] 
+            temp_id2 <- catalogue_list[[t2]]["tempID"][[1]][[f2]] 
+            #Assign tempIDs to linked clusters
+            if((temp_id1 == 0) && (temp_id2 == 0)){
+              catalogue_list[[t]]["tempID"][[1]][[f]]  <- next_temp_id + 1
+              catalogue_list[[t2]]["tempID"][[1]][[f2]] <- next_temp_id + 1
+              next_temp_id = next_temp_id + 1
+            }else if((temp_id1 == 0)){
+              catalogue_list[[t]]["tempID"][[1]][[f]]  <- temp_id2
+            }else if((temp_id2 == 0)){
+              catalogue_list[[t2]]["tempID"][[1]][[f2]] <- temp_id1 
+              }else if(temp_id1 != temp_id2){
+                for(t3 in 1:length(catalogue_list)){
+                  catalogue_list[[t3]]["tempID"][catalogue_list[[t3]]["tempID"] == temp_id2] <- temp_id1
+                }
+              }
+          }
+        }
+      }
+    }
+  if(get_timelife){
+    catalogue_list <- get_lifetimes(catalogue_list)
+  }
+  return(catalogue_list)
+}
+
+tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = FALSE)
+tcatid
+
+# tcat$temporal_catalogues[[1]]["tempID"][[1]][1]
+# t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
+# length(tcat$temporal_catalogues[[1]]$id)
+# length(tcat$temporal_catalogues)
+
+#Pruebas replica add_temporal_id
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   tcat$temporal_catalogues[1]["tempID"] = vector(mode="list", length=length(tcat$temporal_catalogues[[1]]["id"]))
+# }
+# 
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   tcat$temporal_catalogues[1]["tempID"] = vector(mode="list", length=length(tcat$temporal_catalogues[[1]]["id"]))
+# }
+
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   aux <- data.frame(matrix(NA,length(tcat$temporal_catalogues[[t]]$id)))
+#   colnames(aux) <- "tempID"
+#   tcat$temporal_catalogues[[t]] <- append(tcat$temporal_catalogues[[t]],aux)
+#   #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
+# }
+
+#Initialising tempID value to assign
+
+#tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
+
+>>>>>>> 64955dab8d6f4622b243e8f102dce583e4935649
 get_label_list <- function(df_list, label = "tempID"){
   # This method gives the unique values of a column in a list
   # of data frames.
@@ -537,6 +621,7 @@ get_lifetimes <- function(catalogue_list){
 catlif <- get_lifetimes(tcatid)
 catlif
 
+<<<<<<< HEAD
 # # c <- c()
 # # c[1] <- 1
 # # c[3] <- 2
@@ -624,6 +709,15 @@ tcatid
 #Initialising tempID value to assign
 
 #tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
+=======
+# c <- c()
+# c[1] <- 1
+# c[3] <- 2
+
+catlif[[1]]["id"][[1]][catlif[[1]]["tempID"][[1]] == 1]
+
+lablis[1] %in% unique(tcatid[[4]]["tempID"][[1]])
+>>>>>>> 64955dab8d6f4622b243e8f102dce583e4935649
 
 #VALIDATIONS
 
