@@ -505,9 +505,9 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
         }
       }
     }
-  # if(get_timelife){
-  #   catalogue_list <- get_lifetimes(catalogue_list)
-  # }
+  if(get_timelife){
+    catalogue_list <- get_lifetimes(catalogue_list)
+  }
   return(catalogue_list)
 }
 
