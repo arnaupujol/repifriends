@@ -459,57 +459,6 @@ tcat$temporal_catalogues[[2]]
 # temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
 
 
-
-# add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
-#   #setting empty values of temp_id
-#   for(t in 1:length(catalogue_list)){
-#     aux <- data.frame(matrix(NA,length(catalogue_list[[t]]$id)))
-#     colnames(aux) <- "tempID"
-#     catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
-#     #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
-#   }
-#   #Initialising tempID value to assign
-#   next_temp_id = 0
-#   #Loop over all timesteps
-#   for(t in 1:length(catalogue_list)){
-#     #Loop over all clusters in a timestep
-#     for (f in t(catalogue_list[t])){
-#       print(f)
-#       #Loop over all timesteps within linking_time
-#       for (t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
-#         print(t2)
-#         #Loop over all clusters in the linked timesteps
-#         for(f2 in t(catalogue_list[t2])){
-#           #Calculating distance between clusters
-#           dist <- distance(f[[1]]["mean_position_pos"][[1]][[t]], f2[[1]]["mean_position_pos"][[1]][[t2]])  #To improve. Better not to use [[1]]
-#           if(dist <= linking_dist){
-#             temp_id1 <- f[[1]]["tempID"][[t]] 
-#             temp_id2 <- f2[[1]]["tempID"][[t2]]
-#             #Assign tempIDs to linked clusters
-#             if(is.null(temp_id1) && is.null(temp_id2)){
-#               f[[1]]["tempID"][[t]] <- next_temp_id
-#               f2[[1]]["tempID"][[t2]] <- next_temp_id
-#               next_temp_id = next_temp_id + 1
-#             }else if(is.null(temp_id1)){
-#               f[[1]]["tempID"][[t]] <- temp_id2
-#             }else if(is.null(temp_id2)){
-#               f2[[1]]["tempID"][[t2]] <- temp_id1 
-#             }else if(temp_id1 != temp_id2){
-#               for(t3 in 1:length(catalogue_list)){
-#                 catalogue_list[[t3]]["tempID"][catalogue_list[[t3]]["tempID"] == temp_id2] <- temp_id1
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
-#   # if(get_timelife){
-#   #   catalogue_list <- get_lifetimes(catalogue_list)
-#   # }
-#   return(catalogue_list)
-# }
-
 add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
   #Case of empty catalogue list
   if(length(catalogue_list) == 0){
@@ -590,7 +539,92 @@ tcatid
 
 #tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
 
+get_label_list <- function(df_list, label = "tempID"){
+  # This method gives the unique values of a column in a list
+  # of data frames.
+  # 
+  # Parameters:
+  #   -----------
+  # df_list: list
+  #   List of dataframes
+  # label: str
+  #   Name of column to select
+  # 
+  # Returns:
+  #   --------
+  # label_list: list
+  #   List of unique values of the column over all dataframes from the list
+  for(i in 1:length(df_list)){
+    mask = df_list[[i]][label][[1]][df_list[[i]][label][[1]] != 0]
+    if(i == 1){
+      label_list <- unique(mask)
+    }else{
+      label_list <- unique(c(label_list, unique(mask)))
+    }
+  }
+  return(label_list)
+}
 
+lablis <- get_label_list(tcatid)
+
+a <- unique(tcatid[[1]]["tempID"][[1]][tcatid[[1]]["tempID"][[1]] != 0])
+b <- unique(tcatid[[2]]["tempID"][[1]][tcatid[[2]]["tempID"][[1]] != 0])
+unique(c(a,b))
+
+get_lifetimes <- function(catalogue_list){
+  # This method obtains the first and last time frames for each
+  # temporal ID from a list of EpiFRIenDs catalogues and the corresponding
+  # timelife.
+  # 
+  # Parameters:
+  # -----------
+  # catalogue_list: list
+  #     List of EpiFRIenDs catalogues, each element of the list
+  #     corresponding to the EpiFRIenDs catalogue of each timestep
+  # 
+  # Returns:
+  # --------
+  # catalogue_list: list
+  #     List of hotspot catalogues with the added fields 'first_timestep',
+  #     'last_timestep' and 'lifetime'
+  
+  #getting list of temporal IDs appearing in catalogue_list
+  tempid_list <- get_label_list(catalogue_list, label = "tempID")
+  #Creating empty columns for first timestep, last timestep and lifteime
+  for(t in 1:length(catalogue_list)){
+    catalogue_list[[t]]["first_timestep"] <- c()
+    catalogue_list[[t]]["last_timestep"] <- c()
+    catalogue_list[[t]]["lifetime"] <- c()
+  }
+  for(tempid_num in tempid_list){
+    appearances = c()
+    for(i in 1:length(catalogue_list)){
+      if(tempid_num %in% unique(catalogue_list[[i]]["tempID"][[1]])){
+        appearances <- append(appearances,i)
+      }
+    }
+    min_appearance = min(appearances)
+    max_appearance = max(appearances)
+    lifetime = max_appearance - min_appearance
+    for(i in min_appearance:max_appearance){
+      catalogue_list[[i]]["first_timestep"][[1]][catalogue_list[[i]]["tempID"][[1]] == tempid_num] <- min_appearance
+      catalogue_list[[i]]["last_timestep"][[1]][catalogue_list[[i]]["tempID"][[1]] == tempid_num] <- max_appearance
+      catalogue_list[[i]]["lifetime"][[1]][catalogue_list[[i]]["tempID"][[1]] == tempid_num] <- lifetime
+    }
+  }
+  return(catalogue_list)
+}
+
+catlif <- get_lifetimes(tcatid)
+catlif
+
+# c <- c()
+# c[1] <- 1
+# c[3] <- 2
+
+catlif[[1]]["id"][[1]][catlif[[1]]["tempID"][[1]] == 1]
+
+lablis[1] %in% unique(tcatid[[4]]["tempID"][[1]])
 
 #VALIDATIONS
 
