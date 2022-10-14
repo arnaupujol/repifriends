@@ -7,9 +7,9 @@ library("RANN")
 library("readxl")
 library("chron")
 
-datarand <- read.csv("mock_data_rand.csv")
-datasin <- read.csv("mock_data_sin.csv")
-dataclus <- read.csv("mock_data_clustered.csv")
+datarand <- read.csv("data\\mock_data_rand.csv")
+datasin <- read.csv("data\\mock_data_sin.csv")
+dataclus <- read.csv("data\\mock_data_clustered.csv")
 
 position_rand <- datarand[3:4]
 test <- datarand[5]
@@ -32,12 +32,12 @@ find_indeces <- function(positions, link_d, tree){
     # 
     # Parameters:
     # -----------
-    # positions: list
+    # positions: DataFrame
     #   A list with the position parameters we want to query with shape (n,2),
     #   where n is the number of positions
     # link_d: float
     #   The linking distance to label friends
-    # tree: list
+    # tree: DataFrame
     #   A list build with the positions of the target data
     # 
     # Returns:
@@ -47,6 +47,15 @@ find_indeces <- function(positions, link_d, tree){
     #   position
   #Creation of empty list where the clusters of points will be saved
   indeces <- list()
+  #Have in count the posible exception of not having any positions
+  if(dim(positions)[1] == 0){
+    return(indeces)
+  }
+  #Case if there is only one position
+  if(dim(positions)[1] == 1){
+    indeces[[1]] <- 1
+    return(indeces)
+  }
   #loop for each position
   for(i in 1:dim(positions)[1]){
     #creatios of list where the linked positions of the given position will be saved
@@ -55,14 +64,14 @@ find_indeces <- function(positions, link_d, tree){
     dist = 0
     kth = 0
     #loop which stops when the maximum linking distance is overcomed
-    while(dist <= link_d){
+    while((dist <= link_d) && (kth < dim(tree)[1])){
       #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
       kth = kth + 1
       query <- nn2(tree, positions[i,], kth)
       index <- query$nn.idx[length(query$nn.idx)]
       dist <- query$nn.dists[length(query$nn.dists)]
-      #Addition of the last point to the indeces list if its in the wanted range
-      if(dist[length(dist)] <= link_d){
+      #Addition of the last point to the indeces list if it is in the wanted range
+      if((dist[length(dist)] <= link_d) && (kth < dim(tree)[1])){
         indecesaux <- append(indecesaux,index)
       }else{
         #Final list for the position i
@@ -74,7 +83,7 @@ find_indeces <- function(positions, link_d, tree){
   return(indeces)
 }
 
-ind <- find_indeces(position_rand, 0.01, position_rand)
+ind <- find_indeces(position_rand, 0.05, position_rand)
 
 dbscan <- function(positions, link_d, min_neighbours = 2){
   # This method finds the DBSCAN clusters from a set of positions and
@@ -82,7 +91,7 @@ dbscan <- function(positions, link_d, min_neighbours = 2){
   # 
   # Parameters:
   #   -----------
-  # positions: list
+  # positions: DataFrame
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions
   # link_d: float
@@ -103,6 +112,10 @@ dbscan <- function(positions, link_d, min_neighbours = 2){
   indeces <- find_indeces(positions, link_d, positions)
   #inicialize ID variable
   last_cluster_id = 0
+  #Have in count the posible exception of not having any positions
+  if(dim(positions)[1] == 0){
+    return(cluster_id)
+  }
   for(i in 1:dim(positions)[1]){
     #check if ith position has the minimum neighbours
     if(length(indeces[[i]]) >= min_neighbours){
@@ -165,10 +178,10 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   # 
   # Parameters:
   #   -----------
-  # positions: list
+  # positions: DataFrame
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions
-  # test_result: list
+  # test_result: DataFrame
   #   A list with the test results (0 or 1)
   # link_d: float
   #   The linking distance to connect cases
@@ -191,7 +204,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   # return: list 
   #   List which contains all the values to be returned
   # cluster_id: list
-  #   List of the cluster IDs of each position, with 0 for those
+  #   List of the cluster IDs of each position with positive test, with 0 for those
   #   without a cluster.
   # mean_pr_fof: list
   #   Mean PR corresponding to cluster_id
@@ -211,8 +224,8 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   #Define total number of cases
   total_n = dim(test_result)[1]
   #Initialising mean PR and p-value for the positive cases in clusters
-  mean_pr_cluster <- numeric(length(cluster_id))                       #!!!!!!!!!!!!!
-  pval_cluster <- rep(1, length(cluster_id))                           #!!!!!!!!!!!!!
+  mean_pr_cluster <- numeric(length(cluster_id))                       
+  pval_cluster <- rep(1, length(cluster_id))                           
   #EpiFRIenDs cluster catalogue
   epifriends_catalogue <- vector(mode='list', length=9)
   names(epifriends_catalogue) <- c("id",                  #EpiFRIenDs id
@@ -226,7 +239,16 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
                                    "p"                    #p-value of detection
                                    )
   next_id <- 1
-  sort_unici <- sort(unique(cluster_id[cluster_id>0]))
+  sort_unici <- sort(unique(cluster_id[cluster_id>0]))      
+  #Case where there are not positive positions
+  if(dim(positive_positions)[1] == 0){
+    return(epifriends_catalogue)
+  }
+  
+  #Case without any clusters
+  if(length(sort_unici) == 0){
+    return(epifriends_catalogue)
+  }
   for(i in 1:length(sort_unici)){
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
@@ -284,11 +306,34 @@ cat <- catalogue(position_rand, test, 0.05)
 # npos <- sum(test[total_friends_indeces,])
 # total <- length(total_friends_indeces)
 
-datarandtemp <- read.csv("mock_data_rand_temp.csv")
+datarandtemp <- read.csv("data\\mock_data_rand_temp.csv")
 
 position_randtemp <- datarandtemp[3:4]
 testtemp <- datarandtemp[5]
 datetemp <- datarandtemp[7]
+
+distance <- function(pos_a, pos_b){
+    # This method calculates the Euclidean distance between two positions.
+    # 
+    # Parameters:
+    # -----------
+    # pos_a: vector
+    #     First position
+    # pos_b: vector
+    #     Second position
+    # 
+    # Returns:
+    # --------
+    # dist: float
+    #     Distance between positions
+  dist = sqrt(sum((pos_a - pos_b)**2))
+  return(dist)
+}
+
+a <- c(1,2)
+b <- c(4,1)
+
+distance(a,b)
 
 temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighbours = 2,
                    time_width, min_date = NULL, max_date = NULL, time_steps = 1,
@@ -298,7 +343,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   # 
   # Parameters:
   #   -----------
-  # positions: list
+  # positions: DataFrame
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions
   # test_result: list
@@ -338,6 +383,11 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   # mean_date: list
   #   List of dates corresponding to the median time in each time window
   #   Save dates in a temporal format
+  #Case of empty list of dates
+  if(length(dates) == 0){
+    print("There are no dates")
+    return()
+  }
   dtparts = t(as.data.frame(strsplit(dates," ")))
   row.names(dtparts) = NULL
   dates <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
@@ -366,9 +416,8 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
                                      max_p = max_p, min_pos = min_pos,
                                      min_total = min_total, min_pr = min_pr)
     mean_date <- append(mean_date, min_date + time_steps*step_num + 0.5*time_width)
-    Newcatalogue$epifriends_catalogue["Date"] <- min_date + time_steps*step_num + 0.5*time_width
-    
-    temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
+    Newcatalogue$epifriends_catalogue["Date"] <- toString(min_date + time_steps*step_num + 0.5*time_width)
+    temporal_catalogues[[step_num+1]] <- Newcatalogue$epifriends_catalogue
     
     step_num = step_num + 1
   }
@@ -380,9 +429,9 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
 tcat <- temporal_catalogue(position_randtemp, testtemp, datarandtemp$date, 0.05, time_width = 180, time_steps = 90)
 Newcatalogue <- catalogue(selected_positions, selected_test_results,0.05)
 
-tcat[1]
+tcat$temporal_catalogues[[2]]
 
-#Proves1
+#Proves
 # dtimes <- datarandtemp$date
 # dtparts = t(as.data.frame(strsplit(dtimes," ")))
 # row.names(dtparts) = NULL
@@ -405,5 +454,275 @@ tcat[1]
 #                           min_total = 2, min_pr = 0)
 # mean_date <- append(mean_date, min_date + 0.5*180)
 # Newcatalogue$epifriends_catalogue["Date"] <- min_date + 0.5*180
-# 
+# chron(18892.42,format=c('y-m-d','h:m:s'))
+#
 # temporal_catalogues <- append(temporal_catalogues, Newcatalogue$epifriends_catalogue)
+
+get_label_list <- function(df_list, label = "tempID"){
+  # This method gives the unique values of a column in a list
+  # of data frames.
+  # 
+  # Parameters:
+  #   -----------
+  # df_list: list
+  #   List of dataframes
+  # label: str
+  #   Name of column to select
+  # 
+  # Returns:
+  #   --------
+  # label_list: list
+  #   List of unique values of the column over all dataframes from the list
+  for(i in 1:length(df_list)){
+    mask = df_list[[i]][label][[1]][df_list[[i]][label][[1]] != 0]
+    if(i == 1){
+      label_list <- unique(mask)
+    }else{
+      label_list <- unique(c(label_list, unique(mask)))
+    }
+  }
+  return(label_list)
+}
+
+lablis <- get_label_list(tcatid)
+
+a <- unique(tcatid[[1]]["tempID"][[1]][tcatid[[1]]["tempID"][[1]] != 0])
+b <- unique(tcatid[[2]]["tempID"][[1]][tcatid[[2]]["tempID"][[1]] != 0])
+unique(c(a,b))
+
+get_lifetimes <- function(catalogue_list){
+  # This method obtains the first and last time frames for each
+  # temporal ID from a list of EpiFRIenDs catalogues and the corresponding
+  # timelife.
+  # 
+  # Parameters:
+  # -----------
+  # catalogue_list: list
+  #     List of EpiFRIenDs catalogues, each element of the list
+  #     corresponding to the EpiFRIenDs catalogue of each timestep
+  # 
+  # Returns:
+  # --------
+  # catalogue_list: list
+  #     List of hotspot catalogues with the added fields 'first_timestep',
+  #     'last_timestep' and 'lifetime'
+  
+  #getting list of temporal IDs appearing in catalogue_list
+  tempid_list <- get_label_list(catalogue_list, label = "tempID")
+  #Creating empty columns for first timestep, last timestep and lifteime
+  for(t in 1:length(catalogue_list)){
+    catalogue_list[[t]]["first_timestep"] <- c()
+    catalogue_list[[t]]["last_timestep"] <- c()
+    catalogue_list[[t]]["lifetime"] <- c()
+  }
+  for(tempid_num in tempid_list){
+    appearances = c()
+    for(i in 1:length(catalogue_list)){
+      if(tempid_num %in% unique(catalogue_list[[i]]["tempID"][[1]])){
+        appearances <- append(appearances,i)
+      }
+    }
+    min_appearance = min(appearances)
+    max_appearance = max(appearances)
+    lifetime = max_appearance - min_appearance
+    for(i in min_appearance:max_appearance){
+      catalogue_list[[i]]["first_timestep"][[1]][catalogue_list[[i]]["tempID"][[1]] == tempid_num] <- min_appearance
+      catalogue_list[[i]]["last_timestep"][[1]][catalogue_list[[i]]["tempID"][[1]] == tempid_num] <- max_appearance
+      catalogue_list[[i]]["lifetime"][[1]][catalogue_list[[i]]["tempID"][[1]] == tempid_num] <- lifetime
+    }
+  }
+  return(catalogue_list)
+}
+
+catlif <- get_lifetimes(tcatid)
+catlif
+
+# # c <- c()
+# # c[1] <- 1
+# # c[3] <- 2
+# 
+# catlif[[1]]["id"][[1]][catlif[[1]]["tempID"][[1]] == 1]
+# 
+# lablis[1] %in% unique(tcatid[[4]]["tempID"][[1]])
+
+add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
+  #Case of empty catalogue list
+  if(length(catalogue_list) == 0){
+    print("There are no catalogues")
+    return()
+  }
+  #setting empty values of temp_id
+  for(t in 1:length(catalogue_list)){
+    aux <- data.frame(matrix(0,length(catalogue_list[[t]]$id)))
+    colnames(aux) <- "tempID"
+    catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
+    #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
+  }
+  #Initialising tempID value to assign
+  next_temp_id = 0
+  #Loop over all timesteps
+  for(t in 1:(length(catalogue_list)-1)){
+    #Loop over all timesteps within linking_time
+    for (t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+      #Loop over all points of catalogue number 1
+      for(f in 1:length(catalogue_list[[t]]$id)){
+        #Loop over all points of catalogue number 2
+        for(f2 in 1:length(catalogue_list[[t2]]$id))
+          #Calculating distance between clusters
+          dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])  #To improve. Better not to use [[1]]
+        if(dist <= linking_dist){
+          temp_id1 <- catalogue_list[[t]]["tempID"][[1]][[f]] 
+          temp_id2 <- catalogue_list[[t2]]["tempID"][[1]][[f2]] 
+          #Assign tempIDs to linked clusters
+          if((temp_id1 == 0) && (temp_id2 == 0)){
+            catalogue_list[[t]]["tempID"][[1]][[f]]  <- next_temp_id + 1
+            catalogue_list[[t2]]["tempID"][[1]][[f2]] <- next_temp_id + 1
+            next_temp_id = next_temp_id + 1
+          }else if((temp_id1 == 0)){
+            catalogue_list[[t]]["tempID"][[1]][[f]]  <- temp_id2
+          }else if((temp_id2 == 0)){
+            catalogue_list[[t2]]["tempID"][[1]][[f2]] <- temp_id1 
+          }else if(temp_id1 != temp_id2){
+            for(t3 in 1:length(catalogue_list)){
+              catalogue_list[[t3]]["tempID"][catalogue_list[[t3]]["tempID"] == temp_id2] <- temp_id1
+            }
+          }
+        }
+      }
+    }
+  }
+  if(get_timelife){
+    catalogue_list <- get_lifetimes(catalogue_list)
+  }
+  return(catalogue_list)
+}
+
+tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = TRUE)
+tcatid
+
+# tcat$temporal_catalogues[[1]]["tempID"][[1]][1]
+# t(tcat$temporal_catalogues[1])[[1]]$mean_position_pos[[1]]
+# length(tcat$temporal_catalogues[[1]]$id)
+# length(tcat$temporal_catalogues)
+
+#Pruebas replica add_temporal_id
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   tcat$temporal_catalogues[1]["tempID"] = vector(mode="list", length=length(tcat$temporal_catalogues[[1]]["id"]))
+# }
+# 
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   tcat$temporal_catalogues[1]["tempID"] = vector(mode="list", length=length(tcat$temporal_catalogues[[1]]["id"]))
+# }
+
+# for(t in 1:length(tcat$temporal_catalogues)){
+#   aux <- data.frame(matrix(NA,length(tcat$temporal_catalogues[[t]]$id)))
+#   colnames(aux) <- "tempID"
+#   tcat$temporal_catalogues[[t]] <- append(tcat$temporal_catalogues[[t]],aux)
+#   #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
+# }
+
+#Initialising tempID value to assign
+
+#tcat$temporal_catalogues[[1]]["mean_position_pos"][[1]][[8]]
+
+#VALIDATIONS
+
+x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,16)
+y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,16)
+length(x)
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 2 ,pos)
+ind
+
+db <- dbscan(pos, 2 ,2)
+db
+
+test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,0,1))
+length(test)
+cat <- catalogue(pos, test, 2)
+cat
+
+dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
+           "2021-06-09 07:50:30","2021-09-18 05:53:26","2020-03-19 17:16:56","2021-06-08 12:40:46","2020-06-26 05:01:31",
+           "2020-10-15 04:40:27","2021-05-28 15:23:23","2020-05-01 02:56:54","2020-08-19 22:45:35","2021-10-23 18:56:35",
+           "2020-10-19 00:01:25")
+
+typeof(dates)
+typeof(datarandtemp$date)
+tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
+tcat$temporal_catalogues
+length(tcat$temporal_catalogues)
+
+tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = FALSE)
+tcatid
+
+#VALIDATION with no positions
+x <- c()
+y <- c()
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 2 ,pos)
+ind
+#ind[1,]
+sort(unique(unlist(ind)))
+
+db <- dbscan(pos, 2 ,2)
+db
+
+test <- data.frame(c())
+cat <- catalogue(pos, test, 2)
+cat
+
+dates <- c()
+tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
+
+#VALIDATION with only one position
+x <- c(1)
+y <- c(1)
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 2 ,pos)
+ind
+
+db <- dbscan(pos, 2 ,2)
+db
+
+test <- data.frame(c(1))
+cat <- catalogue(pos, test, 2)
+cat
+
+dates <- c("2020-11-03 05:33:07")
+tcat <- temporal_catalogue(pos, test, dates ,2, time_width = 180, time_steps = 90)
+tcat
+
+#VALIDATION with two positions
+x <- c(1,3)
+y <- c(1,3)
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 4 ,pos)
+ind
+
+db <- dbscan(pos, 4 ,2)
+db
+
+test <- data.frame(c(1,0))
+cat <- catalogue(pos, test, 4)
+cat
+
+#VALIDATION with repetition of positions
+
+x <- c(1,1,1,3)
+y <- c(1,1,1,3)
+pos <- data.frame(x,y)
+
+ind <- find_indeces(pos, 4 ,pos)
+ind
+
+db <- dbscan(pos, 4 ,2)
+db
+
+test <- data.frame(c(1,1,1,0))
+cat <- catalogue(pos, test, 4)
+cat
