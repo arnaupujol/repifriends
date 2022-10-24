@@ -238,6 +238,16 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
                                    "indeces",             #Indeces of all positions
                                    "p"                    #p-value of detection
                                    )
+  # epifriends_catalogue <- data.frame(id = integer(),
+  #                                    mean_position_pos = double(),
+  #                                    mean_position_all = double(),
+  #                                    mean_pr = double(),
+  #                                    positives = integer(),
+  #                                    negatives = integer(),
+  #                                    total = integer(),
+  #                                    indeces = double(),
+  #                                    p = double()
+  #                                    )
   next_id <- 1
   sort_unici <- sort(unique(cluster_id[cluster_id>0]))      
   #Case where there are not positive positions
@@ -270,6 +280,22 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
       mean_pr_cluster[cluster_id_indeces] <- mean_pr
       pval_cluster[cluster_id_indeces] <- pval
       
+      #Creation of auxiliar vector to save the new data.frame row
+      # aux <- c()
+      # 
+      # mean_pos <- colMeans(positive_positions[cluster_id_indeces,])
+      # aux[1] <- list(mean_pos)
+      # mean_pos_ext <-  colMeans(positions[total_friends_indeces,])
+      # aux[2] <- list(mean_pos_ext)
+      # aux[3] <- mean_pr
+      # aux[4] <- as.integer(npos)
+      # aux[5] <- as.integer(ntotal - npos)
+      # aux[6] <- as.integer(ntotal)
+      # aux[7] <- list(total_friends_indeces)
+      # aux[8] <- pval
+      # 
+      # epifriends_catalogue <- rbind(epifriends_catalogue, aux)
+      
       mean_pos <- colMeans(positive_positions[cluster_id_indeces,])
       epifriends_catalogue[["mean_position_pos"]] <- append(epifriends_catalogue[["mean_position_pos"]], list(mean_pos))
       mean_pos_ext <-  colMeans(positions[total_friends_indeces,])
@@ -292,6 +318,25 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
 
 cat <- catalogue(position_rand, test, 0.05)
 
+library(dplyr)
+library(tidyr)
+
+epifriends_catalogue <- tibble(id = integer(),
+                                   mean_position_pos = list(),
+                                   mean_position_all = list(),
+                                   mean_pr = double(),
+                                   positives = integer(),
+                                   negatives = integer(),
+                                   total = integer(),
+                                   indeces = list(),
+                                   p = double()
+                                )
+epifriends_catalogue <- rbind(epifriends_catalogue, c(1, list(0.5,0.5),list(0.3,0.3),3.5,2,4,6,list(1,2,3),0.4))
+
+epifriends_catalogue[1,2]
+
+jsad <- tibble(x = 1, y = list(1:5))
+jsad[1,]
 #Pruebas
 # positive_positions <- position_rand[test == 1,]
 # cluster_id = dbscan(positive_positions, 0.01, min_neighbours = 2)

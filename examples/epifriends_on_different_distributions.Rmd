@@ -2,16 +2,14 @@
 title: "epifriends_on_different_distributions"
 author: "Mikel Majewski"
 date: '2022-10-21'
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ## Importing modules
 
 We first import the packages required from this RMarkdown.
-
-```{r}
-install.packages("patchwork")
-```
 
 ```{r}
 library("RANN")
@@ -57,11 +55,14 @@ scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
     graph <- ggplot(coordinates,aes(x=x, y=y))+
             geom_point(color = "grey")+
             geom_point(data = pos[id_data >0,], aes(colour = p_vals))+
-            scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+            scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
+            ggtitle("P-value of hotspots")
     return(graph)
 }
 #cat$epifriends_catalogue$p[cat$epifriends_catalogue$id != 0]
+```
 
+```{r}
 size_histogram <- function(catalogue){
   # This method shows a histogram of the size (total number of cases) in foci 
   # for foci with p>0.05 and with p<0.05. 
@@ -75,8 +76,23 @@ size_histogram <- function(catalogue){
   # --------
   # Histogram of number of foci per total number of cases with p<0.05 in red 
   # and p>0.05 in blue.
-  histo <- ggplot(cat$epifriends_catalogue,aes(x=total))+
-          geom_histogram(colors = "blue")
+  cases <- data.frame(catalogue$epifriends_catalogue$total, catalogue$epifriends_catalogue$p)
+  colnames(cases) <- c("total","p")
+  #auxiliar vector to avoid converting doubles to strings
+  aux <- cases$p
+  for(i in 1:length(cases$p)){
+    if(aux[i] > 0.05){
+      cases$p[i] <- "p > 0.05"
+    }else{
+      cases$p[i] <- "p < 0.05"
+    }
+  }
+  histo <- ggplot(cases,aes(x=total, fill=p))+
+          geom_histogram()+
+          scale_fill_manual(values = c("red", "blue"))+
+          xlab("Number of cases in focci")+
+          ylab("Number of focci")
+  return(histo)
 }
 ```
 
@@ -84,7 +100,9 @@ size_histogram <- function(catalogue){
 
 The data created with the epifriends_on_different_distributions.py file of python and saved on this R project is readed:
 
-```{r}
+
+```{r, warning=FALSE}
+setwd("C:/Users/user/Desktop/Uni/Master/TFM/repifriends")
 datarand <- read.csv("data\\mock_data_rand.csv")
 datasin <- read.csv("data\\mock_data_sin.csv")
 dataclus <- read.csv("data\\mock_data_clustered.csv")
@@ -214,8 +232,9 @@ Here we show the results of applying different `link_d` to the first mock catalo
 for(link_d in link_d_to_analyse){
   cat_rand <- catalogue(position_rand, test_rand, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
   print(paste0("Number of EpiFRIenDs groups in random data with scale = ", link_d, ":", length(cat_rand$epifriends_catalogue$id), ", ", sum(cat_rand$epifriends_catalogue$p < 0.05), " of which with p<0.05"))
-  graph_rand <- scatter_pval(position_rand, cat_rand$cluster_id, positive_rand, cat_rand$epifriends_catalogue) 
-  print(graph_rand)
+  graph_rand <- scatter_pval(position_rand, cat_rand$cluster_id, positive_rand, cat_rand$epifriends_catalogue)
+  histo_rand <- size_histogram(cat_rand)
+  print(graph_rand + histo_rand)
 }
 ```
 
@@ -227,7 +246,8 @@ for(link_d in link_d_to_analyse){
   cat_sin <- catalogue(position_sin, test_sin, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
   print(paste0("Number of EpiFRIenDs groups in sinusoidal data with scale = ", link_d, ":", length(cat_sin$epifriends_catalogue$id), ", ", sum(cat_sin$epifriends_catalogue$p < 0.05), " of which with p<0.05"))
   graph_sin <- scatter_pval(position_sin, cat_sin$cluster_id, positive_sin, cat_sin$epifriends_catalogue) 
-  print(graph_sin)
+  histo_sin <- size_histogram(cat_sin)
+  print(graph_sin+histo_sin)
 }
 ```
 
@@ -239,6 +259,7 @@ for(link_d in link_d_to_analyse){
   cat_clus <- catalogue(position_clus, test_clus, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
   print(paste0("Number of EpiFRIenDs groups in sinusoidal data with scale = ", link_d, ":", length(cat_clus$epifriends_catalogue$id), ", ", sum(cat_clus$epifriends_catalogue$p < 0.05), " of which with p<0.05"))
   graph_clus <- scatter_pval(position_clus, cat_clus$cluster_id, positive_clus, cat_clus$epifriends_catalogue) 
-  print(graph_clus)
+  histo_clus <- size_histogram(cat_clus)
+  print(graph_clus+histo_clus)
 }
 ```
