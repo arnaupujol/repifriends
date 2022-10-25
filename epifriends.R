@@ -402,11 +402,12 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   #   as friends
   # time_width: int
   #   Number of days of the time window used to select cases in each time step
-  # min_date: pd.DateTimeIndex
-  #   Initial date used in the first time step and time window selection
-  # max_date: pd.DateTimeIndex
+  # min_date: Date
+  #   Initial date used in the first time step and time window selection. 
+  #   If it's passed as number of days, the return will be on number of days.
+  # max_date: Date
   #   Final date to analyse, defining the last time window as the one fully overlapping
-  #   the data
+  #   the data. If it's passed as number of days, the return will be on number of days.
   # time_steps: int
   #   Number of days that the time window is shifted in each time step
   # max_p: float
@@ -473,7 +474,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   return(returns)
 }
 
-tcat <- temporal_catalogue(position_randtemp, testtemp, datarandtemp$date, 0.05, time_width = 180, time_steps = 90)
+tcat <- temporal_catalogue(position_randtemp, testtemp, datarandtemp$date, 0.05, time_width = 180, time_steps = 90, min_date = min_date, max_date = max_date)
 Newcatalogue <- catalogue(selected_positions, selected_test_results,0.05)
 
 tcat$temporal_catalogues[[2]]
@@ -600,8 +601,7 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
   }
   #setting empty values of temp_id
   for(t in 1:length(catalogue_list)){
-    print(catalogue_list[[t]]$id)
-    aux <- data.frame(matrix(0,length(catalogue_list[[t]]$id)))
+    aux <- data.frame(matrix(NA,length(catalogue_list[[t]]$id)))
     colnames(aux) <- "tempID"
     catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
     #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
@@ -615,24 +615,25 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
       #Loop over all points of catalogue number 1
       for(f in 1:length(catalogue_list[[t]]$id)){
         #Loop over all points of catalogue number 2
-        for(f2 in 1:length(catalogue_list[[t2]]$id))
+        for(f2 in 1:length(catalogue_list[[t2]]$id)){
           #Calculating distance between clusters
           dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])  #To improve. Better not to use [[1]]
-        if(dist <= linking_dist){
-          temp_id1 <- catalogue_list[[t]]["tempID"][[1]][[f]] 
-          temp_id2 <- catalogue_list[[t2]]["tempID"][[1]][[f2]] 
-          #Assign tempIDs to linked clusters
-          if((temp_id1 == 0) && (temp_id2 == 0)){
-            catalogue_list[[t]]["tempID"][[1]][[f]]  <- next_temp_id + 1
-            catalogue_list[[t2]]["tempID"][[1]][[f2]] <- next_temp_id + 1
-            next_temp_id = next_temp_id + 1
-          }else if((temp_id1 == 0)){
-            catalogue_list[[t]]["tempID"][[1]][[f]]  <- temp_id2
-          }else if((temp_id2 == 0)){
-            catalogue_list[[t2]]["tempID"][[1]][[f2]] <- temp_id1 
-          }else if(temp_id1 != temp_id2){
-            for(t3 in 1:length(catalogue_list)){
-              catalogue_list[[t3]]["tempID"][catalogue_list[[t3]]["tempID"] == temp_id2] <- temp_id1
+          if(dist <= linking_dist){
+            temp_id1 <- catalogue_list[[t]]["tempID"][[1]][[f]] 
+            temp_id2 <- catalogue_list[[t2]]["tempID"][[1]][[f2]] 
+            #Assign tempIDs to linked clusters
+            if((is.na(temp_id1)) && is.na((temp_id2))){
+              catalogue_list[[t]]["tempID"][[1]][[f]]  <- next_temp_id
+              catalogue_list[[t2]]["tempID"][[1]][[f2]] <- next_temp_id
+              next_temp_id = next_temp_id + 1
+            }else if(is.na(temp_id1)){
+              catalogue_list[[t]]["tempID"][[1]][[f]]  <- temp_id2
+            }else if(is.na(temp_id2)){
+              catalogue_list[[t2]]["tempID"][[1]][[f2]] <- temp_id1 
+            }else if(temp_id1 != temp_id2){
+              for(t3 in 1:length(catalogue_list)){
+                replace(catalogue_list[[t3]]$tempID, catalogue_list[[t3]]$tempID == temp_id2, temp_id1)
+              }
             }
           }
         }
@@ -644,6 +645,9 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
   }
   return(catalogue_list)
 }
+
+# tcatid[[1]]$tempID
+# replace(tcatid[[1]]$tempID, tcatid[[1]]$tempID == 1, 2)
 
 tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = TRUE)
 tcatid

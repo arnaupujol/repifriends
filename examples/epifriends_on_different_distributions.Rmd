@@ -98,7 +98,7 @@ size_histogram <- function(catalogue){
 
 ## Create mock data 
 
-The data created with the epifriends_on_different_distributions.py file of python and saved on this R project is readed:
+The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
 
 
 ```{r, warning=FALSE}
