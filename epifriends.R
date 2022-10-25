@@ -611,13 +611,17 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
   #Loop over all timesteps
   for(t in 1:(length(catalogue_list)-1)){
     #Loop over all timesteps within linking_time
-    for (t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+    for (f in 1:length(catalogue_list[[t]]$id)){
       #Loop over all points of catalogue number 1
-      for(f in 1:length(catalogue_list[[t]]$id)){
+      for(t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
         #Loop over all points of catalogue number 2
         for(f2 in 1:length(catalogue_list[[t2]]$id)){
           #Calculating distance between clusters
-          dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])  #To improve. Better not to use [[1]]
+          dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])
+          # print("x1: ")
+          # print(catalogue_list[[t]]["mean_position_pos"][[1]][[f]])
+          # print("x2: ")
+          # print(catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])
           if(dist <= linking_dist){
             temp_id1 <- catalogue_list[[t]]["tempID"][[1]][[f]] 
             temp_id2 <- catalogue_list[[t2]]["tempID"][[1]][[f2]] 
