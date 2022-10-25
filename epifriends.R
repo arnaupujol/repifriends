@@ -522,7 +522,7 @@ get_label_list <- function(df_list, label = "tempID"){
   # label_list: list
   #   List of unique values of the column over all dataframes from the list
   for(i in 1:length(df_list)){
-    mask = df_list[[i]][label][[1]][df_list[[i]][label][[1]] != 0]
+    mask = df_list[[i]][label][[1]][!is.na(df_list[[i]][label][[1]])]
     if(i == 1){
       label_list <- unique(mask)
     }else{
