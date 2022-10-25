@@ -111,6 +111,7 @@ while(min_date + time_steps*step_num + time_width <= max_date){
   #select data in time window
   selected_data <- (dates >= min_date + time_steps*step_num)&
                     (dates <= min_date + time_steps*step_num + time_width)
+  step_num <- step_num + 1
   
 }
 ```
