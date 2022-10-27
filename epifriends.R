@@ -607,21 +607,16 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
     #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
   }
   #Initialising tempID value to assign
-  next_temp_id = 0
+  next_temp_id <- 0
   #Loop over all timesteps
   for(t in 1:(length(catalogue_list)-1)){
     #Loop over all timesteps within linking_time
     for (f in 1:length(catalogue_list[[t]]$id)){
       #Loop over all points of catalogue number 1
-      for(t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+      for(t2 in (t + 1):min(t + linking_time - 1, length(catalogue_list))){
         #Loop over all points of catalogue number 2
         for(f2 in 1:length(catalogue_list[[t2]]$id)){
-          #Calculating distance between clusters
-          dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])
-          # print("x1: ")
-          # print(catalogue_list[[t]]["mean_position_pos"][[1]][[f]])
-          # print("x2: ")
-          # print(catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])
+            dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])
           if(dist <= linking_dist){
             temp_id1 <- catalogue_list[[t]]["tempID"][[1]][[f]] 
             temp_id2 <- catalogue_list[[t2]]["tempID"][[1]][[f2]] 
@@ -636,7 +631,7 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
               catalogue_list[[t2]]["tempID"][[1]][[f2]] <- temp_id1 
             }else if(temp_id1 != temp_id2){
               for(t3 in 1:length(catalogue_list)){
-                replace(catalogue_list[[t3]]$tempID, catalogue_list[[t3]]$tempID == temp_id2, temp_id1)
+                catalogue_list[[t3]]$tempID <- replace(catalogue_list[[t3]]$tempID, catalogue_list[[t3]]$tempID == temp_id2, temp_id1)
               }
             }
           }
@@ -651,7 +646,9 @@ add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_time
 }
 
 # tcatid[[1]]$tempID
-# replace(tcatid[[1]]$tempID, tcatid[[1]]$tempID == 1, 2)
+# tcatid[[1]]$tempID = replace(tcatid[[1]]$tempID, tcatid[[1]]$tempID == 1, 2)
+# aux
+# tcatid[[1]]$tempID = aux
 
 tcatid <- add_temporal_id(tcat$temporal_catalogues, 3, 0.15, get_timelife = TRUE)
 tcatid
