@@ -19,15 +19,14 @@ All the packages that are required so that all the codes can run are:
 
 Installation:
 ----------------------
-To install the repository, first you have to clone it to your local machine.
-Then you can simply run:
+To install the repository, you open your RStudio. Then in the packages window 
+in the right above corner you click on install and you select the option 
+"Package Archive File (.zip; .tar.gz)".
 
-```
-$ python setup.py install
-```
+Then you select the "epifriends_0.1.0.tar.gz" or "epifriends_0.1.0.zip" on 
+the package folder and epifriends will be instaled.
 
-In the text file `requirements.txt` the required packages are specified and
-installed if needed. This version have been proven to work for Python 3.8.12
+This version have been proven to work for R 4.1.1 version.
 
 Structure of the repository:
 ----------------------------
