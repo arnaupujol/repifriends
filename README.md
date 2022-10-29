@@ -20,7 +20,7 @@ All the packages that are required so that all the codes can run are:
 Installation:
 ----------------------
 To install the repository, you open your RStudio. Then in the packages window 
-in the right above corner you click on install and you select the option 
+in the bottom right corner you click on install and you select the option 
 "Package Archive File (.zip; .tar.gz)".
 
 Then you select the "epifriends_0.1.0.tar.gz" or "epifriends_0.1.0.zip" on 
