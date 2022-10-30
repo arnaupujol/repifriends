@@ -2,14 +2,14 @@
 R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs).
 # Epidemiological Foci Relating Infections by Distance (EpiFRIenDs)
 
-> Author: **Mikel Majewski Etxeberria**  
+> Author: **Mikel Majewski Etxeberria, Arnau Pujol**  
 > Year: **2022**  
 > Version: **1.0**  
 
 This repository contains the EpiFRIenDs software to detect and analyse foci
 (clusters, outbreaks or hotspots) of infections from a given disease.
 
-The package is still in work.
+The package is still work in progress, consider this a Beta version. The first official release is comming very soon.
 
 Software requirements:
 ----------------------
@@ -48,7 +48,7 @@ cluster.
 minimum number of neighbours, this function detects the EpiFRIenDs foci and
 outputs a catalogue of them with its associated data.
 - temporal_catalogue: from a EpiFRIenDs catalogue and a dates vector
-this method creates a list of EpiFRIenDs catatalogues(each element of the  
+this method creates a list of EpiFRIenDs catatalogues (each element of the  
 list representing a time frame) and the posiblity of adding some other 
 variables like a temporal id using some linking times and distances, 
 and in this way assigning a temporal ID to the foci, assigning the same temporal ID
