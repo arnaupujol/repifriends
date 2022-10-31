@@ -7,10 +7,11 @@
 This repository contains the R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs), a software 
 to detect and analyse foci (clusters, outbreaks or hotspots) of infections from a given disease.
 
+This software is fully open source and all are welcome to use or modify it for any purpose.
+We would kindly request that any scientific publications making use of this software cite **Pujol A., Brokhattingen N., Matambisso G., et al (in prep.)**.
+
 The package is still work in progress, consider this a Beta version. The first official release is comming very soon.
 
-This software is fully open source and all are welcome to use or modify it for any purpose.
-We would kindly request that any scientific publications making use of this software cite Pujol A., Borkhattingen N., Matambisso G., et al (in prep.).
 
 Software requirements:
 ----------------------
