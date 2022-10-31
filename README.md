@@ -15,7 +15,7 @@ Software requirements:
 ----------------------
 All the packages that are required so that all the codes can run are:
 - RANN
-- chrone
+- chron
 
 Installation:
 ----------------------
