@@ -1,26 +1,28 @@
-# repifriends
-R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs).
 # Epidemiological Foci Relating Infections by Distance (EpiFRIenDs)
 
-> Author: **Mikel Majewski Etxeberria**  
+> Author: **Mikel Majewski Etxeberria, Arnau Pujol**  
 > Year: **2022**  
 > Version: **1.0**  
 
-This repository contains the EpiFRIenDs software to detect and analyse foci
-(clusters, outbreaks or hotspots) of infections from a given disease.
+This repository contains the R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs), a software 
+to detect and analyse foci (clusters, outbreaks or hotspots) of infections from a given disease.
 
-The package is still in work.
+This software is fully open source and all are welcome to use or modify it for any purpose.
+We would kindly request that any scientific publications making use of this software cite **Pujol A., Brokhattingen N., Matambisso G., et al (in prep.)**.
+
+The package is still work in progress, consider this a Beta version. The first official release is comming very soon.
+
 
 Software requirements:
 ----------------------
 All the packages that are required so that all the codes can run are:
 - RANN
-- chrone
+- chron
 
 Installation:
 ----------------------
 To install the repository, you open your RStudio. Then in the packages window 
-in the right above corner you click on install and you select the option 
+in the bottom right corner you click on install and you select the option 
 "Package Archive File (.zip; .tar.gz)".
 
 Then you select the "epifriends_0.1.0.tar.gz" or "epifriends_0.1.0.zip" on 
@@ -48,7 +50,7 @@ cluster.
 minimum number of neighbours, this function detects the EpiFRIenDs foci and
 outputs a catalogue of them with its associated data.
 - temporal_catalogue: from a EpiFRIenDs catalogue and a dates vector
-this method creates a list of EpiFRIenDs catatalogues(each element of the  
+this method creates a list of EpiFRIenDs catatalogues (each element of the  
 list representing a time frame) and the posiblity of adding some other 
 variables like a temporal id using some linking times and distances, 
 and in this way assigning a temporal ID to the foci, assigning the same temporal ID
