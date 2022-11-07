@@ -3,7 +3,7 @@
 ##################################################################################################
 # CREATION OF CATALOGUE WITH TEST VALUES.
 #################################################################################################
-#' @description  This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.
+#' This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.
 #'
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param test_result data.frame with the test results (0 or 1).
@@ -34,7 +34,7 @@
 #' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
 #'
 #' @examples
-#' Required packages
+#' # Required packages
 #' if(!require("RANN")) install.packages("RANN")
 #' library("RANN")
 #'

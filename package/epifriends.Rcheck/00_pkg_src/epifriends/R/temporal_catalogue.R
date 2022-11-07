@@ -3,7 +3,7 @@
 ##################################################################################################
 # CREATION OF A TEMPORAL CATALOGUE WITH TEST AND TIME VALUES.
 #################################################################################################
-#' @description This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.
+#' This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.
 #'
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param test_result data.frame with the test results (0 or 1).
@@ -39,7 +39,7 @@
 #' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
 #'
 #' @examples
-#' Required packages
+#' # Required packages
 #' if(!require("RANN")) install.packages("RANN")
 #' if(!require("chron")) install.packages("chron")
 #' library("RANN")

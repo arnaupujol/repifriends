@@ -9,7 +9,7 @@
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #'
-#' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
+#' @details The epifriends package uses the RANN package which gives us the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
 #'
 #' @return cluster_id: Vector of the cluster IDs of each position, with 0 for those without a cluster. Returns empty numeric vector if positions vector is empty.
 #' @export
@@ -18,7 +18,7 @@
 #' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
 #'
 #' @examples
-#' Required packages
+#' # Required packages
 #' if(!require("RANN")) install.packages("RANN")
 #' library("RANN")
 #'

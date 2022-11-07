@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2022.3.6)  28 OCT 2022 21:21
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2022.3.6)  7 NOV 2022 12:10
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -258,13 +258,13 @@ LaTeX Info: Redefining \nameref on input line 8.
 \@outlinefile=\write4
 \openout4 = `Rd2.out'.
 
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 21.
+LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 22.
  (c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 10.0pt on input line 21.
-LaTeX Font Info:    Trying to load font information for T1+phv on input line 28.
+(Font)              scaled to size 10.0pt on input line 22.
+LaTeX Font Info:    Trying to load font information for T1+phv on input line 29.
  (c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
 ) (./Rd2.toc
@@ -276,30 +276,86 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 \tf@toc=\write5
 \openout5 = `Rd2.toc'.
 
+ [1
+
+
+{c:/Users/user/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 43.
+(Font)              scaled to size 9.0pt on input line 98.
+
+Overfull \hbox (153.71648pt too wide) in paragraph at lines 103--103
+ []\T1/zi4/m/n/9 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.[] 
+ []
+
+[2]
+Overfull \hbox (27.72568pt too wide) in paragraph at lines 108--108
+ []\T1/zi4/m/n/9 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.[] 
+ []
+
+[3]
+Overfull \hbox (153.71648pt too wide) in paragraph at lines 156--156
+ []\T1/zi4/m/n/9 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.[] 
+ []
+
+
+Overfull \hbox (135.72568pt too wide) in paragraph at lines 161--161
+ []\T1/zi4/m/n/9 # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.[] 
+ []
+
+[4]
+Overfull \hbox (153.71648pt too wide) in paragraph at lines 260--260
+ []\T1/zi4/m/n/9 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.[] 
+ []
+
+[5]
+Overfull \hbox (27.72568pt too wide) in paragraph at lines 265--265
+ []\T1/zi4/m/n/9 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.[] 
+ []
+
+LaTeX Font Info:    Trying to load font information for TS1+zi4 on input line 268.
+(c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd
+File: ts1zi4.fd 2018/01/14 TS1/zi4 (Inconsolata)
+)
+LaTeX Font Info:    Font shape `TS1/zi4/m/n' will be
+(Font)              scaled to size 9.0pt on input line 268.
+
+Overfull \hbox (138.75941pt too wide) in paragraph at lines 269--269
+ []\T1/zi4/m/n/9 dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",[] 
+ []
+
+
+Overfull \hbox (92.26555pt too wide) in paragraph at lines 270--270
+ []\T1/zi4/m/n/9 "2021-06-09 07:50:30","2021-09-18 05:53:26","2020-03-19 17:16:56","2021-06-08 12:40:46","2020-06-26 05:01:31",[] 
+ []
+
+
+Overfull \hbox (92.26555pt too wide) in paragraph at lines 271--271
+ []\T1/zi4/m/n/9 "2020-10-15 04:40:27","2021-05-28 15:23:23","2020-05-01 02:56:54","2020-08-19 22:45:35","2021-10-23 18:56:35",[] 
+ []
+
+
+Overfull \hbox (185.21648pt too wide) in paragraph at lines 275--275
+ []\T1/zi4/m/n/9 tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)[] 
+ []
 
 No file Rd2.ind.
-[1
-
-
-{c:/Users/user/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./Rd2.aux)
+[6] (./Rd2.aux)
 Package rerunfilecheck Info: File `Rd2.out' has not changed.
-(rerunfilecheck)             Checksum: FE83B62E3341AAA7BCA26DAD55B87E38;70.
+(rerunfilecheck)             Checksum: 0B687F9E700C53C1FABDA0DEE8A71A61;325.
  ) 
 Here is how much of TeX's memory you used:
- 8737 strings out of 480236
- 139089 string characters out of 5894297
- 423848 words of memory out of 5000000
- 26557 multiletter control sequences out of 15000+600000
- 499614 words of font info for 58 fonts, out of 8000000 for 9000
+ 8788 strings out of 480236
+ 139852 string characters out of 5894297
+ 425866 words of memory out of 5000000
+ 26575 multiletter control sequences out of 15000+600000
+ 502690 words of font info for 61 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 77i,5n,79p,215b,358s stack positions out of 5000i,500n,10000p,200000b,80000s
-{c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}<c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Rd2.pdf (1 page, 50701 bytes).
+ 77i,5n,79p,280b,617s stack positions out of 5000i,500n,10000p,200000b,80000s
+{c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}<c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/Users/user/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (6 pages, 89248 bytes).
 PDF statistics:
- 54 PDF objects out of 1000 (max. 8388607)
- 40 compressed objects within 1 object stream
- 9 named destinations out of 1000 (max. 500000)
- 9 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 117 PDF objects out of 1000 (max. 8388607)
+ 95 compressed objects within 1 object stream
+ 36 named destinations out of 1000 (max. 500000)
+ 25 words of extra memory for PDF output out of 10000 (max. 10000000)
 
