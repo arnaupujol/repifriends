@@ -20,6 +20,7 @@ library("chron")
 library("ggplot2")
 library("patchwork")
 library("ggpubr")
+library("epifriends")
 ```
 
 ## Create mock data 
@@ -66,6 +67,16 @@ graph <- ggplot(mock_rand,aes(x=x, y=y, color = dates, shape = as.factor(tests))
 graph
 ```
 
+```{r}
+# graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y, color = dates[mock_rand["test"] == 0]))+
+#             geom_point()+
+#             scale_color_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
+#             ggtitle("Random distribution of positives")+
+#             geom_point(data = mock_rand[mock_rand["test"] == 1,], aes(x=x, y=y, fill = dates[mock_rand["test"] == 1]),colour = "red")+
+#             scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))
+# graph
+```
+
 ## Implementing EpiFRIenDs
 
 Here we define the required parameters to run the method **temporal_catalogue** that outputs an EpiFRIenDs catalogue in each of the defined time steps:
@@ -91,7 +102,7 @@ max_date = max(datesform)
 ```
 
 ```{r}
-epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps)
+epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = FALSE)
 ```
 
 Here we visualise the detected clusters in each step, showing one scatter plot for each time step with:
@@ -111,6 +122,11 @@ while(min_date + time_steps*step_num + time_width <= max_date){
   #select data in time window
   selected_data <- (dates >= min_date + time_steps*step_num)&
                     (dates <= min_date + time_steps*step_num + time_width)
+  graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y))+
+            geom_point(color = "grey")+
+            geom_point(data = mock_rand[mock_rand["test"] == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey")
+  print(graph)
+  
   step_num <- step_num + 1
   
 }
@@ -137,7 +153,7 @@ linking_time = 3
 linking_dist = 0.15
 
 #Get temporal IDs
-epi_catalogue_list_id <- add_temporal_id(epi_catalogue_list$temporal_catalogues, linking_time, linking_dist, get_timelife = TRUE)
+epi_catalogue_list_id <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = linking_time, linking_dist = linking_dist, get_timelife = TRUE)
 ```
 
 

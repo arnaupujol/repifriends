@@ -139,16 +139,22 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   if(is.null(min_date)){
     min_date <- min(dates)
   }else{
-    #Convert string format to date.
-    dtparts <- strsplit(min_date," ")
-    min_date <- chron(dates=dtparts[[1]][1],times=dtparts[[1]][2],format=c('y-m-d','h:m:s'))
+    #If min_date is passed as a character
+    if(is.character(min_date)){
+      #Convert string format to date.
+      dtparts <- strsplit(min_date," ")
+      min_date <- chron(dates=dtparts[[1]][1],times=dtparts[[1]][2],format=c('y-m-d','h:m:s'))
+    }
   }
   if(is.null(max_date)){
     max_date <- max(dates)
   }else{
-    #Convert string format to date.
-    dtparts <- strsplit(max_date," ")
-    max_date <- chron(dates=dtparts[[1]][1],times=dtparts[[1]][2],format=c('y-m-d','h:m:s'))
+    #If max_date is passed as a character
+    if(is.character(max_date)){
+      #Convert string format to date.
+      dtparts <- strsplit(max_date," ")
+      max_date <- chron(dates=dtparts[[1]][1],times=dtparts[[1]][2],format=c('y-m-d','h:m:s'))
+    }
   }
   #temporal loop until the last time frame that fully overlaps the data
   temporal_catalogues <- list()
