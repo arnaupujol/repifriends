@@ -1,0 +1,77 @@
+---
+title: "optimization"
+author: "Mikel Majewski"
+date: '2022-11-14'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+## Create mock data 
+
+The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
+
+
+```{r, warning=FALSE}
+setwd("C:/Users/user/Desktop/Uni/Master/TFM/repifriends")
+datarand <- read.csv("data\\mock_data_rand.csv")
+datasin <- read.csv("data\\mock_data_sin.csv")
+dataclus <- read.csv("data\\mock_data_clustered.csv")
+```
+
+In order to work better with the data, some subdatasets are created:
+
+```{r}
+position_rand <- datarand[3:4]
+positive_rand = (datarand$test == 1)
+test_rand <- datarand[5]
+
+position_sin <- datasin[3:4]
+positive_sin = (datasin$test == 1)
+test_sin <- datasin[5]
+
+position_clus <- dataclus[3:4]
+positive_clus = (dataclus$test == 1)
+test_clus <- dataclus[5]
+```
+
+This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:
+
+```{r}
+plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
+plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
+plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+```
+
+```{r}
+distmat <- function(x){
+  matriu <- matrix(nrow = dim(x)[1], ncol = dim(x)[1])
+  for(i in 1:dim(x)[1]){
+    for(j in 1:dim(x)[1]){
+      matriu[i,j] <- distance(x[i,],x[j,])
+    }
+  }
+  return(matriu)
+}
+
+par(mfrow = c(1, 2))                    
+Mat <- distmat(position_rand[positive_rand,])
+dist <- as.vector(Mat)
+hist(dist)
+plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
+
+par(mfrow = c(1, 2)) 
+Mat <- distmat(position_sin[positive_sin,])
+dist <- as.vector(Mat)
+hist(dist)
+plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
+
+par(mfrow = c(1, 2)) 
+Mat <- distmat(position_clus[positive_clus,])
+dist <- as.vector(Mat)
+hist(dist)
+plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+```

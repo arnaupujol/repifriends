@@ -68,13 +68,20 @@ graph
 ```
 
 ```{r}
-# graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y, color = dates[mock_rand["test"] == 0]))+
-#             geom_point()+
-#             scale_color_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
-#             ggtitle("Random distribution of positives")+
-#             geom_point(data = mock_rand[mock_rand["test"] == 1,], aes(x=x, y=y, fill = dates[mock_rand["test"] == 1]),colour = "red")+
-#             scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))
-# graph
+graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y, color = dates[mock_rand["test"] == 0]))+
+            geom_point()+
+            scale_color_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
+            ggtitle("Random distribution of positives")+
+            geom_point(data = mock_rand[mock_rand["test"] == 1,], aes(x=x, y=y, fill = dates[mock_rand["test"] == 1]),colour = "red",shape=21)+
+            scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))
+graph
+```
+
+```{r}
+graph <- ggplot(mock_rand,aes(x=x, y=y))+
+            geom_point(aes(fill = date, shape = test))+
+            scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))
+graph
 ```
 
 ## Implementing EpiFRIenDs
@@ -122,9 +129,12 @@ while(min_date + time_steps*step_num + time_width <= max_date){
   #select data in time window
   selected_data <- (dates >= min_date + time_steps*step_num)&
                     (dates <= min_date + time_steps*step_num + time_width)
+  #Ploting all points with grey color and positive cases with red edge
   graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y))+
             geom_point(color = "grey")+
             geom_point(data = mock_rand[mock_rand["test"] == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey")
+  #For each EpiFRIenDs cluster in this time step, plot its cases colour coded by the mean positivity rate
+  
   print(graph)
   
   step_num <- step_num + 1
