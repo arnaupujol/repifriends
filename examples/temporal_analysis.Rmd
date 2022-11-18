@@ -60,27 +60,28 @@ tests <- as.integer(mock_rand$test)
 In this plot we visualise the generated mock data. The colours of the points represent the date of the samples, and those marked with a red edge are the positive cases:
 
 ```{r}
-graph <- ggplot(mock_rand,aes(x=x, y=y, color = dates, shape = as.factor(tests)))+
-            geom_point()+
-            scale_color_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
-            ggtitle("Random distribution of positives")
-graph
+# graph <- ggplot(mock_rand,aes(x=x, y=y, color = dates, shape = as.factor(tests)))+
+#             geom_point()+
+#             scale_color_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
+#             ggtitle("Random distribution of positives")
+# graph
 ```
 
 ```{r}
-graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y, color = dates[mock_rand["test"] == 0]))+
-            geom_point()+
-            scale_color_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
-            ggtitle("Random distribution of positives")+
-            geom_point(data = mock_rand[mock_rand["test"] == 1,], aes(x=x, y=y, fill = dates[mock_rand["test"] == 1]),colour = "red",shape=21)+
-            scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))
-graph
+# graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y, color = dates[mock_rand["test"] == 0]))+
+#             geom_point()+
+#             scale_color_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
+#             ggtitle("Random distribution of positives")+
+#             geom_point(data = mock_rand[mock_rand["test"] == 1,], aes(x=x, y=y, fill = dates[mock_rand["test"] == 1]),colour = "red",shape=21)+
+#             scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))
+# graph
 ```
 
 ```{r}
 graph <- ggplot(mock_rand,aes(x=x, y=y))+
-            geom_point(aes(fill = date, shape = test))+
-            scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))
+            geom_point(aes(fill = dates, colour = as.factor(test)), shape = 21)+
+            scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
+            scale_color_manual(values = c("grey", "red"), name = "Test", labels = c("Negative","Positive"))
 graph
 ```
 
