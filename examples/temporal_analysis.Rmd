@@ -79,7 +79,7 @@ In this plot we visualise the generated mock data. The colours of the points rep
 
 ```{r}
 graph <- ggplot(mock_rand,aes(x=x, y=y))+
-            geom_point(aes(fill = dates, colour = as.factor(test)), shape = 21)+
+            geom_point(aes(fill = dates, colour = as.factor(test)), shape = 21, size = 2.5)+
             scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
             scale_color_manual(values = c("grey", "red"), name = "Test", labels = c("Negative","Positive"))
 graph
@@ -132,12 +132,13 @@ while(min_date + time_steps*step_num + time_width <= max_date){
                     (dates <= min_date + time_steps*step_num + time_width)
   #Ploting all points with grey color and positive cases with red edge
   graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y))+
-            geom_point(color = "grey")+
-            geom_point(data = mock_rand[mock_rand["test"] == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey")
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = mock_rand[mock_rand["test"] == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey", size = 2.5)
   #For each EpiFRIenDs cluster in this time step, plot its cases colour coded by the mean positivity rate
-  
-  print(graph)
-  
+  # 
+  # for(epi in 1:length(epi_catalogue_list[1]$))
+  # print(graph)
+  # 
   step_num <- step_num + 1
   
 }

@@ -53,8 +53,8 @@ scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
     # plot(coordinates$x, coordinates$y, pch = 19, col = "grey")
     # points(pos$x[id_data > 0], pos$y[id_data>0], pch = 19, col = rainbow(100)[factor(p_vals)])
     graph <- ggplot(coordinates,aes(x=x, y=y))+
-            geom_point(color = "grey")+
-            geom_point(data = pos[id_data >0,], aes(colour = p_vals))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos[id_data >0,], aes(colour = p_vals), size = 2.5)+
             scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
             ggtitle("P-value of hotspots")
     return(graph)
@@ -157,8 +157,8 @@ pos <- data.frame(position_rand[positive_rand,],cluster_id)
 # plot(datarand$x[!positive_rand], datarand$y[!positive_rand], pch = 19, col = "grey")
 # points(datarand$x[positive_rand], datarand$y[positive_rand], pch = 19, col = rainbow(40)[factor(cluster_id)])
 graph <- ggplot(neg,aes(x=x, y=y))+
-            geom_point(color = "grey")+
-            geom_point(data = pos, aes(colour = cluster_id))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
             scale_colour_gradientn(colors=rainbow(7))
 graph
 
@@ -176,8 +176,8 @@ pos <- data.frame(position_sin[positive_sin,],cluster_id)
 # points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
 
 graph <- ggplot(neg,aes(x=x, y=y))+
-            geom_point(color = "grey")+
-            geom_point(data = pos, aes(colour = cluster_id))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
             scale_colour_gradientn(colors=rainbow(7))
 graph
 ```
@@ -193,8 +193,8 @@ pos <- data.frame(position_clus[positive_clus,],cluster_id)
 # points(dataclus$x[positive_clus], dataclus$y[positive_clus], pch = 19, col = rainbow(40)[factor(cluster_id)])
 
 graph <- ggplot(neg,aes(x=x, y=y))+
-            geom_point(color = "grey")+
-            geom_point(data = pos, aes(colour = cluster_id))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
             scale_colour_gradientn(colors=rainbow(7))
 graph
 ```
