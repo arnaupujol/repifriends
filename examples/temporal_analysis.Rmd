@@ -121,8 +121,6 @@ while(min_date + time_steps*step_num + time_width <= max_date){
   # 
   for(epi in 1:length(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id)){
     indeces <- epi_catalogue_list$temporal_catalogues[[step_num+1]]$indeces[[epi]]
-    vmin <- 0
-    vmax <- max(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id)
     if(dim(position_rand[selected_data,][indeces,])[1]>0){
       graph <- graph + geom_point(data = mock_rand[selected_data,][indeces,], aes(x = x, y = y, colour = as.factor(test)), shape = 21, size = 2.5, fill = as.integer(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id[[epi]]))
     }
@@ -135,18 +133,33 @@ while(min_date + time_steps*step_num + time_width <= max_date){
 ```
 
 ```{r}
-selected_data <- (dates >= min_date + time_steps*0)&
-                    (dates <= min_date + time_steps0 + time_width)
-
-indeces <- epi_catalogue_list$temporal_catalogues[[1]]$indeces[[1]]
-indeces
-vmin <- 0
-vmax <- max(epi_catalogue_list$temporal_catalogues[[1]]$id)
-position_rand[selected_data,][indeces,]
-
-graph <- ggplot( mock_rand[selected_data,][indeces,],aes(x=x, y=y)) +
-  geom_point(aes(colour = as.factor(test)), size = 2.5, shape = 21, fill = as.integer(epi_catalogue_list$temporal_catalogues[[1]]$id[[1]]+2))
-graph
+# auxmock <- mock_rand
+# step_num <- 0
+# 
+# while(min_date + time_steps*step_num + time_width <= max_date){
+#   print(paste0("Time step number", step_num)) 
+#   #select data in time window
+#   selected_data <- (dates >= min_date + time_steps*step_num)&
+#                     (dates <= min_date + time_steps*step_num + time_width)
+#   
+#   #Ploting all points with grey color and positive cases with red edge
+#   graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y))+
+#             geom_point(color = "grey", size = 2.5)+
+#             geom_point(data = mock_rand[mock_rand["test"] == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey", size = 2.5)+
+#             scale_color_manual(values = c("grey", "red"), name = "Test", labels = c("Negative","Positive"))
+#   
+#   auxmock$cluster <- auxmock$x*0
+#   for(epi in 1:length(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id)){
+#     indeces <- epi_catalogue_list$temporal_catalogues[[step_num+1]]$indeces[[epi]]
+#     auxmock$cluster[indeces] <- rep(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id[[epi]],length(indeces))
+#   }
+#   graph <- graph + geom_point(data = auxmock, aes(x = x, y = y, fill = as.factor(cluster), colour = as.factor(test)), shape = 21, size = 2.5)
+# 
+#   print(graph)
+#   
+#   step_num <- step_num + 1
+#   
+# }
 ```
 
 Here we show the number of clusters detected as a function of time: 
