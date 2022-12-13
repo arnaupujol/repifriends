@@ -9,7 +9,16 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r}
+install.packages("spatstat.core")
+```
+
+```{r}
+library("spatstat.core")
+library("epifriends")
+library("RANN")
+```
+
 ## Create mock data 
 
 The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
@@ -46,11 +55,13 @@ plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
 plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
 ```
 
+For each distribution a positive points distance to each other graph is created:
+
 ```{r}
 distmat <- function(x){
   matriu <- matrix(nrow = dim(x)[1], ncol = dim(x)[1])
-  for(i in 1:dim(x)[1]){
-    for(j in 1:dim(x)[1]){
+  for(i in 1:(dim(x)[1]-1)){
+    for(j in (i+1):dim(x)[1]){
       matriu[i,j] <- distance(x[i,],x[j,])
     }
   }
@@ -58,20 +69,186 @@ distmat <- function(x){
 }
 
 par(mfrow = c(1, 2))                    
-Mat <- distmat(position_rand[positive_rand,])
+Mat_rand <- distmat(position_rand[positive_rand,])
 dist <- as.vector(Mat)
 hist(dist)
 plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
 
 par(mfrow = c(1, 2)) 
-Mat <- distmat(position_sin[positive_sin,])
+Mat_sin <- distmat(position_sin[positive_sin,])
 dist <- as.vector(Mat)
 hist(dist)
 plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
 
 par(mfrow = c(1, 2)) 
-Mat <- distmat(position_clus[positive_clus,])
+Mat_clus <- distmat(position_clus[positive_clus,])
 dist <- as.vector(Mat)
 hist(dist)
 plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+```
+
+And now a nearest neighbor distance graph for positive cases is created:
+
+```{r}
+#Distribució de distancies d'un punt amb el seu més pròxim
+min <- c()
+min_dist <- function(M){
+  for(i in 1:dim(M)[1]){
+    min[i] <- min(c(M[i,],M[,i]),na.rm = TRUE)
+  }
+  return(min)
+}
+min_rand <- min_dist(Mat_rand)
+min_sin <- min_dist(Mat_sin)
+min_clus <- min_dist(Mat_clus)
+
+par(mfrow = c(1, 2))
+hist(min_rand)
+plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
+
+par(mfrow = c(1, 2)) 
+hist(min_sin)
+plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
+
+par(mfrow = c(1, 2)) 
+hist(min_clus)
+plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+
+```
+
+We take first the median and the 25% and 75% quantiles to analyze those linking distances:
+
+```{r}
+quant_rand <- quantile(min_rand,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+quant_sin <- quantile(min_sin,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+quant_clus <- quantile(min_clus,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+```
+
+Some functions are computed:
+
+```{r}
+#function that, given a points dataset, applying the KNTree method, returns how much points have the N nearest point at distance lower than a given linking distance
+number_dist <- function(position, N, link_d){
+  #inizializatiion of counting variable
+  count <- 0
+  for(i in 1:dim(position)[1]){
+    #search of the N nearest neighboors
+    query <- nn2(position,position[i,],N)
+    dist <- query$nn.dists[length(query$nn.dists)]
+    if(dist < link_d){
+      #increase the count variable if the distance of that neighbor is less than the linking distance
+      count = count +1 
+    }
+  }
+  return(count)
+}
+
+#Given a points dataset, the next function will return how much clusters of size N and linking distance less than link_d have all points positive
+positive_clust_num <- function(position, N, link_d, test){
+  pos <- c()
+  for(i in 1:dim(position)[1]){
+    #search of the N nearest neighboors
+    query <- nn2(position,position[i,],N)
+    dist <- query$nn.dists[length(query$nn.dists)]
+    if(dist < link_d){
+      positive <- 1
+      for(j in query$nn.idx){
+        positive <- positive*test[j] 
+      }
+      pos[i] <- positive
+    }else{
+      pos[i] <- NA
+    }
+  }
+  num <- length(which(pos == 1))
+  return(num)
+}
+
+```
+Now the minimum number of neighbors is computed:
+
+```{r}
+num_neig <- function(position, test, link_d){
+  stop <- 0
+  N <- 2
+  while(stop != 1){
+    #Number of clusters with less distance than linking distance
+    M <- number_dist(position, N, link_d)
+    #prevalence
+    p <- sum(test == 1)/length(test)
+    estim <- M*(p^N)
+    #Real number of positive clusters
+    real <- positive_clust_num(position, N, link_d,test)
+    if(estim<real){
+      stop <- 1
+      return(N)
+    }else{
+      N = N + 1
+    }
+  }
+}
+
+num_neig(position_rand, datarand$test, quant_rand[3])
+```
+
+```{r}
+# index <- list()
+# linking_d <- quant_rand[2]
+# #prevalence
+# p <- sum(datarand$test == 1)/length(datarand$test)
+# 
+# dist <- c()
+# positives <- datarand$test
+# 
+# for(i in 1:dim(position_rand)[1]){
+#   query <- nn2(position_rand, position_rand[i,], 2)
+#   dist[i] <- query$nn.dists[length(query$nn.dists)]
+#   if(dist[i]<linking_d){
+#     if(positives[i] == 1 && datarand$test[query$nn.idx[length(query$nn.idx)]] == 1){
+#     }else{
+#       positives[i] <- 0
+#     }
+#   }else{
+#     positives[i] <- NA
+#   }
+# }
+# 
+# npar <- sum(positives,na.rm = TRUE)+sum(positives == 1)
+# npar*(p^2)
+# 
+# hist(dist)
+# hist(positives)
+# for(i in 1:dim(position_rand)[1]){
+#   query <- nn2(position_rand, position_rand[i,], 1)
+#   index[[i]] <- query$nn.idx[length(query$nn.idx)]
+# }
+# for(j in 2:3){
+#   dist <- c()
+#   for(i in 1:dim(position_rand)[1]){
+#     query <- nn2(position_rand, position_rand[i,], j)
+#     index[[i]] <- append(index[[i]],query$nn.idx[length(query$nn.idx)])
+#     dist <- append(dist,query$nn.dists[length(query$nn.dists)])
+#   }
+# }
+# index_ld <- index[which(dist<linking_d)]
+
+
+```
+
+
+# P-value optimization
+```{r}
+setwd("C:/Users/user/Desktop/Uni/Master/TFM")
+swamp <- read.csv('swamp.csv', as.is=T)
+cypress <- subset(swamp, live == 1 & sp=='TD')
+# keep live cypress (Taxodium distichum) locations
+cypress.ppp <- as.ppp(cypress[,c('x','y')], W=c(0,50, 0, 200))
+cypress.pppw <- as.ppp(cypress[,c('y','x')], W=c(0,200, 0, 50))
+``` 
+
+```{r}
+par(mfrow=c(2,2), mar=rep(0.5,4))
+randppp <- runifpoint(91, cypress.pppw$window)
+plot(randppp)
+npoints(randppp)
 ```
