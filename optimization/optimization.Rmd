@@ -300,8 +300,7 @@ ldist_sin
 
 ```{r}
 min_rand <- min_dist(position_rand[positive_rand,])
-quant_rand <- quantile(min_rand,probs = c(0.25,0.5,0.75),na.rm = TRUE)
-min_neihbours <- num_neig(position_rand, datarand$test, quant_rand[2])
+min_neihbours <- num_neig(position_rand, datarand$test, ldist_rand)
 
 #Running DBSCAN for the mock data with sinusoidal distribution
 
@@ -310,8 +309,6 @@ cluster_id = dbscan(position_rand[positive_rand,], ldist_rand, min_neighbours)
 neg <- data.frame(position_rand[!positive_rand,])
 pos <- data.frame(position_rand[positive_rand,],cluster_id)
 
-# plot(datasin$x[!positive_sin], datasin$y[!positive_sin], pch = 19, col = "grey")
-# points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
 
 graph <- ggplot(neg,aes(x=x, y=y))+
             geom_point(color = "grey", size = 2.5)+
@@ -322,8 +319,7 @@ graph
 
 ```{r}
 min_clus <- min_dist(position_clus[positive_clus,])
-quant_clus <- quantile(min_clus,probs = c(0.25,0.5,0.75),na.rm = TRUE)
-min_neihbours <- num_neig(position_clus, dataclus$test, quant_clus[2])
+min_neihbours <- num_neig(position_clus, dataclus$test, ldist_clus)
 
 #Running DBSCAN for the mock data with sinusoidal distribution
 
@@ -338,14 +334,13 @@ pos <- data.frame(position_clus[positive_clus,],cluster_id)
 graph <- ggplot(neg,aes(x=x, y=y))+
             geom_point(color = "grey", size = 2.5)+
             geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
-            scale_colour_gradientn(colors=rainbow(7))
+            scale_colour_gradientn(colors=c("black",rainbow(50)))
 graph
 ```
 
 ```{r}
 min_sin <- min_dist(position_sin[positive_sin,])
-quant_sin <- quantile(min_sin,probs = c(0.25,0.5,0.75),na.rm = TRUE)
-min_neihbours <- num_neig(position_sin, datasin$test, quant_sin[2])
+min_neihbours <- num_neig(position_sin, datasin$test, ldist_sin)
 
 #Running DBSCAN for the mock data with sinusoidal distribution
 
