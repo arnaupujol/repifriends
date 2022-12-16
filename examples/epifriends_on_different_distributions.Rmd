@@ -159,7 +159,7 @@ pos <- data.frame(position_rand[positive_rand,],cluster_id)
 graph <- ggplot(neg,aes(x=x, y=y))+
             geom_point(color = "grey", size = 2.5)+
             geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
-            scale_colour_gradientn(colors=rainbow(7))
+            scale_colour_gradientn(colors=c("black",rainbow(7)))
 graph
 
 ```
@@ -178,7 +178,7 @@ pos <- data.frame(position_sin[positive_sin,],cluster_id)
 graph <- ggplot(neg,aes(x=x, y=y))+
             geom_point(color = "grey", size = 2.5)+
             geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
-            scale_colour_gradientn(colors=rainbow(7))
+            scale_colour_gradientn(colors=c("black",rainbow(50)))
 graph
 ```
 
@@ -195,7 +195,7 @@ pos <- data.frame(position_clus[positive_clus,],cluster_id)
 graph <- ggplot(neg,aes(x=x, y=y))+
             geom_point(color = "grey", size = 2.5)+
             geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
-            scale_colour_gradientn(colors=rainbow(7))
+            scale_colour_gradientn(colors=c("black",rainbow(40)))
 graph
 ```
 

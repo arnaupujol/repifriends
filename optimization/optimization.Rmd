@@ -17,6 +17,7 @@ install.packages("spatstat.core")
 library("spatstat.core")
 library("epifriends")
 library("RANN")
+library("ggplot2")
 ```
 
 ## Create mock data 
@@ -67,7 +68,9 @@ distmat <- function(x){
   }
   return(matriu)
 }
+```
 
+```{r}
 par(mfrow = c(1, 2))                    
 Mat_rand <- distmat(position_rand[positive_rand,])
 dist <- as.vector(Mat)
@@ -91,16 +94,28 @@ And now a nearest neighbor distance graph for positive cases is created:
 
 ```{r}
 #Distribució de distancies d'un punt amb el seu més pròxim
-min <- c()
-min_dist <- function(M){
-  for(i in 1:dim(M)[1]){
-    min[i] <- min(c(M[i,],M[,i]),na.rm = TRUE)
+# min_dist <- function(x){
+#   min <- c()
+#   M <- distmat(x)
+#   for(i in 1:dim(M)[1]){
+#     min[i] <- min(c(M[i,],M[,i]),na.rm = TRUE)
+#   }
+#   return(min)
+# }
+min_dist <- function(position){
+  dist <- c()
+  for(i in 1:dim(position)[1]){
+    query <- nn2(position,position[i,],2)
+    dist[i] <- query$nn.dists[length(query$nn.dists)]
   }
-  return(min)
+  return(dist)
 }
-min_rand <- min_dist(Mat_rand)
-min_sin <- min_dist(Mat_sin)
-min_clus <- min_dist(Mat_clus)
+```
+
+```{r}
+min_rand <- min_dist(position_rand[positive_rand,])
+min_sin <- min_dist(position_sin[positive_sin,])
+min_clus <- min_dist(position_clus[positive_clus,])
 
 par(mfrow = c(1, 2))
 hist(min_rand)
@@ -165,10 +180,11 @@ positive_clust_num <- function(position, N, link_d, test){
 }
 
 ```
+
 Now the minimum number of neighbors is computed:
 
 ```{r}
-num_neig <- function(position, test, link_d){
+num_neig <- function(position, test, link_d, prob=0.9){
   stop <- 0
   N <- 2
   while(stop != 1){
@@ -179,7 +195,10 @@ num_neig <- function(position, test, link_d){
     estim <- M*(p^N)
     #Real number of positive clusters
     real <- positive_clust_num(position, N, link_d,test)
-    if(estim<real){
+    if(real == 0){
+      return(N-1)
+    }
+    if(estim<(1-prob)*real){
       stop <- 1
       return(N)
     }else{
@@ -188,7 +207,161 @@ num_neig <- function(position, test, link_d){
   }
 }
 
-num_neig(position_rand, datarand$test, quant_rand[3])
+num_neig(position_rand, datarand$test, quant_rand[2],0.9)
+```
+And the catalogue with this parameters can be computed
+```{r}
+cata <- catalogue(position_rand,data.frame(datarand$test), quant_rand[2],min_neighbours = 4)
+```
+
+And now we try to fin the optimum linking distance:
+
+```{r}
+optimum_linkd <- function(position, test, mindist=NULL, cat_med=NULL,f_med=0, prob=0.9){
+  #filter positive positions
+  positives <- position[(test == 1),]
+  if(is.null(mindist)){
+    #distribution of positive points minimum distance to another positive point
+    mindist <- min_dist(positives)
+  }
+  if(length(mindist)<3){
+    #if there are only three distances the algorithm can finish and the best distance is returned
+    return(quantile(mindist,probs = c(0.5),na.rm=TRUE))
+  }
+  #Quantiles of distances are calculated
+  quant <- quantile(mindist,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+  #If is the first iteration, the catalogue with the median linking distance is computed
+  if(is.null(cat_med)){
+    #Calculation of best number of neighbors
+    M_med <- num_neig(position, test, quant[2],prob)
+    #Catalogue
+    cat_med <- catalogue(position,data.frame(test),quant[2],min_neighbours = M_med)
+    #Computation of optimization function
+    f_med <- 0
+    for(j in 1:length(cat_med$cluster_id)){
+      if(cat_med$cluster_id[j]!=0){
+        f_med <- f_med + cat_med$pval_cluster[j]
+      }
+    }
+  }
+  #Same process for 25% quantile distance
+  M_25 <- num_neig(position, test, quant[1],prob)
+  cat_25 <- catalogue(position,data.frame(test),quant[1],min_neighbours = M_25)
+  f_25 <- 0
+  for(j in 1:length(cat_25$cluster_id)){
+    if(cat_25$cluster_id[j]!=0){
+      f_25 <- f_25 + cat_25$pval_cluster[j]
+    }
+  }
+  #Same process for 75% quantile distance
+  M_75 <- num_neig(position, test, quant[3],prob)
+  cat_75 <- catalogue(position,data.frame(test),quant[3],min_neighbours = M_75)
+  f_75 <- 0
+  for(j in 1:length(cat_75$cluster_id)){
+    if(cat_75$cluster_id[j]!=0){
+      f_75 <- f_75 + cat_75$pval_cluster[j]
+    }
+  }
+  if((f_25 == f_med) && (f_med == f_75) && (f_med != 0)){
+    return(quant[2])
+  }else{
+    f <- max(c(f_25,f_med,f_75))
+    if(f==f_25){
+      dis <- mindist[(mindist<quant[2])]
+      return(optimum_linkd(position,test,dis,cat_25,f_25))
+    }
+    if(f==f_med){
+      dis <- mindist[(quant[1]<=mindist)]
+      dis <- dis[(dis<quant[3])]
+      return(optimum_linkd(position,test,dis,cat_med,f_med))
+    }
+    if(f==f_75){
+      dis <- mindist[(quant[2]<mindist)]
+      return(optimum_linkd(position,test,dis,cat_75,f_75))
+    }
+  }
+}
+```
+
+```{r}
+ldist_rand <- optimum_linkd(position_rand, datarand$test)
+ldist_rand
+```
+
+```{r}
+ldist_clus <- optimum_linkd(position_clus, dataclus$test)
+ldist_clus
+```
+
+```{r}
+ldist_sin <- optimum_linkd(position_sin, datasin$test)
+ldist_sin
+```
+
+```{r}
+min_rand <- min_dist(position_rand[positive_rand,])
+quant_rand <- quantile(min_rand,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+min_neihbours <- num_neig(position_rand, datarand$test, quant_rand[2])
+
+#Running DBSCAN for the mock data with sinusoidal distribution
+
+cluster_id = dbscan(position_rand[positive_rand,], ldist_rand, min_neighbours)
+
+neg <- data.frame(position_rand[!positive_rand,])
+pos <- data.frame(position_rand[positive_rand,],cluster_id)
+
+# plot(datasin$x[!positive_sin], datasin$y[!positive_sin], pch = 19, col = "grey")
+# points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=rainbow(7))
+graph
+```
+
+```{r}
+min_clus <- min_dist(position_clus[positive_clus,])
+quant_clus <- quantile(min_clus,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+min_neihbours <- num_neig(position_clus, dataclus$test, quant_clus[2])
+
+#Running DBSCAN for the mock data with sinusoidal distribution
+
+cluster_id = dbscan(position_clus[positive_clus,], ldist_clus, min_neighbours)
+
+neg <- data.frame(position_clus[!positive_clus,])
+pos <- data.frame(position_clus[positive_clus,],cluster_id)
+
+# plot(datasin$x[!positive_sin], datasin$y[!positive_sin], pch = 19, col = "grey")
+# points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=rainbow(7))
+graph
+```
+
+```{r}
+min_sin <- min_dist(position_sin[positive_sin,])
+quant_sin <- quantile(min_sin,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+min_neihbours <- num_neig(position_sin, datasin$test, quant_sin[2])
+
+#Running DBSCAN for the mock data with sinusoidal distribution
+
+cluster_id = dbscan(position_sin[positive_sin,], ldist_sin, min_neighbours)
+
+neg <- data.frame(position_sin[!positive_sin,])
+pos <- data.frame(position_sin[positive_sin,],cluster_id)
+
+# plot(datasin$x[!positive_sin], datasin$y[!positive_sin], pch = 19, col = "grey")
+# points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=c("black",rainbow(7)))
+graph
 ```
 
 ```{r}
@@ -233,22 +406,4 @@ num_neig(position_rand, datarand$test, quant_rand[3])
 # index_ld <- index[which(dist<linking_d)]
 
 
-```
-
-
-# P-value optimization
-```{r}
-setwd("C:/Users/user/Desktop/Uni/Master/TFM")
-swamp <- read.csv('swamp.csv', as.is=T)
-cypress <- subset(swamp, live == 1 & sp=='TD')
-# keep live cypress (Taxodium distichum) locations
-cypress.ppp <- as.ppp(cypress[,c('x','y')], W=c(0,50, 0, 200))
-cypress.pppw <- as.ppp(cypress[,c('y','x')], W=c(0,200, 0, 50))
-``` 
-
-```{r}
-par(mfrow=c(2,2), mar=rep(0.5,4))
-randppp <- runifpoint(91, cypress.pppw$window)
-plot(randppp)
-npoints(randppp)
 ```
