@@ -95,6 +95,10 @@ max_date = max(datesform)
 epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = FALSE)
 ```
 
+```{r}
+epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = 3, linking_dist = 0.15, get_timelife = TRUE)
+```
+
 Here we visualise the detected clusters in each step, showing one scatter plot for each time step with:
 
     * The cases not belonging to any cluster in grey (the positive cases marked with a red edge)
