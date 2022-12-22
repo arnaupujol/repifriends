@@ -18,6 +18,7 @@ library("chron")
 library("ggplot2")
 library("patchwork")
 library("ggpubr")
+library("epifriends")
 ```
 
 Some functions in order to plot are defined:
@@ -57,6 +58,46 @@ scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
             geom_point(data = pos[id_data >0,], aes(colour = p_vals), size = 2.5)+
             scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
             ggtitle("P-value of hotspots")
+    return(graph)
+}
+#cat$epifriends_catalogue$p[cat$epifriends_catalogue$id != 0]
+```
+
+```{r}
+scatter_pr <- function(coordinates, id_data, positive, epi_catalogue){
+    # This method shows a scatter plot of the data distribution, showing in 
+    # colour the positive cases that belong to foci (with the colour 
+    # representing their p-value) and in grey the rest of the data. 
+    # 
+    # Parameters:
+    # -----------
+    # coordinates: data.frame
+    #     data frame with the values of the coordinates
+    # id_data: data.frame
+    #     data frame with the cluster ID associated to each positive case, o for 
+    #     no associated cluster
+    # positive: data.frame
+    #     Boolean vector that indicates if the case is infected. 
+    # epi_catalogue: list
+    #     List of the EpiFRIenDs catalogue
+    # 
+    # Returns:
+    # --------
+    # Scatter plot of the data distribution, showing in 
+    # colour the positive cases that belong to foci (with the colour 
+    # representing their p-value) and in grey the rest of the data.
+    pos <- data.frame(coordinates[positive,],id_data)
+    pr <- c()
+    for(i in id_data[id_data > 0]){
+      pr <- append(pr, epi_catalogue$mean_pr[epi_catalogue$id == i])
+    }
+    # plot(coordinates$x, coordinates$y, pch = 19, col = "grey")
+    # points(pos$x[id_data > 0], pos$y[id_data>0], pch = 19, col = rainbow(100)[factor(p_vals)])
+    graph <- ggplot(coordinates,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos[id_data >0,], aes(colour = pr), size = 2.5)+
+            scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
+            ggtitle("PR of hotspots")
     return(graph)
 }
 #cat$epifriends_catalogue$p[cat$epifriends_catalogue$id != 0]
