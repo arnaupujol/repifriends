@@ -59,35 +59,35 @@ plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
 For each distribution a positive points distance to each other graph is created:
 
 ```{r}
-distmat <- function(x){
-  matriu <- matrix(nrow = dim(x)[1], ncol = dim(x)[1])
-  for(i in 1:(dim(x)[1]-1)){
-    for(j in (i+1):dim(x)[1]){
-      matriu[i,j] <- distance(x[i,],x[j,])
-    }
-  }
-  return(matriu)
-}
+# distmat <- function(x){
+#   matriu <- matrix(nrow = dim(x)[1], ncol = dim(x)[1])
+#   for(i in 1:(dim(x)[1]-1)){
+#     for(j in (i+1):dim(x)[1]){
+#       matriu[i,j] <- distance(x[i,],x[j,])
+#     }
+#   }
+#   return(matriu)
+# }
 ```
 
 ```{r}
-par(mfrow = c(1, 2))                    
-Mat_rand <- distmat(position_rand[positive_rand,])
-dist <- as.vector(Mat)
-hist(dist)
-plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
-
-par(mfrow = c(1, 2)) 
-Mat_sin <- distmat(position_sin[positive_sin,])
-dist <- as.vector(Mat)
-hist(dist)
-plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
-
-par(mfrow = c(1, 2)) 
-Mat_clus <- distmat(position_clus[positive_clus,])
-dist <- as.vector(Mat)
-hist(dist)
-plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+# par(mfrow = c(1, 2))                    
+# Mat_rand <- distmat(position_rand[positive_rand,])
+# dist <- as.vector(Mat)
+# hist(dist)
+# plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
+# 
+# par(mfrow = c(1, 2)) 
+# Mat_sin <- distmat(position_sin[positive_sin,])
+# dist <- as.vector(Mat)
+# hist(dist)
+# plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
+# 
+# par(mfrow = c(1, 2)) 
+# Mat_clus <- distmat(position_clus[positive_clus,])
+# dist <- as.vector(Mat)
+# hist(dist)
+# plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
 ```
 
 And now a nearest neighbor distance graph for positive cases is created:
@@ -240,7 +240,7 @@ optimum_linkd <- function(position, test, mindist=NULL, cat_med=NULL,f_med=0, pr
     f_med <- 0
     for(j in 1:length(cat_med$cluster_id)){
       if(cat_med$cluster_id[j]!=0){
-        f_med <- f_med + cat_med$pval_cluster[j]
+        f_med <- f_med + (1-cat_med$pval_cluster[j])
       }
     }
   }
@@ -250,7 +250,7 @@ optimum_linkd <- function(position, test, mindist=NULL, cat_med=NULL,f_med=0, pr
   f_25 <- 0
   for(j in 1:length(cat_25$cluster_id)){
     if(cat_25$cluster_id[j]!=0){
-      f_25 <- f_25 + cat_25$pval_cluster[j]
+      f_25 <- f_25 + (1-cat_25$pval_cluster[j])
     }
   }
   #Same process for 75% quantile distance
@@ -259,7 +259,7 @@ optimum_linkd <- function(position, test, mindist=NULL, cat_med=NULL,f_med=0, pr
   f_75 <- 0
   for(j in 1:length(cat_75$cluster_id)){
     if(cat_75$cluster_id[j]!=0){
-      f_75 <- f_75 + cat_75$pval_cluster[j]
+      f_75 <- f_75 + (1-cat_75$pval_cluster[j])
     }
   }
   if((f_25 == f_med) && (f_med == f_75) && (f_med != 0)){
@@ -316,7 +316,6 @@ graph <- ggplot(neg,aes(x=x, y=y))+
             scale_colour_gradientn(colors=rainbow(7))
 graph
 ```
-
 ```{r}
 min_clus <- min_dist(position_clus[positive_clus,])
 min_neihbours <- num_neig(position_clus, dataclus$test, ldist_clus)
@@ -357,6 +356,77 @@ graph <- ggplot(neg,aes(x=x, y=y))+
             geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
             scale_colour_gradientn(colors=c("black",rainbow(7)))
 graph
+```
+
+For all ditances, claculation of f:
+```{r}
+min_rand <- sort(min_rand)
+f_rand <- c()
+for(i in 1:length(min_rand)){
+  M <- num_neig(position_rand, datarand$test, min_rand[i])
+  cat <- catalogue(position_rand,data.frame(datarand$test),min_rand[i],min_neighbours = M)
+  f_rand[i] <- 0
+  for(j in 1:length(cat$cluster_id)){
+    if(cat$cluster_id[j]!=0){
+      f_rand[i] <- f_rand[i] + (1-cat$pval_cluster[j])
+    }
+  }
+  print(f_rand[i])
+}
+plot(f_rand)
+```
+
+```{r}
+min_clus <- sort(min_clus)
+f_clus <- c()
+for(i in 1:length(min_clus)){
+  M <- num_neig(position_clus, dataclus$test, min_clus[i])
+  cat <- catalogue(position_clus,data.frame(dataclus$test),min_clus[i],min_neighbours = M)
+  f_clus[i] <- 0
+  for(j in 1:length(cat$cluster_id)){
+    if(cat$cluster_id[j]!=0){
+      f_clus[i] <- f_clus[i] + (1-cat$pval_cluster[j])
+    }
+  }
+  print(f_clus[i])
+}
+plot(f_clus)
+```
+
+```{r}
+min_sin <- sort(min_sin)
+f_sin <- c()
+for(i in 1:length(min_sin)){
+  M <- num_neig(position_sin, datasin$test, min_sin[i])
+  cat <- catalogue(position_sin,data.frame(datasin$test),min_sin[i],min_neighbours = M)
+  f_sin[i] <- 0
+  for(j in 1:length(cat$cluster_id)){
+    if(cat$cluster_id[j]!=0){
+      f_sin[i] <- f_sin[i] + (1-cat$pval_cluster[j])
+    }
+  }
+  print(f_sin[i])
+}
+plot(f_sin)
+```
+Best distances:
+```{r}
+min_rand[which.max(f_rand)]
+max(f_rand)
+min_clus[which.max(f_clus)]
+max
+
+(f_clus)
+min_sin[which.max(f_sin)]
+max(f_sin)
+f_sin[which(min_sin==ldist_sin)]
+```
+
+
+```{r}
+M_maxclus <- num_neig(position_clus, dataclus$test, min(min_clus))
+dbscan(position_clus[positive_clus,], min(min_clus), min_neighbours = M_maxclus)
+cat <- catalogue(position_clus,data.frame(dataclus$test),min(min_clus),min_neighbours = M_maxclus)
 ```
 
 ```{r}
