@@ -11,6 +11,7 @@ This software is fully open source and all are welcome to use or modify it for a
 We would kindly request that any scientific publications making use of this software cite **Pujol A., Brokhattingen N., Matambisso G., et al (in prep.)**.
 
 The package is still work in progress, consider this a Beta version. The first official release is comming very soon.
+You can find [here](https://github.com/arnaupujol/epifriends) a version of EpiFRIenDs in Python. 
 
 
 Software requirements:
