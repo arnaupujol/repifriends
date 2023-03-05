@@ -2,7 +2,9 @@
 title: "temporal_analysis"
 author: "Mikel Majewski"
 date: '2022-10-25'
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +17,7 @@ We first import the packages required from this RMarkdown.
 
 ```{r}
 library("RANN")
+library("data.table")
 library("readxl")
 library("chron")
 library("ggplot2")
@@ -29,17 +32,17 @@ The data created with the temporal_analysis.ipynb file of python and saved on th
 
 
 ```{r, warning=FALSE}
-setwd("C:/Users/user/Desktop/Uni/Master/TFM/repifriends")
-mock_rand <- read.csv("data\\mock_data_rand_temp.csv")
+setwd("./../")
+mock_rand <- data.table(read.csv("./data/mock_data_rand_temp.csv"))
 ```
 
 In order to work better with the data, some subdatasets are created:
 
 ```{r}
-position_rand <- mock_rand[3:4]
+position_rand <- mock_rand[, 3:4]
 positive_rand = (mock_rand$test == 1)
-test_rand <- mock_rand[5]
-date_rand <- mock_rand[7]
+test_rand <- mock_rand[,5]
+date_rand <- mock_rand[,7]
 ```
 
 The dates are changed to date format:
@@ -117,9 +120,9 @@ while(min_date + time_steps*step_num + time_width <= max_date){
   selected_data <- (dates >= min_date + time_steps*step_num)&
                     (dates <= min_date + time_steps*step_num + time_width)
   #Ploting all points with grey color and positive cases with red edge
-  graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y))+
+  graph <- ggplot(mock_rand[test == 0,],aes(x=x, y=y))+
             geom_point(color = "grey", size = 2.5)+
-            geom_point(data = mock_rand[mock_rand["test"] == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey", size = 2.5)+
+            geom_point(data = mock_rand[test == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey", size = 2.5)+
             scale_color_manual(values = c("grey", "red"))
   #For each EpiFRIenDs cluster in this time step, plot its cases colour coded by the mean positivity rate
   # 

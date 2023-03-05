@@ -8,6 +8,8 @@
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param keep_null_tests: Whether to remove or not missings. If numeric, provide value to impute.
+#' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
 #' @details The epifriends package uses the RANN package which gives us the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
 #'
@@ -30,7 +32,8 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- dbscan(pos, 2 ,3)
 
-dbscan <- function(positions, link_d, min_neighbours = 2){
+dbscan <- function(positions, link_d, min_neighbours = 2, 
+                   keep_null_tests = FALSE, verbose = FALSE){
   # This method finds the DBSCAN clusters from a set of positions and
   # returns their cluster IDs.
   #
@@ -44,13 +47,19 @@ dbscan <- function(positions, link_d, min_neighbours = 2){
   # min_neighbours: integer
   #   Minium number of neighbours in the radius < link_d needed to link cases
   #   as friends.
-  #
+  # keep_null_tests: numeric of logical
+  #   Whether to remove or not missings. If numeric, provide value to impute.
+  # verbose: logical
+  #   If TRUE, print information of the process; else, do not print.
   # Returns:
   #   --------
   # cluster_id: numeric vector
   #   Vector of the cluster IDs of each position, with 0 for those
   #   without a cluster. Returns empty numeric vector if positions vector is empty.
-
+  
+  # Remove or impute missings
+  positions = clean_unknown_data(positions, keep_null_tests,verbose)
+  if(verbose){print("Perform DBSCAN")}
   #Create cluster id
   cluster_id <- integer(dim(positions)[1])
   #Query KDTree

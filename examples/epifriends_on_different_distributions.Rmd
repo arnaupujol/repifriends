@@ -13,6 +13,7 @@ We first import the packages required from this RMarkdown.
 
 ```{r}
 library("RANN")
+library("data.table")
 library("readxl")
 library("chron")
 library("ggplot2")
@@ -21,6 +22,49 @@ library("ggpubr")
 library("epifriends")
 ```
 
+Auxiliar functions to be included in main package:
+
+```{r}
+clean_unknown_data <- function(positions, keep_null_tests,verbose){
+  # This method removes all the cases with any missing value
+  # in either x or y.
+  #
+  # Parameters:
+  # -----------
+  # positions: list of class data.table
+  #   A list with the position parameters we want to query with shape (n,2),
+  #   where n is the number of positions.
+  # keep_null_tests: numeric of logical
+  #   Whether to remove or not missings. If numeric, provide value to impute.
+  # verbose: logical
+  #   If TRUE, print information of the process; else, do not print.
+  #
+  # Returns:
+  # --------
+  # indeces: List of class data.table
+  #   List with imputed or removed missing values.
+  
+  #Change infinites to missings
+  positions[sapply(positions, is.infinite)] <- NA
+  
+  if(is.numeric(keep_null_tests)){
+    if(verbose){print(paste0(
+      "Replacing missing positions with value: ",as.character(keep_null_tests))
+    )}
+    positions <- data.table::setnafill(positions, fill=keep_null_tests)
+  }else if(keep_null_tests == FALSE){
+    positions <- positions[!(is.na(x) | is.na(y))]
+  }else if(keep_null_tests == TRUE){
+    if(verbose){print("Missing values in positions kept as NULL")}
+  }else{
+    stop("Argument keep_null_tests has an invalid argument")
+  }
+  
+  return(positions)
+  
+}
+```
+  
 Some functions in order to plot are defined:
 
 ```{r}
@@ -143,26 +187,37 @@ The data created with the epifriends_on_different_distributions.ipynb file of py
 
 
 ```{r, warning=FALSE}
-setwd("C:/Users/user/Desktop/Uni/Master/TFM/repifriends")
-datarand <- read.csv("data\\mock_data_rand.csv")
-datasin <- read.csv("data\\mock_data_sin.csv")
-dataclus <- read.csv("data\\mock_data_clustered.csv")
+setwd("./../")
+datarand <- data.table(read.csv("./data/mock_data_rand.csv"))
+datasin <- data.table(read.csv("./data/mock_data_sin.csv"))
+dataclus <- data.table(read.csv("./data/mock_data_clustered.csv"))
+
+# Set some random missings
+datarand[X %in% sample(X, 5, TRUE), x := NA]
+datasin[X %in% sample(X, 5, TRUE), y := NA]
+dataclus[X %in% sample(X, 5, TRUE), x := NA]
+dataclus[X %in% sample(X, 5, TRUE), y := NA]
+
+# Clean missings
+datarand <- clean_unknown_data(datarand, FALSE,FALSE)
+datasin <- clean_unknown_data(datasin, FALSE,FALSE)
+dataclus <- clean_unknown_data(dataclus, FALSE,FALSE)
 ```
 
 In order to work better with the data, some subdatasets are created:
 
 ```{r}
-position_rand <- datarand[3:4]
+position_rand <- datarand[,3:4]
 positive_rand = (datarand$test == 1)
-test_rand <- datarand[5]
+test_rand <- datarand[,5]
 
-position_sin <- datasin[3:4]
+position_sin <- datasin[,3:4]
 positive_sin = (datasin$test == 1)
-test_sin <- datasin[5]
+test_sin <- datasin[,5]
 
-position_clus <- dataclus[3:4]
+position_clus <- dataclus[,3:4]
 positive_clus = (dataclus$test == 1)
-test_clus <- dataclus[5]
+test_clus <- dataclus[,5]
 ```
 
 This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:

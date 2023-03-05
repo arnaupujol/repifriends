@@ -14,6 +14,8 @@
 #' @param min_pos Threshold of minimum number of positive cases in clusters applied.
 #' @param min_total Threshold of minimum number of cases in clusters applied.
 #' @param min_pr Threshold of minimum positivity rate in clusters applied.
+#' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
+#' @param verbose If TRUE, print information of the process; else, do not print.
 #'
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
 #'#'
@@ -51,7 +53,7 @@
 
 catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0){
+                      min_pr = 0, keep_null_tests = FALSE, verbose = FALSE){
   # This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean
   # positivity rate (PR) of each cluster extended with the non-infected cases
   # closer than the link_d.
@@ -79,6 +81,10 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   #   Threshold of minimum number of cases in clusters applied.
   # min_pr: double
   #   Threshold of minimum positivity rate in clusters applied.
+  # keep_null_tests: numeric of logical
+  #   Whether to remove or not missings. If numeric, provide value to impute.
+  # verbose: logical
+  #   If TRUE, print information of the process; else, do not print.
   #
   # Returns:
   #   --------
@@ -93,6 +99,9 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   #   P-value corresponding to cluster_id.
   # epifriends_catalogue: List
   #   Catalogue of the epifriends clusters and their main characteristics.
+  
+  # Remove or impute missings
+  positions = clean_unknown_data(positions, keep_null_tests,verbose)
 
   #Define positions of positive cases
   positive_positions <- positions[test_result == 1,]
@@ -138,7 +147,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     ntotal <- length(total_friends_indeces)
     pval <- 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
     #setting EpiFRIenDs catalogue
-    if(pval < max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
+    if(pval <= max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)
       cluster_id[cluster_id_indeces] <- next_id
       next_id = next_id + 1
