@@ -156,9 +156,9 @@ dataclus[X %in% sample(X, 5, TRUE), x := NA]
 dataclus[X %in% sample(X, 5, TRUE), y := NA]
 
 # Clean missings
-datarand <- clean_unknown_data(datarand, FALSE,FALSE)
-datasin <- clean_unknown_data(datasin, FALSE,FALSE)
-dataclus <- clean_unknown_data(dataclus, FALSE,FALSE)
+datarand <- clean_unknown_data(datarand)
+datasin <- clean_unknown_data(datasin)
+dataclus <- clean_unknown_data(dataclus)
 ```
 
 In order to work better with the data, some subdatasets are created:

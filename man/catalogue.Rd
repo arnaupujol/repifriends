@@ -13,7 +13,9 @@ catalogue(
   max_p = 1,
   min_pos = 2,
   min_total = 2,
-  min_pr = 0
+  min_pr = 0,
+  keep_null_tests = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -34,6 +36,10 @@ catalogue(
 \item{min_total}{Threshold of minimum number of cases in clusters applied.}
 
 \item{min_pr}{Threshold of minimum positivity rate in clusters applied.}
+
+\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{verbose}{If TRUE, print information of the process; else, do not print.}
 }
 \value{
 List with the next objects:

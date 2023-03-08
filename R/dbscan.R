@@ -32,7 +32,7 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- dbscan(pos, 2 ,3)
 
-dbscan <- function(positions, link_d, min_neighbours = 2, 
+dbscan <- function(positions, link_d, min_neighbours = 2, test = NULL,
                    keep_null_tests = FALSE, verbose = FALSE){
   # This method finds the DBSCAN clusters from a set of positions and
   # returns their cluster IDs.
@@ -58,7 +58,7 @@ dbscan <- function(positions, link_d, min_neighbours = 2,
   #   without a cluster. Returns empty numeric vector if positions vector is empty.
   
   # Remove or impute missings
-  positions = clean_unknown_data(positions, keep_null_tests,verbose)
+  positions = clean_unknown_data(positions,test,keep_null_tests,verbose)
   if(verbose){print("Perform DBSCAN")}
   #Create cluster id
   cluster_id <- integer(dim(positions)[1])

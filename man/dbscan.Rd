@@ -4,7 +4,13 @@
 \alias{dbscan}
 \title{This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.}
 \usage{
-dbscan(positions, link_d, min_neighbours = 2)
+dbscan(
+  positions,
+  link_d,
+  min_neighbours = 2,
+  keep_null_tests = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
@@ -12,6 +18,10 @@ dbscan(positions, link_d, min_neighbours = 2)
 \item{link_d:}{The linking distance to connect cases. Should be in the same scale as the positions.}
 
 \item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+
+\item{keep_null_tests:}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
 \value{
 cluster_id: Vector of the cluster IDs of each position, with 0 for those without a cluster. Returns empty numeric vector if positions vector is empty.

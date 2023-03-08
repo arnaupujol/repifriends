@@ -14,10 +14,12 @@
 #' @return Data.table with cleaned/imputed coordinates based on user choose.
 #' @export
 #' #'
+#' @import data.table
 #'
 #' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
 #'
 #' @examples
+
 #' # Required packages
 #' if(!require("RANN")) install.packages("RANN")
 #' library("RANN")
@@ -28,14 +30,14 @@
 #' pos <- data.table(x,y)
 #'
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
-#' db <- clean_unknown_data(pos, FALSE, FALSE)
+#' db <- clean_unknown_data(pos)
 #'
 clean_unknown_data <- function(
     positions, 
     test = NULL,
-    keep_null_tests = NULL, 
-    cols_remove = c("x", "y"),
-    verbose = FALSE){
+    keep_null_tests = TRUE, 
+    verbose = FALSE,
+    cols_remove = c("x", "y")){
   # This method removes all the cases with any missing value
   # in either x or y.
   #
@@ -57,32 +59,31 @@ clean_unknown_data <- function(
   
   #Change infinites to missings
   positions[sapply(positions, is.infinite)] <- NA
-  positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
-  
+
   if(is.null(test)){
     positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
-    return(list(positions, NULL))
+    return(positions)
   }else{
     col_impute = "test"
     positions$test <- test
     positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
-      if(is.numeric(keep_null_tests)){
-        if(verbose){print(paste0(
+    if(is.numeric(keep_null_tests)){
+      if(verbose){print(paste0(
           "Replacing missing positions with value: ",as.character(keep_null_tests))
         )}
-        positions <- data.table::setnafill(positions, fill=keep_null_tests)
-      }else if(keep_null_tests == FALSE){
+      positions <- data.table::setnafill(positions, fill=keep_null_tests)
+    }else if(keep_null_tests == FALSE){
         positions <- positions[!is.na(rowSums(positions[,..col_impute]))]
-      }else if(keep_null_tests == TRUE){
+    }else if(keep_null_tests == TRUE){
         if(verbose){print("Missing values in positions kept as NULL")}
-      }else{
+    }else{
         stop("Argument keep_null_tests has an invalid argument")
-      }
+    }
   }
   
   test <- positions$test
   positions[, test := NULL]
   
-  return(list(positions, test))
+  return(list("position" = position, "test" = test))
   
 }

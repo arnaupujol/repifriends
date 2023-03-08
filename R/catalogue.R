@@ -101,7 +101,9 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   #   Catalogue of the epifriends clusters and their main characteristics.
   
   # Remove or impute missings
-  positions = clean_unknown_data(positions, keep_null_tests,verbose)
+  pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
+  positions = pos$positions
+  test_result = pos$test
 
   #Define positions of positive cases
   positive_positions <- positions[test_result == 1,]
