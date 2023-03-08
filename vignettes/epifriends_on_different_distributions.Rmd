@@ -22,49 +22,6 @@ library("ggpubr")
 library("epifriends")
 ```
 
-Auxiliar functions to be included in main package:
-
-```{r}
-clean_unknown_data <- function(positions, keep_null_tests,verbose){
-  # This method removes all the cases with any missing value
-  # in either x or y.
-  #
-  # Parameters:
-  # -----------
-  # positions: list of class data.table
-  #   A list with the position parameters we want to query with shape (n,2),
-  #   where n is the number of positions.
-  # keep_null_tests: numeric of logical
-  #   Whether to remove or not missings. If numeric, provide value to impute.
-  # verbose: logical
-  #   If TRUE, print information of the process; else, do not print.
-  #
-  # Returns:
-  # --------
-  # indeces: List of class data.table
-  #   List with imputed or removed missing values.
-  
-  #Change infinites to missings
-  positions[sapply(positions, is.infinite)] <- NA
-  
-  if(is.numeric(keep_null_tests)){
-    if(verbose){print(paste0(
-      "Replacing missing positions with value: ",as.character(keep_null_tests))
-    )}
-    positions <- data.table::setnafill(positions, fill=keep_null_tests)
-  }else if(keep_null_tests == FALSE){
-    positions <- positions[!(is.na(x) | is.na(y))]
-  }else if(keep_null_tests == TRUE){
-    if(verbose){print("Missing values in positions kept as NULL")}
-  }else{
-    stop("Argument keep_null_tests has an invalid argument")
-  }
-  
-  return(positions)
-  
-}
-```
-  
 Some functions in order to plot are defined:
 
 ```{r}

@@ -5,7 +5,7 @@
 #################################################################################################
 #' This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.
 #'
-#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
+#' @param positions data.table with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param keep_null_tests: Whether to remove or not missings. If numeric, provide value to impute.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
@@ -30,7 +30,12 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- clean_unknown_data(pos, FALSE, FALSE)
 #'
-clean_unknown_data <- function(positions, keep_null_tests,verbose){
+clean_unknown_data <- function(
+    positions, 
+    test = NULL,
+    keep_null_tests = NULL, 
+    cols_remove = c("x", "y"),
+    verbose = FALSE){
   # This method removes all the cases with any missing value
   # in either x or y.
   #
@@ -39,6 +44,7 @@ clean_unknown_data <- function(positions, keep_null_tests,verbose){
   # positions: list of class data.table
   #   A list with the position parameters we want to query with shape (n,2),
   #   where n is the number of positions.
+  # test: list with the tests
   # keep_null_tests: numeric of logical
   #   Whether to remove or not missings. If numeric, provide value to impute.
   # verbose: logical
@@ -51,20 +57,32 @@ clean_unknown_data <- function(positions, keep_null_tests,verbose){
   
   #Change infinites to missings
   positions[sapply(positions, is.infinite)] <- NA
+  positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
   
-  if(is.numeric(keep_null_tests)){
-    if(verbose){print(paste0(
-      "Replacing missing positions with value: ",as.character(keep_null_tests))
-    )}
-    positions <- data.table::setnafill(positions, fill=keep_null_tests)
-  }else if(keep_null_tests == FALSE){
-    positions <- positions[!(is.na(x) | is.na(y))]
-  }else if(keep_null_tests == TRUE){
-    if(verbose){print("Missing values in positions kept as NULL")}
+  if(is.null(test)){
+    positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
+    return(list(positions, NULL))
   }else{
-    stop("Argument keep_null_tests has an invalid argument")
+    col_impute = "test"
+    positions$test <- test
+    positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
+      if(is.numeric(keep_null_tests)){
+        if(verbose){print(paste0(
+          "Replacing missing positions with value: ",as.character(keep_null_tests))
+        )}
+        positions <- data.table::setnafill(positions, fill=keep_null_tests)
+      }else if(keep_null_tests == FALSE){
+        positions <- positions[!is.na(rowSums(positions[,..col_impute]))]
+      }else if(keep_null_tests == TRUE){
+        if(verbose){print("Missing values in positions kept as NULL")}
+      }else{
+        stop("Argument keep_null_tests has an invalid argument")
+      }
   }
   
-  return(positions)
+  test <- positions$test
+  positions[, test := NULL]
+  
+  return(list(positions, test))
   
 }
