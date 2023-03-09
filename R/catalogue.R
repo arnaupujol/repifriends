@@ -102,11 +102,11 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   
   # Remove or impute missings
   pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
-  positions = pos$positions
-  test_result = pos$test
+  positions = pos$position
+  test_result = data.frame("test_result" = pos$test)
 
   #Define positions of positive cases
-  positive_positions <- positions[test_result == 1,]
+  positive_positions <- positions[which(test_result == 1),]
   #Computing cluster_id if needed
   if(is.null(cluster_id)){
     cluster_id = dbscan(positive_positions, link_d, min_neighbours = min_neighbours)

@@ -7,9 +7,9 @@
 clean_unknown_data(
   positions,
   test = NULL,
-  keep_null_tests = NULL,
-  cols_remove = c("x", "y"),
-  verbose = FALSE
+  keep_null_tests = TRUE,
+  verbose = FALSE,
+  cols_remove = c("x", "y")
 )
 }
 \arguments{

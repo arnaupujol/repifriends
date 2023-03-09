@@ -8,6 +8,7 @@ dbscan(
   positions,
   link_d,
   min_neighbours = 2,
+  test = NULL,
   keep_null_tests = FALSE,
   verbose = FALSE
 )
