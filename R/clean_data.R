@@ -84,6 +84,6 @@ clean_unknown_data <- function(
   test <- positions$test
   positions[, test := NULL]
   
-  return(list("position" = position, "test" = test))
+  return(list("position" = positions, "test" = test))
   
 }
