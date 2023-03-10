@@ -1,9 +1,7 @@
-# Eric Matamoros Morales (Ver 04-03-2023)
+# This source code is licensed under the GNU GENERAL PUBLIC LICENSE license found in the
+# LICENSE file in the root directory of this source tree.
 
-##################################################################################################
-# CLEAN MISSING DATA
-#################################################################################################
-#' This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.
+#' This method imputes or removes missing data
 #'
 #' @param positions data.table with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param keep_null_tests: Whether to remove or not missings. If numeric, provide value to impute.
@@ -11,18 +9,16 @@
 #'
 #' @details This function cleans the position data if contains missing values. User can choose whether to remove the missings or impute them with a specific value.
 #'
-#' @return Data.table with cleaned/imputed coordinates based on user choose.
+#' @return Data.table with cleaned/imputed variables based on user choose.
+#' 
 #' @export
-#' #'
-#' @import data.table
-#'
+#' 
 #' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
 #'
 #' @examples
-
 #' # Required packages
-#' if(!require("RANN")) install.packages("RANN")
-#' library("RANN")
+#' if(!require("data.table")) install.packages("data.table")
+#' library("data.table")
 #'
 #' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 #' x <- c(1,2,3,4,7.5,8,8.5,9,10,NA,13.1,13.2,13.3,14,15,30)
@@ -31,31 +27,13 @@
 #'
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- clean_unknown_data(pos)
-#'
+#' 
 clean_unknown_data <- function(
     positions, 
     test = NULL,
     keep_null_tests = TRUE, 
     verbose = FALSE,
     cols_remove = c("x", "y")){
-  # This method removes all the cases with any missing value
-  # in either x or y.
-  #
-  # Parameters:
-  # -----------
-  # positions: list of class data.table
-  #   A list with the position parameters we want to query with shape (n,2),
-  #   where n is the number of positions.
-  # test: list with the tests
-  # keep_null_tests: numeric of logical
-  #   Whether to remove or not missings. If numeric, provide value to impute.
-  # verbose: logical
-  #   If TRUE, print information of the process; else, do not print.
-  #
-  # Returns:
-  # --------
-  # indeces: List of class data.table
-  #   List with imputed or removed missing values.
   
   #Change infinites to missings
   positions[sapply(positions, is.infinite)] <- NA

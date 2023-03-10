@@ -2,7 +2,7 @@
 % Please edit documentation in R/clean_data.R
 \name{clean_unknown_data}
 \alias{clean_unknown_data}
-\title{This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.}
+\title{This method imputes or removes missing data}
 \usage{
 clean_unknown_data(
   positions,
@@ -20,18 +20,18 @@ clean_unknown_data(
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
 \value{
-Data.table with cleaned/imputed coordinates based on user choose.
+Data.table with cleaned/imputed variables based on user choose.
 }
 \description{
-This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.
+This method imputes or removes missing data
 }
 \details{
 This function cleans the position data if contains missing values. User can choose whether to remove the missings or impute them with a specific value.
 }
 \examples{
 # Required packages
-if(!require("RANN")) install.packages("RANN")
-library("RANN")
+if(!require("data.table")) install.packages("data.table")
+library("data.table")
 
 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,NA,13.1,13.2,13.3,14,15,30)

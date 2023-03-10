@@ -1,8 +1,6 @@
-# Mikel Majewski Etxeberria (Ver 28-11-2022)
+# This source code is licensed under the GNU GENERAL PUBLIC LICENSE license found in the
+# LICENSE file in the root directory of this source tree.
 
-##################################################################################################
-# CREATION OF A TEMPORAL CATALOGUE WITH TEST AND TIME VALUES.
-#################################################################################################
 #' This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.
 #'
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
@@ -24,18 +22,17 @@
 #' @param get_timelife It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.
 #'
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
-#'#'
+#'
 #' @return  List with the next objects:
 #' temporal_catalogues: list of catalogues
 #'   List of EpiFRIenDs catalogues, where each element contains the catalogue in each
 #'   time step.
 #' mean_date: vector of chorn date times.
-#'   List of dates corresponding to the median time in each time window
-# '  Save dates in a temporal format.
+#'  List of dates corresponding to the median time in each time window
+#'  Save dates in a temporal format.
+#'
 #' @export
-#' #'
-#'
-#'
+#' 
 #' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
 #'
 #' @examples
@@ -61,71 +58,11 @@
 #'
 #' # Creation of temporal catalogue for this data.
 #' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
-
-
-
-
+#' 
 temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighbours = 2,
                                time_width, min_date = NULL, max_date = NULL, time_steps = 1,
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
                                add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE){
-  # This method generates a list of EpiFRIenDs catalogues representing different time frames
-  # by including only cases within a time window that moves within each time step.
-  #
-  # Parameters:
-  #   -----------
-  # positions: List of class data.frame
-  #   A list with the position parameters we want to query with shape (n,2),
-  #   where n is the number of positions.
-  # test_result: List of class data.frame
-  #   A list with the test results (0 or 1).
-  # dates: string vector
-  #   Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.
-  # link_d: double
-  #   The linking distance to connect cases.
-  # min_neighbours: integer
-  #   Minium number of neighbours in the radius < link_d needed to link cases
-  #   as friends.
-  # time_width: integer
-  #   Number of days of the time window used to select cases in each time step.
-  # min_date: Character
-  #   Initial date used in the first time step and time window selection. In format 'y-m-d h:m:s'.
-  # max_date: Date
-  #   Final date to analyse, defining the last time window as the one fully overlapping
-  #   the data. In format 'y-m-d h:m:s'.
-  # time_steps: integer
-  #   Number of days that the time window is shifted in each time step.
-  # max_p: double
-  #   Maximum value of the p-value to consider the cluster detection.
-  # min_pos: integer
-  #   Threshold of minimum number of positive cases in clusters applied.
-  # min_total: integer
-  #   Threshold of minimum number of cases in clusters applied.
-  # min_pr: double
-  #   Threshold of minimum positivity rate in clusters applied
-  # add_temporal_id: Boolean
-  #   Boolean that indicates if we want to add a temporal id to the hotspots
-  #   indicating which hotspots are near in time and space.
-  # linking_time: integer
-  #   Maximum number of timesteps of distance to link hotspots with
-  #   the same temporal ID. Only necesary if add_temporal_id is TRUE.
-  # linking_dist: double
-  #   Linking distance used to link the clusters from the different
-  #   time frames. Only necesary if add_temporal_id is TRUE.
-  # get_timelife: Boolean
-  #   It specifies if the time periods and timelife of clusters are obtained.
-  #   Only necesary if add_temporal_id is TRUE.
-  #
-  # Returns:
-  #   --------
-  # returns: list
-  #   List that contais the two return variables.
-  # temporal_catalogues: list of catalogues
-  #   List of EpiFRIenDs catalogues, where each element contains the catalogue in each
-  #   time step.
-  # mean_date: vector of chorn date times.
-  #   List of dates corresponding to the median time in each time window
-  #   Save dates in a temporal format.
 
   #Case of empty list of dates
   if(length(dates) == 0){
@@ -189,40 +126,42 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   return(returns)
 }
 
-
+#' This method calculates the Euclidean distance between two positions.
+#'
+#' @param pos_a First position.
+#' @param pos_b: Second position.
+#'
+#' @return Distance between positions.
+#' 
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' pos_a <- c(1,2)
+#' pos_b <- c(4,7)
+#'
+#' # Compute distances between two positions
+#' x <- distance(pos_a, pos_b)
+#' 
 distance <- function(pos_a, pos_b){
-  # This method calculates the Euclidean distance between two positions.
-  #
-  # Parameters:
-  # -----------
-  # pos_a: vector
-  #     First position.
-  # pos_b: vector
-  #     Second position.
-  #
-  # Returns:
-  # --------
-  # dist: double
-  #     Distance between positions.
   dist = sqrt(sum((pos_a - pos_b)**2))
   return(dist)
 }
 
+#' This method gives the unique values of a variable in a list of lists(temporal catalogues with temporal_id in our case).
+#'
+#' @param df_list List of lists(temporal catalogues with temporal_id in our case).
+#' @param label Name of variable to select.
+#'
+#' @return List of unique values of the selected variable over all lists (temporal catalogues with temporal_id in our case) from the list.
+#' 
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
 get_label_list <- function(df_list, label = "tempID"){
-  # This method gives the unique values of a variable in a list
-  # of lists(temporal catalogues with temporal_id in our case).
-  #
-  # Parameters:
-  #   -----------
-  # df_list: list
-  #   List of lists(temporal catalogues with temporal_id in our case).
-  # label: string
-  #   Name of variable to select.
-  #
-  # Returns:
-  #   --------
-  # label_list: numeric vector
-  #   List of unique values of the selected variable over all lists (temporal catalogues with temporal_id in our case) from the list.
   for(i in 1:length(df_list)){
     mask = df_list[[i]][label][[1]][!is.na(df_list[[i]][label][[1]])]
     if(i == 1){
@@ -234,23 +173,17 @@ get_label_list <- function(df_list, label = "tempID"){
   return(label_list)
 }
 
+#' This method obtains the first and last time frames for each temporal ID from a list of EpiFRIenDs catalogues and the corresponding timelife.
+#'
+#' @param catalogue_list List of lists (temporal catalogues with temporal_id in our case).
+#'
+#' @return List of hotspot catalogues with the added fields 'first_timestep', 'last_timestep' and 'lifetime'.
+#' 
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
 get_lifetimes <- function(catalogue_list){
-  # This method obtains the first and last time frames for each
-  # temporal ID from a list of EpiFRIenDs catalogues and the corresponding
-  # timelife.
-  #
-  # Parameters:
-  # -----------
-  # catalogue_list: list
-  #     List of EpiFRIenDs catalogues, each element of the list
-  #     corresponding to the EpiFRIenDs catalogue of each timestep.
-  #
-  # Returns:
-  # --------
-  # catalogue_list: list
-  #     List of hotspot catalogues with the added fields 'first_timestep',
-  #     'last_timestep' and 'lifetime'.
-
   #getting list of temporal IDs appearing in catalogue_list
   tempid_list <- get_label_list(catalogue_list, label = "tempID")
   #Creating empty columns for first timestep, last timestep and lifteime
@@ -278,31 +211,25 @@ get_lifetimes <- function(catalogue_list){
   return(catalogue_list)
 }
 
-add_temporal_id <- function(catalogue_list, linking_time, linking_dist, get_timelife = TRUE){
-  # This method generates the temporal ID of EpiFRIenDs clusters by linking
-  # clusters from different time frames, assigning the same temporal ID to
-  # them when they are close enough in time and space.
-  #
-  # Parameters:
-  #   -----------
-  # catalogue_list: list of catalogues
-  #   List of EpiFRIenDs catalogues, each element of the list
-  #   corresponding to the catalogue of each timestep.
-  # linking_time: int
-  #   Maximum number of timesteps of distance to link hotspots with
-  #   the same temporal ID.
-  # linking_dist: double
-  #   Linking distance used to link the clusters from the different
-  #   time frames.
-  # get_timelife: Boolean
-  #   It specifies if the time periods and timelife of clusters are obtained.
-  #
-  # Returns:
-  #   --------
-  # catalogue_list: list of catalogues
-  #   List of EpiFRIenDs catalogues with the added variable 'tempID'
-  #   (and optionally the variables 'first_timestep', 'last_timestep' and 'lifetime').
-
+#' This method generates the temporal ID of EpiFRIenDs clusters by linking clusters from different time frames, assigning the same temporal ID to them when they are close enough in time and space.
+#'
+#' @param catalogue_list List of EpiFRIenDs catalogues, each element of the list corresponding to the catalogue of each timestep.
+#' @param linking_time Maximum number of timesteps of distance to link hotspots with the same temporal ID.
+#' @param linking_dist Linking distance used to link the clusters from the different time frames.
+#' @param get_timelife It specifies if the time periods and timelife of clusters are obtained.
+#' 
+#' @return List of EpiFRIenDs catalogues with the added variable 'tempID' (and optionally the variables 'first_timestep', 'last_timestep' and 'lifetime').
+#' 
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+add_temporal_id <- function(
+    catalogue_list, 
+    linking_time, 
+    linking_dist, 
+    get_timelife = TRUE){
+  
   #Case of empty catalogue list
   if(length(catalogue_list) == 0){
     return()

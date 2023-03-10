@@ -1,8 +1,6 @@
-# Mikel Majewski Etxeberria(Ver 28-11-2022)
+# This source code is licensed under the GNU GENERAL PUBLIC LICENSE license found in the
+# LICENSE file in the root directory of this source tree.
 
-##################################################################################################
-# CREATION OF CATALOGUE WITH TEST VALUES.
-#################################################################################################
 #' This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.
 #'
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
@@ -15,10 +13,12 @@
 #' @param min_total Threshold of minimum number of cases in clusters applied.
 #' @param min_pr Threshold of minimum positivity rate in clusters applied.
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
-#' @param verbose If TRUE, print information of the process; else, do not print.
+#' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
+#' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
+#' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
-#'#'
+#'
 #' @return  List with the next objects:
 #' cluster_id: numeric vector
 #'   Vector of the cluster IDs of each position, with 0 for those
@@ -29,10 +29,9 @@
 #'   P-value corresponding to cluster_id.
 #' epifriends_catalogue: List
 #'   Catalogue of the epifriends clusters and their main characteristics.
+#'   
 #' @export
-#' #'
-#'
-#'
+#' 
 #' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
 #'
 #' @examples
@@ -50,60 +49,24 @@
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- catalogue(pos, test, 2)
-
+#' 
 catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, keep_null_tests = FALSE, verbose = FALSE){
-  # This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean
-  # positivity rate (PR) of each cluster extended with the non-infected cases
-  # closer than the link_d.
-  #
-  # Parameters:
-  #   -----------
-  # positions: List of class data.frame
-  #   A list with the position parameters we want to query with shape (n,2),
-  #   where n is the number of positions.
-  # test_result: List of class data.frame
-  #   A list with the test results (0 or 1).
-  # link_d: double
-  #   The linking distance to connect cases.
-  # cluster_id: numeric vector
-  #   Vector of the cluster IDs of each position, with 0 for those
-  #   without a cluster. Give NULL if cluster_id must be calculated.
-  # min_neighbours: integer
-  #   Minium number of neighbours in the radius < link_d needed to link cases
-  #   as friends.
-  # max_p: double
-  #   Maximum value of the p-value to consider the cluster detection.
-  # min_pos: integer
-  #   Threshold of minimum number of positive cases in clusters applied.
-  # min_total: integer
-  #   Threshold of minimum number of cases in clusters applied.
-  # min_pr: double
-  #   Threshold of minimum positivity rate in clusters applied.
-  # keep_null_tests: numeric of logical
-  #   Whether to remove or not missings. If numeric, provide value to impute.
-  # verbose: logical
-  #   If TRUE, print information of the process; else, do not print.
-  #
-  # Returns:
-  #   --------
-  # return: list
-  #   List which contains all the next objects. If there are not clusters an empty catalogue is returned with NULL values.
-  # cluster_id: numeric vector
-  #   Vector of the cluster IDs of each position, with 0 for those
-  #   without a cluster.
-  # mean_pr_cluster: numeric vector
-  #   Mean PR corresponding to cluster_id.
-  # pval_cluster: numeric vector
-  #   P-value corresponding to cluster_id.
-  # epifriends_catalogue: List
-  #   Catalogue of the epifriends clusters and their main characteristics.
+                      min_pr = 0, keep_null_tests = FALSE, in_latlon = FALSE, 
+                      to_epsg = NULL, verbose = FALSE){
   
   # Remove or impute missings
   pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
   positions = pos$position
   test_result = data.frame("test_result" = pos$test)
+  
+  #Defining 2d-positions
+  positions = get_2dpositions(
+    x = positions$x, 
+    y = positions$y, 
+    in_latlon = in_latlon, 
+    to_epsg = to_epsg,
+    verbose = verbose)
 
   #Define positions of positive cases
   positive_positions <- positions[which(test_result == 1),]

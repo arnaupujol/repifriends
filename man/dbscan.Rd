@@ -10,6 +10,8 @@ dbscan(
   min_neighbours = 2,
   test = NULL,
   keep_null_tests = FALSE,
+  in_latlon = FALSE,
+  to_epsg = NULL,
   verbose = FALSE
 )
 }
@@ -21,6 +23,10 @@ dbscan(
 \item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
 
 \item{keep_null_tests:}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+
+\item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
@@ -45,6 +51,7 @@ pos <- data.frame(x,y)
 
 # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 db <- dbscan(pos, 2 ,3)
+
 }
 \author{
 Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.

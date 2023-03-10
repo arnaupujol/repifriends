@@ -15,6 +15,8 @@ catalogue(
   min_total = 2,
   min_pr = 0,
   keep_null_tests = FALSE,
+  in_latlon = FALSE,
+  to_epsg = NULL,
   verbose = FALSE
 )
 }
@@ -39,7 +41,11 @@ catalogue(
 
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
 
-\item{verbose}{If TRUE, print information of the process; else, do not print.}
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+
+\item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
+
+\item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
 \value{
 List with the next objects:
@@ -58,7 +64,6 @@ This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the me
 }
 \details{
 The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
-#'
 }
 \examples{
 # Required packages
@@ -75,6 +80,7 @@ test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
 
 # Creation of catalogue for this positions, linking distance 2 and default values.
 cat <- catalogue(pos, test, 2)
+
 }
 \author{
 Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.

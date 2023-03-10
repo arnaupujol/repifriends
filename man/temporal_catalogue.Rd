@@ -66,13 +66,13 @@ temporal_catalogues: list of catalogues
   time step.
 mean_date: vector of chorn date times.
   List of dates corresponding to the median time in each time window
+ Save dates in a temporal format.
 }
 \description{
 This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.
 }
 \details{
 The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
-#'
 }
 \examples{
 # Required packages
@@ -97,6 +97,7 @@ dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","20
 
 # Creation of temporal catalogue for this data.
 tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
+
 }
 \author{
 Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
