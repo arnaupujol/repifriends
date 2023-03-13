@@ -52,13 +52,13 @@
 #' 
 catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, keep_null_tests = FALSE, in_latlon = FALSE, 
-                      to_epsg = NULL, verbose = FALSE){
+                      min_pr = 0, method = "kmeans", keep_null_tests = FALSE, 
+                      in_latlon = FALSE,to_epsg = NULL, verbose = FALSE){
   
   # Remove or impute missings
   pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
   positions = pos$position
-  test_result = data.frame("test_result" = pos$test)
+  test_result = data.table("test" = pos$test)
   
   #Defining 2d-positions
   positions = get_2dpositions(
@@ -67,13 +67,18 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     in_latlon = in_latlon, 
     to_epsg = to_epsg,
     verbose = verbose)
-
+  
+  #Define local prevalence
+  positions <- define_loc_prev(positions, test_result,link_d=link_d, method = method)
+  positions[, id := 1:nrow(positions)]
+  
   #Define positions of positive cases
   positive_positions <- positions[which(test_result == 1),]
   #Computing cluster_id if needed
   if(is.null(cluster_id)){
     cluster_id = dbscan(positive_positions, link_d, min_neighbours = min_neighbours)
   }
+  
   #Define total number of positive cases
   total_positives = sum(test_result)
   #Define total number of cases
@@ -106,11 +111,36 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     all_friends_indeces <- find_indeces(positive_positions[cluster_id_indeces,], link_d, positions)
     #get unique values of such indeces
     total_friends_indeces <- sort(unique(unlist(all_friends_indeces)))
+    browser()
+    
     #get positivity rate from all the unique indeces
-    mean_pr <- mean(test_result[total_friends_indeces,])
+    mean_pr <- test_result[total_friends_indeces, .(mean(test))][[1]]
     npos <- sum(test_result[total_friends_indeces,])
     ntotal <- length(total_friends_indeces)
-    pval <- 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
+    
+    if(method == "centroid"){
+      # Find centroid of X & Y
+      centroid_x <- mean(positions[total_friends_indeces]$x)
+      centroid_y <- mean(positions[total_friends_indeces]$y)
+      centroid_df <- data.table("x" = centroid_x, "y" = centroid_y)
+      
+      # Compute the distance between the centroid and each row of the dataframe
+      combs <- as.data.table(melt(
+        as.matrix(dist(rbind(centroid_df, positions[,.(x, y)]))), 
+        varnames = c("n1", "n2")))
+      combs[, n2 := n2 -1 ]
+      combs <- combs[n1 == 1]
+      setorderv(combs, cols = "value", order=1L)
+      
+      # Define for local prevalence calculus
+      thr_expand = 2
+      limit_dist = 0.5
+      combs <- combs[2:(2+ntotal * 2),]
+      combs <- combs[value <= limit_dist]
+      prevalence <- sum(positions[combs$n2]$test) / nrow(positions[combs$n2])
+    }
+    
+    pval <- 1 - pbinom(npos - 1, ntotal, prevalence)
     #setting EpiFRIenDs catalogue
     if(pval <= max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)
