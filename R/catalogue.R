@@ -15,6 +15,7 @@
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
+#' @param n_sim: Number of observations in each of the simulations to be performed. Will help during p-value calculus.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
@@ -52,8 +53,9 @@
 #' 
 catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, method = "kmeans", keep_null_tests = FALSE, 
-                      in_latlon = FALSE,to_epsg = NULL, verbose = FALSE){
+                      min_pr = 0, thr_expand= 2, thr_dist = link_d * 2, 
+                      method = "kmeans",keep_null_tests = FALSE,in_latlon = FALSE,
+                      to_epsg = NULL, n_sim = 10000, verbose = FALSE){
   
   # Remove or impute missings
   pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
@@ -67,9 +69,6 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     in_latlon = in_latlon, 
     to_epsg = to_epsg,
     verbose = verbose)
-  
-  #Define local prevalence
-  positions <- define_loc_prev(positions, test_result,link_d=link_d, method = method)
   positions[, id := 1:nrow(positions)]
   
   #Define positions of positive cases
@@ -104,6 +103,10 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   if(length(sort_unici) == 0){
     return(epifriends_catalogue)
   }
+  
+  if(method == "kmeans"){
+    pos_clusters <- compute_kmeans(positions, test_result)
+  }
   for(i in 1:length(sort_unici)){
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
@@ -111,36 +114,37 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     all_friends_indeces <- find_indeces(positive_positions[cluster_id_indeces,], link_d, positions)
     #get unique values of such indeces
     total_friends_indeces <- sort(unique(unlist(all_friends_indeces)))
-    browser()
-    
+
     #get positivity rate from all the unique indeces
     mean_pr <- test_result[total_friends_indeces, .(mean(test))][[1]]
     npos <- sum(test_result[total_friends_indeces,])
     ntotal <- length(total_friends_indeces)
     
-    if(method == "centroid"){
-      # Find centroid of X & Y
-      centroid_x <- mean(positions[total_friends_indeces]$x)
-      centroid_y <- mean(positions[total_friends_indeces]$y)
-      centroid_df <- data.table("x" = centroid_x, "y" = centroid_y)
+    # Approaches to estimate the p-value
+    if(method == "kmeans"){
+      ind_pos_rate <- pos_clusters[total_friends_indeces]
+      trials <- simulate_trial(n_sim, 1, ind_pos_rate$prevalence)
+      pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
+    }else if(method == "centroid"){
+      pos_rate <- compute_centroid(positions, total_friends_indeces,
+                                   test_result,0.5, 0.1)
+    }else if(method == "radial"){
+      ind_pos_rate <- sapply(
+        total_friends_indeces, calc_distance, positions, test_result, thr_dist)
       
-      # Compute the distance between the centroid and each row of the dataframe
-      combs <- as.data.table(melt(
-        as.matrix(dist(rbind(centroid_df, positions[,.(x, y)]))), 
-        varnames = c("n1", "n2")))
-      combs[, n2 := n2 -1 ]
-      combs <- combs[n1 == 1]
-      setorderv(combs, cols = "value", order=1L)
+      trials <- simulate_trial(n_sim, 1, ind_pos_rate)
+      pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
       
-      # Define for local prevalence calculus
-      thr_expand = 2
-      limit_dist = 0.5
-      combs <- combs[2:(2+ntotal * 2),]
-      combs <- combs[value <= limit_dist]
-      prevalence <- sum(positions[combs$n2]$test) / nrow(positions[combs$n2])
+    }else if(method == "base"){
+      total_positives = sum(test_result)
+      ntotal <- length(total_friends_indeces)
+      pos_rate <- total_positives/total_n
+    }else{
+      stop("None of the methods specified is valid. Please check the documentation.")
     }
+      
+    pval <- 1 - pbinom(npos - 1, ntotal, pos_rate)
     
-    pval <- 1 - pbinom(npos - 1, ntotal, prevalence)
     #setting EpiFRIenDs catalogue
     if(pval <= max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)
@@ -168,3 +172,45 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   names(return) <- c("cluster_id", "mean_pr_cluster", "pval_cluster", "epifriends_catalogue")
   return(return)
 }
+
+#' Perform binomial simulations with different independent probabilities of success.
+#'
+#' @param n Number of observations.
+#' @param size Number of trials (zero or more).
+#' @param probs Vector of probabilities for each simulation to be performed.
+#'
+#' @return Ratio between the sum of each n and the total number of trials.
+#'   
+#' @export
+#' 
+#' @author Eric Matamoros.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' library("RANN")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' n <- 10000
+#' size <- 1
+#' probs <- c(0.3, 0.4)
+#'
+#' # Do simulations
+#' trials <- simulate_trial(n, size, probs)
+#'
+simulate_trial <- function(n, size, probs){
+
+  # Create data.table with individual simulations
+  df <- data.table("id" = 1:n)
+  counter <- 1
+  for(prob in probs){
+    df[, (as.character(counter)) := rbinom(n = n, size = size, prob = prob)]
+    counter <- counter +1
+    }
+  df[, id := NULL]
+  
+  # Compute ratio
+  return(rowSums(df) / ncol(df))
+}
+
+

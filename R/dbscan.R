@@ -139,6 +139,7 @@ find_indeces <- function(positions, link_d, tree){
       query <- nn2(tree, positions[i,], kth)
       index <- query$nn.idx[length(query$nn.idx)]
       dist <- query$nn.dists[length(query$nn.dists)]
+      
       #Addition of the last point to the indeces list if it is in the wanted range
       if((dist[length(dist)] <= link_d) && (kth < dim(tree)[1])){
         indecesaux <- append(indecesaux,index)
