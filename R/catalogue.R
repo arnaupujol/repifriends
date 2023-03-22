@@ -15,7 +15,9 @@
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
-#' @param n_sim: Number of observations in each of the simulations to be performed. Will help during p-value calculus.
+#' @param n_sim: Number of observations in each of the simulations to be performed. Will help during p-value calculus. Applies both to "kmeans" & "radial" method.
+#' @param max_epi_cont: Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.
+#' @param max_thr_data: Percentage of data used to compute the local prevalence. Only applies for "centroid" method.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
@@ -51,16 +53,19 @@
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- catalogue(pos, test, 2)
 #' 
-catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
+catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
                       min_pr = 0, thr_expand= 2, thr_dist = link_d * 2, 
                       method = "kmeans",keep_null_tests = FALSE,in_latlon = FALSE,
-                      to_epsg = NULL, n_sim = 10000, verbose = FALSE){
+                      to_epsg = NULL, n_sim = 10000, max_epi_cont = 0.5, 
+                      max_thr_data = 0.1, verbose = FALSE){
   
   # Remove or impute missings
-  pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
-  positions = pos$position
-  test_result = data.table("test" = pos$test)
+  positions[, c("test", "prevalence") := list(test_result, prevalence)]
+  to_impute <- colnames(positions)[!(colnames(positions) %in% c("x", "y"))]
+  positions = clean_unknown_data(positions,to_impute,keep_null_tests,verbose)
+  test_result = data.table("test" = positions$test)
+  if(!is.null(prevalence)){ prevalence = positions$prevalence}
   
   #Defining 2d-positions
   positions = get_2dpositions(
@@ -104,7 +109,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     return(epifriends_catalogue)
   }
   
-  if(method == "kmeans"){
+  if((method == "kmeans") & (is.null(prevalence))){
     pos_clusters <- compute_kmeans(positions, test_result)
   }
   for(i in 1:length(sort_unici)){
@@ -120,27 +125,38 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     npos <- sum(test_result[total_friends_indeces,])
     ntotal <- length(total_friends_indeces)
     
-    # Approaches to estimate the p-value
-    if(method == "kmeans"){
-      ind_pos_rate <- pos_clusters[total_friends_indeces]
-      trials <- simulate_trial(n_sim, 1, ind_pos_rate$prevalence)
-      pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
-    }else if(method == "centroid"){
-      pos_rate <- compute_centroid(positions, total_friends_indeces,
-                                   test_result,0.5, 0.1)
-    }else if(method == "radial"){
-      ind_pos_rate <- sapply(
-        total_friends_indeces, calc_distance, positions, test_result, thr_dist)
-      
+    if(!is.null(prevalence)){
+      if(verbose){print("Using user-given prevalence.")}
+      ind_pos_rate = prevalence[positive_positions]
       trials <- simulate_trial(n_sim, 1, ind_pos_rate)
       pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
       
-    }else if(method == "base"){
-      total_positives = sum(test_result)
-      ntotal <- length(total_friends_indeces)
-      pos_rate <- total_positives/total_n
     }else{
-      stop("None of the methods specified is valid. Please check the documentation.")
+      # Approaches to estimate the p-value
+      if(method == "kmeans"){
+        if(verbose){print("Using KMeans method to account for local prevalence.")}
+        ind_pos_rate <- pos_clusters[total_friends_indeces]
+        trials <- simulate_trial(n_sim, 1, ind_pos_rate$prevalence)
+        pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
+      }else if(method == "centroid"){
+        if(verbose){print("Using Centroid method to account for local prevalence.")}
+        pos_rate <- compute_centroid(positions, total_friends_indeces,
+                                     test_result,max_epi_cont, max_thr_data)
+      }else if(method == "radial"){
+        if(verbose){print("Using Radial method to account for local prevalence.")}
+        ind_pos_rate <- sapply(
+          total_friends_indeces, calc_distance, positions, test_result, thr_dist)
+        trials <- simulate_trial(n_sim, 1, ind_pos_rate)
+        pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
+        
+      }else if(method == "base"){
+        if(verbose){print("Accounting for global prevalence.")}
+        total_positives = sum(test_result)
+        ntotal <- length(total_friends_indeces)
+        pos_rate <- total_positives/total_n
+      }else{
+        stop("None of the methods specified is valid. Please check the documentation.")
+      }
     }
       
     pval <- 1 - pbinom(npos - 1, ntotal, pos_rate)

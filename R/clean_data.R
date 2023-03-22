@@ -4,6 +4,7 @@
 #' This method imputes or removes missing data
 #'
 #' @param positions data.table with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
+#' @param cols_impute Vector of columns that want to be imputed based on keep_null_tests parameter.
 #' @param keep_null_tests: Whether to remove or not missings. If numeric, provide value to impute.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
@@ -30,7 +31,7 @@
 #' 
 clean_unknown_data <- function(
     positions, 
-    test = NULL,
+    cols_impute = NULL,
     keep_null_tests = TRUE, 
     verbose = FALSE,
     cols_remove = c("x", "y")){
@@ -38,30 +39,32 @@ clean_unknown_data <- function(
   #Change infinites to missings
   positions[sapply(positions, is.infinite)] <- NA
 
-  if(is.null(test)){
+  if( (is.null(cols_impute)) | (length(cols_impute) == 0)){
     positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
     return(positions)
   }else{
-    col_impute = "test"
-    positions$test <- test
     positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
-    if(is.numeric(keep_null_tests)){
-      if(verbose){print(paste0(
-          "Replacing missing positions with value: ",as.character(keep_null_tests))
-        )}
-      positions <- data.table::setnafill(positions, fill=keep_null_tests)
-    }else if(keep_null_tests == FALSE){
-        positions <- positions[!is.na(rowSums(positions[,..col_impute]))]
-    }else if(keep_null_tests == TRUE){
-        if(verbose){print("Missing values in positions kept as NULL")}
-    }else{
-        stop("Argument keep_null_tests has an invalid argument")
+    for(col_impute in cols_impute){
+      
+      if(col_impute %in% colnames(df)){
+        if(is.numeric(keep_null_tests)){
+          if(verbose){print(paste0(
+              "Replacing missing positions of ", col_impute," with value: ",as.character(keep_null_tests))
+            )}
+          positions <- data.table::setnafill(positions, fill=keep_null_tests, cols = col_impute)
+        }else if(keep_null_tests == FALSE){
+            positions <- positions[!is.na(rowSums(positions[,..col_impute]))]
+        }else if(keep_null_tests == TRUE){
+            if(verbose){print(paste0("Missing values for column : " , col_impute, " kept as NULL"))}
+        }else{
+            stop("Argument keep_null_tests has an invalid argument")
+        }
+      }else{
+        print(paste0("Column : ", col_impute, "does not exist."))
+      }
     }
   }
   
-  test <- positions$test
-  positions[, test := NULL]
-  
-  return(list("position" = positions, "test" = test))
+  return(positions)
   
 }

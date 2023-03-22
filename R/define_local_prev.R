@@ -34,13 +34,23 @@ compute_kmeans <- function(positions, test, seed = 123, coord_cols = c("x", "y")
   df[, test := test]
   df[, id := 1:nrow(df)]
 
-  # Leverage NbClust to automatically detect number of clusters
+  # Leverage clValid to automatic detect optimal number of clusters
   set.seed(seed)
-  sink(tempfile())
-  km_detect <- NbClust(data = df[,..coord_cols], distance = "euclidean", 
-                         method = "kmeans", min.nc = 2, max.nc = 8)
-  sink()
-  df[, clusters := km_detect$Best.partition]
+  # Optimal cluster based on connectivity
+  intern <- clValid(as.data.frame(df[,..coord_cols]),
+                    nClust = 2:8,clMethods = c("kmeans"),
+                    validation = "internal",
+                    maxitems = nrow(df))
+  
+  rows <- rownames(optimalScores(intern))
+  optimal <- as.data.table(optimalScores(intern))
+  optimal[, approach := rows]
+  n_clusters <- as.numeric(optimal[approach == "Dunn"]$Clusters[1])
+  
+  k_results <- kmeans(df[,..coord_cols], centers = n_clusters, nstart = 500)
+  
+  df[, clusters := k_results$cluster]
+  
   df[, prevalence := sum(test) / .N, by = "clusters"]
   
   return(df)
