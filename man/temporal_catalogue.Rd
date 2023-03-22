@@ -65,7 +65,7 @@ temporal_catalogues: list of catalogues
   List of EpiFRIenDs catalogues, where each element contains the catalogue in each
   time step.
 mean_date: vector of chorn date times.
-  List of dates corresponding to the median time in each time window
+ List of dates corresponding to the median time in each time window
  Save dates in a temporal format.
 }
 \description{
