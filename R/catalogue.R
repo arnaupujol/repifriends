@@ -82,7 +82,7 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
   if(is.null(cluster_id)){
     cluster_id = dbscan(positive_positions, link_d, min_neighbours = min_neighbours)
   }
-  
+
   #Define total number of positive cases
   total_positives = sum(test_result)
   #Define total number of cases
@@ -137,41 +137,41 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
         if(verbose){print("Using KMeans method to account for local prevalence.")}
         ind_pos_rate <- pos_clusters[total_friends_indeces]
         trials <- simulate_trial(n_sim, 1, ind_pos_rate$prevalence)
-        pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
+        pval <- length(which(trials >= (npos / ntotal))) / n_sim
       }else if(method == "centroid"){
         if(verbose){print("Using Centroid method to account for local prevalence.")}
         pos_rate <- compute_centroid(positions, total_friends_indeces,
                                      test_result,max_epi_cont, max_thr_data)
+        pval <- 1 - pbinom(npos - 1, ntotal, pos_rate)
       }else if(method == "radial"){
         if(verbose){print("Using Radial method to account for local prevalence.")}
         ind_pos_rate <- sapply(
           total_friends_indeces, calc_distance, positions, test_result, thr_dist)
         trials <- simulate_trial(n_sim, 1, ind_pos_rate)
-        pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
+        pval <- length(which(trials >= (npos / ntotal))) / n_sim
         
       }else if(method == "base"){
         if(verbose){print("Accounting for global prevalence.")}
         total_positives = sum(test_result)
         ntotal <- length(total_friends_indeces)
         pos_rate <- total_positives/total_n
+        pval <- 1 - pbinom(npos - 1, ntotal, pos_rate)
       }else{
         stop("None of the methods specified is valid. Please check the documentation.")
       }
     }
       
-    pval <- 1 - pbinom(npos - 1, ntotal, pos_rate)
-    
     #setting EpiFRIenDs catalogue
     if(pval <= max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)
       cluster_id[cluster_id_indeces] <- next_id
       next_id = next_id + 1
-
+      
       mean_pr_cluster[cluster_id_indeces] <- mean_pr
       pval_cluster[cluster_id_indeces] <- pval
-      mean_pos <- colMeans(positive_positions[cluster_id_indeces,])
+      mean_pos <- as.data.table(t(colMeans(positive_positions[cluster_id_indeces,])))
       epifriends_catalogue[["mean_position_pos"]] <- append(epifriends_catalogue[["mean_position_pos"]], list(mean_pos))
-      mean_pos_ext <-  colMeans(positions[total_friends_indeces,])
+      mean_pos_ext <-  as.data.table(t(colMeans(positions[total_friends_indeces,])))
       epifriends_catalogue[["mean_position_all"]] <- append(epifriends_catalogue[["mean_position_all"]], list(mean_pos_ext))
       epifriends_catalogue[["mean_pr"]] <- append(epifriends_catalogue[["mean_pr"]], mean_pr)
       epifriends_catalogue[["positives"]] <- append(epifriends_catalogue[["positives"]], as.integer(npos))

@@ -110,6 +110,7 @@ compute_centroid <- function(
   if( (nrow(combs_eval[is_epifriends == 1]) / nrow(combs_eval)) > max_epi_cont){
     n_total_eval = nrow(combs_eval[is_epifriends == 1]) / max_epi_cont
     combs_eval <- combs[1:n_total_eval]
+    combs_eval <- na.omit(combs_eval)
   }
   
   return(sum(combs_eval$test) / nrow(combs_eval))
@@ -180,7 +181,7 @@ calc_distance <- function(value, positions, test_result, thr_dist){
 #' ind_dist <- calc_ind_prev(df, pos, test)
 #'
 calc_ind_prev <- function(df, positions, test_result){
-  combs <- t(dist(df[,.(x,y)], positions[,.(x, y)], pairwise = FALSE))
+  combs <- t(proxy::dist(df[,.(x,y)], positions[,.(x, y)], pairwise = FALSE))
   combs <- data.table(
     "id" = positions$id, "distance" = combs[,1], "test" = test_result$test)
   setorderv(combs, cols = "distance", order=1L)

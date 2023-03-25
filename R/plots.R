@@ -1,4 +1,4 @@
-scatter_pval <- function(coordinates, id_data, positive, epi_catalogue, method = NULL){
+scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalogue, radious = NULL, method = NULL){
   # This method shows a scatter plot of the data distribution, showing in 
   # colour the positive cases that belong to foci (with the colour 
   # representing their p-value) and in grey the rest of the data. 
@@ -33,11 +33,40 @@ scatter_pval <- function(coordinates, id_data, positive, epi_catalogue, method =
   }else{
     title <- "P-value of hotspots"
   }
-  graph <- ggplot(coordinates,aes(x=x, y=y))+
-    geom_point(color = "grey", size = 2.5)+
-    geom_point(data = pos[id_data >0,], aes(colour = p_vals), size = 2.5)+
-    scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
-    ggtitle(title)
+  
+  if(!is.null(prevalence)){
+    pos <- as.data.table(pos)
+    coordinates[, prevalence := prevalence]
+    coordinates[, id := paste0(x, "_", y)]
+    
+    pos[, id := paste0(x, "_", y)]
+    
+    pos <- merge(pos, coordinates[,.(id, prevalence)], by = "id")
+    
+    graph <- ggplot(coordinates,aes(x=x, y=y, size = prevalence))+
+      geom_point(color = "#F38B8B", shape=21, stroke = 1) +
+      geom_point(
+        data = pos[id_data >0,], 
+        aes(color = "#F38B8B", fill = p_vals, size = prevalence), shape=21, stroke = 1)+
+      scale_fill_continuous(limits = c(0, 0.5), low = "grey", high = "blue") +
+      scale_size_continuous(range = c(1, 4), limits = c(0,1)) +
+      ggtitle(title)
+    
+    if(!is.null(radious)){
+      graph = graph + 
+        geom_circle(data = radious, aes(x0 = x, y0 = y, r = radious), 
+                    size = 3, fill = NA, color = "blue")
+      }
+  }else{
+    graph <- ggplot(coordinates,aes(x=x, y=y))+
+      geom_point(color = "grey", size = 2.5)+
+      geom_point(data = pos[id_data >0,], aes(colour = p_vals), size = 2.5)+
+      scale_color_continuous(limits = c(0, 0.5), low = "grey", high = "red") +
+      #scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
+      ggtitle(title)
+    
+  }
+
   return(graph)
 }
 
