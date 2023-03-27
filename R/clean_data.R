@@ -46,7 +46,7 @@ clean_unknown_data <- function(
     positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
     for(col_impute in cols_impute){
       
-      if(col_impute %in% colnames(df)){
+      if(col_impute %in% colnames(positions)){
         if(is.numeric(keep_null_tests)){
           if(verbose){print(paste0(
               "Replacing missing positions of ", col_impute," with value: ",as.character(keep_null_tests))
