@@ -113,7 +113,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
     #we only add the mean date if the catalogue is not empty
     if(FALSE %in% lapply(Newcatalogue$epifriends_catalogue, is.null)){
       mean_date <- append(mean_date, min_date + time_steps*step_num + 0.5*time_width)
-      Newcatalogue$epifriends_catalogue["Date"] <- toString(min_date + time_steps*step_num + 0.5*time_width)
+      Newcatalogue$epifriends_catalogue$Date <- (min_date + time_steps*step_num + 0.5*time_width)
       temporal_catalogues[[step_num+1]] <- Newcatalogue$epifriends_catalogue
     }
     step_num = step_num + 1
@@ -123,6 +123,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   }
   returns <- list(temporal_catalogues, mean_date)
   names(returns) <- c("temporal_catalogues", "mean_date")
+  
   return(returns)
 }
 
