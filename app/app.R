@@ -133,9 +133,7 @@ ui <- fluidPage(
                    tabPanel("Clusters-EpiFRIenDs",
                             h3("Coordinates & clusters detected by Epifriends"),
                             br(),
-                            tableOutput(outputId = "epifriends_results"),
-                            br(),
-                            plotOutput(outputId = "epifriends_v3")
+                            tableOutput(outputId = "epifriends_results")
                    )
                  )
                )
@@ -255,7 +253,8 @@ server <- function(input, output) {
       general <- data.table("cluster_id" = 1:length(epi$epifriends_catalogue$p))
       general$pvalue <- epi$epifriends_catalogue$p
       general <- cbind(general,rbindlist(epi$epifriends_catalogue$mean_position_all))
-      names(general) <- c("cluster_id", "p_value", "mean_x_coord", "mean_y_coord")
+      general <- general[,.(cluster_id = cluster_id, p_value = pvalue, mean_x = x, mean_y = y)]
+      general
     }      
   }, 
   table.attr = "class='centered'"
@@ -272,7 +271,10 @@ server <- function(input, output) {
       for(clusters in which(epi$epifriends_catalogue$p <= 0.05)){
         coords[index %in% epi$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
       }
-      coords[cluster != 0]
+      coords <- coords[cluster != 0]
+      coords <- coords[order(cluster)]
+      coords[, ':='(X = NULL, id = NULL, index = NULL)]
+      
     }      
   }, 
   table.attr = "class='centered'"
