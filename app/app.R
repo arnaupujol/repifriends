@@ -2,6 +2,8 @@ library(shiny)
 library(epifriends)
 library(data.table)
 library(gridExtra)
+library(RANN)
+library(ggplot2)
 
 scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
   # This method shows a scatter plot of the data distribution, showing in 
@@ -36,7 +38,7 @@ scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
     geom_point(color = "grey", size = 2.5)+
     geom_point(data = pos[id_data >0,], aes(colour = p_vals), size = 2.5)+
     scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
-    ggtitle("P-value of hotspots")
+    ggtitle("P-value of hotspots") + coord_equal()
   return(graph)
 }
 
@@ -85,10 +87,6 @@ ui <- fluidPage(
                sliderInput(inputId = "link_d",
                            label = "Select linking distance:",
                            min = 0.05, max = 0.2, value = 0.1, step = 0.05),
-               selectInput(inputId = "method",
-                         label = "Methodology for local prevalence calculus:",
-                         choices = c("KMeans", "Radial", "Centroid"),
-                         selected = "Centroid"),
                selectInput(inputId = "keep_null_tests",
                            label = "How to deal with missing data",
                            choices = c("Remove", "Keep", "Impute"),
@@ -121,8 +119,24 @@ ui <- fluidPage(
                    tabPanel("Distribution",
                             plotOutput(outputId = "distribution")
                    ),
-                   tabPanel("Summary EpiFRIenDs",
-                            plotOutput(outputId = "epifriends"))
+                   tabPanel("Summary-EpiFRIenDs",
+                            h3("Summary table with detected clusters and significance"),
+                            br(),
+                            tableOutput(outputId = "epifriends_summary"),
+                            br(),
+                            h3("Summary plots"),
+                            br(),
+                            plotOutput(outputId = "epifriends_v1"),
+                            plotOutput(outputId = "epifriends_v3"),
+                            plotOutput(outputId = "epifriends_v2")
+                            ),
+                   tabPanel("Clusters-EpiFRIenDs",
+                            h3("Coordinates & clusters detected by Epifriends"),
+                            br(),
+                            tableOutput(outputId = "epifriends_results"),
+                            br(),
+                            plotOutput(outputId = "epifriends_v3")
+                   )
                  )
                )
              )
@@ -166,7 +180,6 @@ server <- function(input, output) {
     if(in_latlon == "Longitude/Latitude"){
       in_latlon <- FALSE
     }
-
     epifriends(catalogue(
       positions = df[,.(x,y)], 
       test_result = df[,.(test)], 
@@ -194,22 +207,78 @@ server <- function(input, output) {
   output$distribution <- renderPlot({
     ggplot(data(), aes(x = x, y = y, color = as.factor(test))) +
       geom_point(size = 2.5) +
-      labs(title = "Distribution of Positive and Negative Cases")
+      labs(title = "Distribution of Positive and Negative Cases") +
+      coord_equal()
   })
   
-  output$epifriends <- renderPlot({
+  output$epifriends_v1 <- renderPlot({
     if(algorithm_run()){
       df <- as.data.table(data())
       epi <- epifriends()
       plot1 <- scatter_pval(df[,.(x,y)], epi$cluster_id, (df$test == 1), epi$epifriends_catalogue)
-      
-      plot2 <- histo_rand <- size_histogram(epi)
-      
-      # Arrange the plots in a 2x1 grid layout
-      grid.arrange(plot1, plot2, ncol = 1)
+      grid.arrange(plot1, ncol=1)
     }      
   })
+  
+  output$epifriends_v2 <- renderPlot({
+    if(algorithm_run()){
+      df <- as.data.table(data())
+      epi <- epifriends()
+      plot2 <- size_histogram(epi)
+      grid.arrange(plot2, ncol=1)
+    }      
+  })
+  
+  output$epifriends_v3 <- renderPlot({
+    if(algorithm_run()){
+      df <- as.data.table(data())
+      epi <- epifriends()
+      # Plot significant clusters
+      coords <- data.table::copy(df)
+      coords[, cluster := 0]
+      coords[, index := 1:nrow(coords)]
+      for(clusters in which(epi$epifriends_catalogue$p <= 0.05)){
+        coords[index %in% epi$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+      }
+      
+      plot3 <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+        geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+        labs(title = "Distribution of Significant Clusters") + coord_equal()
+      grid.arrange(plot3, ncol=1)
+    }      
+  })
+  
+  output$epifriends_summary <- renderTable({
+    if(algorithm_run()){
+      df <- as.data.table(data())
+      epi <- epifriends()
+      general <- data.table("cluster_id" = 1:length(epi$epifriends_catalogue$p))
+      general$pvalue <- epi$epifriends_catalogue$p
+      general <- cbind(general,rbindlist(epi$epifriends_catalogue$mean_position_all))
+      names(general) <- c("cluster_id", "p_value", "mean_x_coord", "mean_y_coord")
+    }      
+  }, 
+  table.attr = "class='centered'"
+  )
+  
+  output$epifriends_results <- renderTable({
+    if(algorithm_run()){
+      df <- as.data.table(data())
+      epi <- epifriends()
+      # Plot significant clusters
+      coords <- data.table::copy(df)
+      coords[, cluster := 0]
+      coords[, index := 1:nrow(coords)]
+      for(clusters in which(epi$epifriends_catalogue$p <= 0.05)){
+        coords[index %in% epi$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+      }
+      coords[cluster != 0]
+    }      
+  }, 
+  table.attr = "class='centered'"
+  )
 
 }
 
 shinyApp(ui = ui, server = server)
+

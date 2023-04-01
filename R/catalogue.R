@@ -121,7 +121,7 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
       pval_cluster[cluster_id_indeces] <- pval
       mean_pos <- colMeans(positive_positions[cluster_id_indeces,])
       epifriends_catalogue[["mean_position_pos"]] <- append(epifriends_catalogue[["mean_position_pos"]], list(mean_pos))
-      mean_pos_ext <-  colMeans(positions[total_friends_indeces,])
+      mean_pos_ext <-  as.data.table(t(colMeans(positions[total_friends_indeces,])))
       epifriends_catalogue[["mean_position_all"]] <- append(epifriends_catalogue[["mean_position_all"]], list(mean_pos_ext))
       epifriends_catalogue[["mean_pr"]] <- append(epifriends_catalogue[["mean_pr"]], mean_pr)
       epifriends_catalogue[["positives"]] <- append(epifriends_catalogue[["positives"]], as.integer(npos))
