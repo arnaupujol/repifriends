@@ -35,20 +35,22 @@ scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalog
   }
   
   if(!is.null(prevalence)){
+    
     pos <- as.data.table(pos)
     coordinates[, prevalence := prevalence]
     coordinates[, id := paste0(x, "_", y)]
     
     pos[, id := paste0(x, "_", y)]
-    
-    pos <- merge(pos, coordinates[,.(id, prevalence)], by = "id")
+    pos_filt <- pos[id_data >0,]
+    pos_filt$p_vals <- p_vals
+    pos_filt <- merge(pos_filt, coordinates[,.(id, prevalence)], by = "id", how = "left")
     
     graph <- ggplot(coordinates,aes(x=x, y=y, size = prevalence))+
       geom_point(color = "#F38B8B", shape=21, stroke = 1) +
       geom_point(
-        data = pos[id_data >0,], 
+        data =pos_filt, 
         aes(color = "#F38B8B", fill = p_vals, size = prevalence), shape=21, stroke = 1)+
-      scale_fill_continuous(limits = c(0, 0.5), low = "grey", high = "blue") +
+      scale_fill_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
       scale_size_continuous(range = c(1, 4), limits = c(0,1)) +
       ggtitle(title)
     
@@ -58,10 +60,13 @@ scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalog
                     size = 3, fill = NA, color = "blue")
       }
   }else{
+    
+    pos_filt <- pos[id_data >0,]
+    pos_filt$p_vals <- p_vals
     graph <- ggplot(coordinates,aes(x=x, y=y))+
       geom_point(color = "grey", size = 2.5)+
-      geom_point(data = pos[id_data >0,], aes(colour = p_vals), size = 2.5)+
-      scale_color_continuous(limits = c(0, 0.5), low = "grey", high = "red") +
+      geom_point(data = pos_filt, aes(colour = p_vals), size = 2.5)+
+      scale_color_continuous(limits = c(0, 0.2), low = "grey", high = "red") +
       #scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
       ggtitle(title)
     

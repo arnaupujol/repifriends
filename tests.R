@@ -15,21 +15,40 @@ library(RANN)
 library(patchwork)
 library(knitr)
 library(kableExtra)
-
-store_PDF = TRUE
+library(grid)
 
 # Load data
 # Prevalence defined as number of positives versus total number, where total number
 # can either be a cluster, a radious or all the population size.
 
-files <- c("mock_dataframe_clustered_v1.csv", "mock_dataframe_clustered_v2.csv", "mock_dataframe_clustered_v3.csv")
+files <- c("example_multiple.csv", "example_one_isolated_one_populated_v2.csv", "example_one_isolated_one_populated.csv")
 
-link_d_to_analyse = c(.1)
+for(file in files){
+  data_v1 <- as.data.table(read_csv(paste0("data/", file)))
+  data_v1[, id := 1:nrow(data_v1)]
+  
+  position_rand <- data_v1[,3:4]
+  positive_rand = (data_v1$test == 1)
+  test_rand <- data_v1$test
+  
+  # Plot data
+  graph_base <- ggplot(data_v1, aes(x = x, y = y, color = as.factor(test))) +
+    geom_point(size = 2.5) +
+    labs(
+      title = "Distribution of Positive and Negative Cases",
+      subtitle = file
+      )
+  
+  print(graph_base)
+  
+}
+
+link_d_to_analyse = c(0.05)
 min_neighbours = 2
 methods_list <- c("kmeans", "radial", "centroid", "base")
 store_PDF = TRUE
 
-for(file in files[1]){
+for(file in files[2]){
   
   catalogue_methods <- c()
   for(method in methods_list){
@@ -58,14 +77,36 @@ for(file in files[1]){
         position_rand, test_rand, link_d, cluster_id = NULL, min_neighbours = min_neighbours,
         method = method)
       catalogue_methods[[method]] <-  categories
-
+      
+      # Plot significant clusters
+      coords <- data.table::copy(position_rand)
+      coords[, cluster := 0]
+      coords[, index := 1:nrow(coords)]
+      for(clusters in which(categories$epifriends_catalogue$p <= 0.05)){
+        coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+      }
+      graph_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+        geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+        labs(title = "Distribution of Significant Clusters")
+      
+      # Table general overview
+      general <- data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
+      general$pvalue <- categories$epifriends_catalogue$p
+      general <- cbind(general,rbindlist(categories$epifriends_catalogue$mean_position_all))
+      
+      grid::grid.newpage()
+      grid.table(general)
+      print(graph_base + graph_clusters)
+      
+      
+      
       if(method == 'kmeans'){
         kmeans_prev <- compute_kmeans(position_rand, test_rand)
         prevalence <- kmeans_prev$prevalence
         
         k_results <- kmeans(position_rand[,.(x,y)], centers = max(kmeans_prev$clusters), nstart = 500)
         
-        print(graph_base + plot(k_results, data = position_rand[,.(x,y)]))
+        print(graph_clusters + plot(k_results, data = position_rand[,.(x,y)]))
         
       }else if(method == "radial"){
         index_friends <- unique(unlist(categories$epifriends_catalogue$indeces))
@@ -143,8 +184,8 @@ for(file in files[1]){
         paste0(method,"-Link_d: ",link_d)) 
       histo <- size_histogram(categories)
       
-      print(graph_base+graphs_prev)
-      print(graph_base + graphs_no_prev)
+      print(graph_clusters+graphs_prev)
+      print(graph_clusters + graphs_no_prev)
       print(histo)
       
     }
@@ -158,7 +199,6 @@ for(file in files[1]){
   pdf(pdf_name, width = 11, height = 8.5)
   
   general <- get_all_results(catalogue_methods, methods_list)
-  grid.table(general$table)
   print(general$chart)
   if (store_PDF){
     dev.off()
@@ -239,7 +279,7 @@ get_all_results <- function(catalogue, methods_list){
   
   graph_all <- ggplot(results, aes(x = method_epifriends, y = pvalue,  fill = epifriends)) +
     geom_bar(stat = "identity") +
-    ylim(0, 1) + 
+    ylim(0, 0.2) + 
     labs(title = "P-Value for each Epifriends-Methodology Combination", 
          x = "Epifriends-Methodology", y = "P-Value") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -247,5 +287,11 @@ get_all_results <- function(catalogue, methods_list){
   return(list("table" = results, "chart" = graph_all))
 }
 
-
+# Plot significant clusters
+coords <- data.table::copy(position_rand)
+coords[, cluster := 0]
+coords[, index := 1:nrow(coords)]
+for(clusters in which(categories$epifriends_catalogue$p <= 0.05)){
+  coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+}
 
