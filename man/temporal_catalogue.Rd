@@ -21,7 +21,12 @@ temporal_catalogue(
   add_temporal_id = TRUE,
   linking_time,
   linking_dist,
-  get_timelife = TRUE
+  get_timelife = TRUE,
+  cluster_id = NULL,
+  keep_null_tests = FALSE,
+  in_latlon = FALSE,
+  to_epsg = NULL,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -58,6 +63,14 @@ temporal_catalogue(
 \item{linking_dist}{Linking distance used to link the clusters from the different time frames. Only necesary if add_temporal_id is TRUE.}
 
 \item{get_timelife}{It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.}
+
+\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+
+\item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
+
+\item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
 \value{
 List with the next objects:

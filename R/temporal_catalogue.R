@@ -20,7 +20,11 @@
 #' @param linking_time Maximum number of timesteps of distance to link hotspots with the same temporal ID. Only necesary if add_temporal_id is TRUE.
 #' @param linking_dist Linking distance used to link the clusters from the different time frames. Only necesary if add_temporal_id is TRUE.
 #' @param get_timelife It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.
-#'
+#' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
+#' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
+#' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
+#' @param verbose: If TRUE, print information of the process; else, do not print.
+#' 
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
 #'
 #' @return  List with the next objects:
@@ -62,7 +66,9 @@
 temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighbours = 2,
                                time_width, min_date = NULL, max_date = NULL, time_steps = 1,
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
-                               add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE){
+                               add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
+                               cluster_id = NULL, keep_null_tests = FALSE, in_latlon = FALSE, to_epsg = NULL, 
+                               verbose = FALSE){
 
   #Case of empty list of dates
   if(length(dates) == 0){
@@ -106,10 +112,11 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
     selected_test_results <- as.data.frame(test_result[selected_data,])
 
     #get catalogue
-    Newcatalogue <- catalogue(selected_positions, selected_test_results,
-                              link_d, min_neighbours = min_neighbours,
-                              max_p = max_p, min_pos = min_pos,
-                              min_total = min_total, min_pr = min_pr)
+    Newcatalogue <- catalogue(positions = selected_positions, test_result = selected_test_results,
+                              link_d = link_d, cluster_id = cluster_id, min_neighbours = min_neighbours,
+                              max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
+                              keep_null_tests = keep_null_tests, in_latlon = in_latlon, to_epsg = to_epsg,
+                              verbose = verbose)
     #we only add the mean date if the catalogue is not empty
     if(FALSE %in% lapply(Newcatalogue$epifriends_catalogue, is.null)){
       mean_date <- append(mean_date, min_date + time_steps*step_num + 0.5*time_width)

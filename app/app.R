@@ -226,7 +226,7 @@ server <- function(input, output) {
       min_pr = 0, 
       keep_null_tests = keep_null_tests, 
       in_latlon = in_latlon,
-      to_epsg = input$to_epsg, 
+      to_epsg = as.numeric(input$to_epsg), 
       verbose = FALSE))
     algorithm_run(TRUE)
   })
@@ -271,7 +271,12 @@ server <- function(input, output) {
       add_temporal_id = TRUE,
       linking_time = input$linking_time_temp,
       linking_dist = input$linking_dist_temp,
-      get_timelife = TRUE))
+      get_timelife = TRUE,
+      cluster_id = NULL,
+      keep_null_tests = keep_null_tests, 
+      in_latlon = in_latlon,
+      to_epsg = as.numeric(input$to_epsg), 
+      verbose = FALSE))
     algorithm_run_temp(TRUE)
   })
   
@@ -364,7 +369,12 @@ server <- function(input, output) {
   
   ## TEMPORAL ALGO PLOTS
   output$distribution_temp <- renderPlot({
-    graph <- ggplot(data_temp(),aes(x=x, y=y))+
+    df <- data_temp()
+    dtparts = t(as.data.frame(strsplit(df$date," ")))
+    row.names(dtparts) = NULL
+    datesform <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+    dates <- as.numeric(datesform)
+    graph <- ggplot(df,aes(x=x, y=y))+
         geom_point(aes(fill = dates, colour = as.factor(test)), shape = 21, size = 2.5)+
         scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
         scale_color_manual(values = c("grey", "red"), name = "Test", labels = c("Negative","Positive")) + coord_equal()

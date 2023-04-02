@@ -1,26 +1,41 @@
+# This source code is licensed under the GNU GENERAL PUBLIC LICENSE license found in the
+# LICENSE file in the root directory of this source tree.
+
+
+#' This method shows a scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
+#' representing their p-value) and in grey the rest of the data. 
+#'
+#' @param coordinates data frame with the values of the coordinates
+#' @param id_data data frame with the cluster ID associated to each positive case, o for no associated cluster
+#' @param positive Boolean vector that indicates if the case is infected. 
+#' @param epi_catalogue List of the EpiFRIenDs catalogue
+#' 
+#' @return  Scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
+#' representing their p-value) and in grey the rest of the data.
+#'
 #' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' library("RANN")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#'
+#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#'
+#' # Creation of catalogue for this positions, linking distance 2 and default values.
+#' cat <- catalogue(pos, test, 2)
+#' 
+#' scatter_pval(pos, cat$cluster_id, (test == 1), cat$epifriends_catalogue)
+#' 
 scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
-  # This method shows a scatter plot of the data distribution, showing in 
-  # colour the positive cases that belong to foci (with the colour 
-  # representing their p-value) and in grey the rest of the data. 
-  # 
-  # Parameters:
-  # -----------
-  # coordinates: data.frame
-  #     data frame with the values of the coordinates
-  # id_data: data.frame
-  #     data frame with the cluster ID associated to each positive case, o for 
-  #     no associated cluster
-  # positive: data.frame
-  #     Boolean vector that indicates if the case is infected. 
-  # epi_catalogue: list
-  #     List of the EpiFRIenDs catalogue
-  # 
-  # Returns:
-  # --------
-  # Scatter plot of the data distribution, showing in 
-  # colour the positive cases that belong to foci (with the colour 
-  # representing their p-value) and in grey the rest of the data.
   pos <- data.frame(coordinates[positive,],id_data)
   p_vals <- c()
   for(i in id_data[id_data > 0]){
@@ -36,20 +51,35 @@ scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
   return(graph)
 }
 
+#' This method shows a histogram of the size (total number of cases) in foci for foci with p>0.05 and with p<0.05. 
+#'
+#' @param catalogue Catalogue of the epifriends clusters and their main characteristics as output of the catalogue() function.
+#' 
+#' @return  Histogram of number of foci per total number of cases with p<0.05 in red and p>0.05 in blue.
+#'
 #' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' library("RANN")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#'
+#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#'
+#' # Creation of catalogue for this positions, linking distance 2 and default values.
+#' cat <- catalogue(pos, test, 2)
+#' 
+#' size_histogram(cat)
+#' 
 size_histogram <- function(catalogue){
-  # This method shows a histogram of the size (total number of cases) in foci 
-  # for foci with p>0.05 and with p<0.05. 
-  #   
-  # Parameters:
-  # -----------
-  # catalogue: list
-  #   List of the EpiFRIenDs catalogue
-  #   
-  # Returns:
-  # --------
-  # Histogram of number of foci per total number of cases with p<0.05 in red 
-  # and p>0.05 in blue.
   cases <- data.frame(catalogue$epifriends_catalogue$total, catalogue$epifriends_catalogue$p)
   colnames(cases) <- c("total","p")
   #auxiliar vector to avoid converting doubles to strings
@@ -69,20 +99,43 @@ size_histogram <- function(catalogue){
   return(histo)
 }
 
+#' This method plots a histogram of the lifetime of the detected clusters. 
+#'
+#' @param list_catalogues List of EpiFRIenDs catalogues, where each element contains the catalogue in each time step.
+#' 
+#' @return  Histogram of the lifetime of the detected clusters
+#'
 #' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' if(!require("chron")) install.packages("chron")
+#' library("RANN")
+#' library("chron")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#'
+#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#'
+#' #Creation of chron dates vector in format 'y-m-d h:m:s'.
+#' dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
+#' "2021-06-09 07:50:30","2021-09-18 05:53:26","2020-03-19 17:16:56","2021-06-08 12:40:46","2020-06-26 05:01:31",
+#' "2020-10-15 04:40:27","2021-05-28 15:23:23","2020-05-01 02:56:54","2020-08-19 22:45:35","2021-10-23 18:56:35",
+#' "2020-10-19 00:01:25")
+#'
+#' # Creation of temporal catalogue for this data.
+#' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
+#' 
+#' hist_timelifes(list_catalogues$temporal_catalogues)
+#' 
 hist_timelifes <- function(list_catalogues) {
-  # This method plots a histogram of the lifetime of the detected clusters.
-  #
-  # Parameters:
-  # -----------
-  # list_catalogues:  list of data.frame
-  #     List of EpiFRIenDs catalogues, each element of the list
-  #     corresponding to the EpiFRIenDs catalogue of each timestep
-  #
-  # Returns:
-  # --------
-  # ggplot object with histogram
-  
   all_tempids <- epifriends::get_label_list(list_catalogues, label = 'tempID')
   if (length(all_tempids) > 0) {
     lifetimes <- c()
@@ -105,24 +158,46 @@ hist_timelifes <- function(list_catalogues) {
   }
 }
 
+# This method visualises the size evolution of the clusters in time and colour-codes them with their total lifetime.
+#'
+#' @param list_catalogues List of EpiFRIenDs catalogues, where each element contains the catalogue in each time step.
+#' @param mean_dates List of dates corresponding to the mean time in each time window
+#' @param time_steps Number of days that the time window is shifted in each time step
+#' 
+#' @return  ggplot object with the size evolution and lifetimes of clusters
+#'
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' if(!require("chron")) install.packages("chron")
+#' library("RANN")
+#' library("chron")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#' time_steps = 305
+#'
+#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#'
+#' #Creation of chron dates vector in format 'y-m-d h:m:s'.
+#' dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
+#' "2021-06-09 07:50:30","2021-09-18 05:53:26","2020-03-19 17:16:56","2021-06-08 12:40:46","2020-06-26 05:01:31",
+#' "2020-10-15 04:40:27","2021-05-28 15:23:23","2020-05-01 02:56:54","2020-08-19 22:45:35","2021-10-23 18:56:35",
+#' "2020-10-19 00:01:25")
+#'
+#' # Creation of temporal catalogue for this data.
+#' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = time_steps, linking_time = 3, linking_dist = 2)
+#' 
+#' lifetime_timeline(list_catalogues$temporal_catalogues, list_catalogues$mean_dates, time_steps)
+#' 
 lifetime_timeline <- function(list_catalogues, mean_dates, time_steps) {
-  # This method visualised the size evolution of the clusters in time
-  # and colour-codes them with their total lifetime.
-  #
-  # Parameters:
-  # -----------
-  # list_catalogues:  list of data.frame
-  #     List of EpiFRIenDs catalogues, each element of the list
-  #     corresponding to the EpiFRIenDs catalogue of each timestep
-  # mean_dates: list
-  #     List of dates corresponding to the median time in each time window
-  # time_steps: int
-  #     Number of days that the time window is shifted in each time step
-  #
-  # Returns:
-  # --------
-  # ggplot object with the size evolution and lifetimes of clusters
-  
   tempids <- epifriends::get_label_list(list_catalogues, label = 'tempID')
   lifetimes <- epifriends::get_label_list(list_catalogues, label = 'lifetime')
   num_cases_df <- data.frame()
