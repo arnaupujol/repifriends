@@ -77,7 +77,7 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
   positions[, id := 1:nrow(positions)]
   
   #Define positions of positive cases
-  positive_positions <- positions[which(test_result == 1),]
+  positive_positions <- positions[which(test_result == 1), .(x,y)]
   #Computing cluster_id if needed
   if(is.null(cluster_id)){
     cluster_id = dbscan(positive_positions, link_d, min_neighbours = min_neighbours)
@@ -114,10 +114,9 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
     #for all these indeces, get list of friends from all positions
-    all_friends_indeces <- find_indeces(positive_positions[cluster_id_indeces,], link_d, positions)
+    all_friends_indeces <- find_indeces(positive_positions[cluster_id_indeces,.(x,y)], link_d, positions[,.(x,y)])
     #get unique values of such indeces
     total_friends_indeces <- sort(unique(unlist(all_friends_indeces)))
-
     #get positivity rate from all the unique indeces
     mean_pr <- test_result[total_friends_indeces, .(mean(test))][[1]]
     npos <- sum(test_result[total_friends_indeces,])

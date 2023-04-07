@@ -29,9 +29,9 @@ scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalog
   # points(pos$x[id_data > 0], pos$y[id_data>0], pch = 19, col = rainbow(100)[factor(p_vals)])
   
   if(!is.null(method)){
-    title <- paste0("P-value of hotspots - Method: ", method)
+    title <- paste0("P-value on positive cases of hotspots - Method: ", method)
   }else{
-    title <- "P-value of hotspots"
+    title <- "P-value on positive cases of hotspots"
   }
   
   if(!is.null(prevalence)){

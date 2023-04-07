@@ -22,7 +22,11 @@ source("./utils.R")
 # Load data
 # Prevalence defined as number of positives versus total number, where total number
 # can either be a cluster, a radious or all the population size.
-files <- c("example_multiple.csv", "example_one_isolated_one_populated_v2.csv", "example_one_isolated_one_populated.csv")
+
+##############################################################################
+##############         OVERVIEW AT DISTRIBUTIONS OF FILES.      ##############
+##############################################################################
+files <- list.files("./data/", pattern = "example")
 
 for(file in files){
   data_v1 <- as.data.table(read_csv(paste0("./data/", file)))
@@ -44,12 +48,16 @@ for(file in files){
   
 }
 
-link_d_to_analyse = c(0.1)
+##############################################################################
+##############                     RUN ANALYSIS                 ##############
+##############################################################################
+link_d_to_analyse = c(0.05)
 min_neighbours = 2
 methods_list <- c("kmeans", "radial", "centroid", "base")
 store_PDF = TRUE
+automatic_link_d = TRUE
 
-for(file in files[1]){
+for(file in files){
   
   catalogue_methods <- c()
   for(method in methods_list){
@@ -57,6 +65,9 @@ for(file in files[1]){
       pdf_name <- paste0("pdfs/", strsplit(file, ".csv")[[1]],"_",method,".pdf")
       pdf(pdf_name, width = 11, height = 8.5)
     }
+    
+    # Get linking distance
+    link_d_to_analyse <- get_link(file)
     
     for(link_d in link_d_to_analyse){
       
@@ -86,7 +97,25 @@ for(file in files[1]){
         method = method)
       catalogue_methods[[method]] <-  categories
       
-      # Plot significant clusters
+      # PLOT ALL CLUSTERS
+      coords <- data.table::copy(position_rand)
+      coords[, cluster := 0]
+      coords[, index := 1:nrow(coords)]
+      for(clusters in 1:length(categories$epifriends_catalogue$p)){
+        coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+      }
+      
+      graph_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+        geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+        labs(title = "Distribution of Clusters")
+      
+      if(method != 'radial'){
+        graph_clusters <- graph_clusters + geom_encircle(
+          data = get_region_prev(data_v1, categories$epifriends_catalogue), 
+          aes(x=x, y=y, group = epifriends, color = as.factor(epifriends)), expand = 0.1 , size = 2)
+      }
+      
+      # PLOT SIGNIFICANT CLUSTERS
       coords <- data.table::copy(position_rand)
       coords[, cluster := 0]
       coords[, index := 1:nrow(coords)]
@@ -94,13 +123,13 @@ for(file in files[1]){
         coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
       }
       
-      graph_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+      graph_sign_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
         geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
         labs(title = "Distribution of Significant Clusters")
       
       if(method != 'radial'){
-        graph_clusters <- graph_clusters + geom_encircle(
-          data = get_region_prev(data_v1, categories$epifriends_catalogue), 
+        graph_sign_clusters <- graph_sign_clusters + geom_encircle(
+          data = get_region_prev(data_v1, categories$epifriends_catalogue, TRUE), 
           aes(x=x, y=y, group = epifriends, color = as.factor(epifriends)), expand = 0.1 , size = 2)
       }
       
@@ -115,13 +144,13 @@ for(file in files[1]){
       general$n_positives <- categories$epifriends_catalogue$positives
       general$n_negatives <- categories$epifriends_catalogue$negatives
       general$n_total <- categories$epifriends_catalogue$total
+      general[, significant := ifelse(pvalue <= 0.05, 'YES', 'NO')]
       
       general_two = data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
       general_two <- cbind(general_two,rbindlist(categories$epifriends_catalogue$mean_position_all))
       
       #grid::grid.newpage()
       grid.arrange(tableGrob(general), tableGrob(general_two), ncol = 1)
-      print(graph_base + graph_clusters)
 
       if(method == 'kmeans'){
         kmeans_prev <- compute_kmeans(
@@ -190,6 +219,8 @@ for(file in files[1]){
         paste0(method,"-Link_d: ",link_d)) 
       histo <- size_histogram(categories)
       
+      print(graph_base + graph_clusters)
+      print(graph_clusters + graph_sign_clusters)
       print(graph_clusters+graphs_prev)
       #print(graph_clusters + graphs_no_prev)
       print(histo)
@@ -210,3 +241,5 @@ for(file in files[1]){
     dev.off()
   }
 }
+
+

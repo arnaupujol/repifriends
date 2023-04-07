@@ -16,7 +16,7 @@ catalogue(
   min_total = 2,
   min_pr = 0,
   thr_expand = 2,
-  thr_dist = link_d * 2,
+  thr_dist = link_d * 4,
   method = "kmeans",
   keep_null_tests = FALSE,
   in_latlon = FALSE,
