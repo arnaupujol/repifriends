@@ -55,7 +55,7 @@
 #' 
 catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, thr_expand= 2, thr_dist = link_d * 2, 
+                      min_pr = 0, thr_expand= 2, thr_dist = link_d * 4, 
                       method = "kmeans",keep_null_tests = FALSE,in_latlon = FALSE,
                       to_epsg = NULL, n_sim = 10000, max_epi_cont = 0.5, 
                       max_thr_data = 0.1, verbose = FALSE){
@@ -109,10 +109,8 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
     return(epifriends_catalogue)
   }
   
-  if((method == "kmeans") & (is.null(prevalence))){
-    pos_clusters <- compute_kmeans(positions, test_result)
-  }
   for(i in 1:length(sort_unici)){
+    
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
     #for all these indeces, get list of friends from all positions
@@ -135,20 +133,67 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
       # Approaches to estimate the p-value
       if(method == "kmeans"){
         if(verbose){print("Using KMeans method to account for local prevalence.")}
+        
+        # Compute KMeans
+        pos_clusters <- compute_kmeans(positions, test_result)
         ind_pos_rate <- pos_clusters[total_friends_indeces]
+        
+        epi_clusters <- unique(pos_clusters[total_friends_indeces]$clusters)
+        perc_epi <- dim(pos_clusters[total_friends_indeces])[1] /dim(pos_clusters[clusters %in% epi_clusters])[1]
+        
+        if(perc_epi >= 0.5){
+          # Merge clusters sequentially and re-compute prevalence based on new added clusters
+          counter <- 0
+          while( (perc_epi >= 0.5) & (counter < 3)){
+            mean_epis <- pos_clusters[clusters %in% epi_clusters, .(x = mean(x), y = mean(y))]
+            remain_epis <- pos_clusters[!(clusters %in% epi_clusters),
+                                        .(x = mean(x), y = mean(y)), by = c("clusters")]
+            # If no clusters rema
+            if(dim(remain_epis)[1] == 0){
+              break
+            }
+            combs <- t(proxy::dist(mean_epis,remain_epis[,.(x, y)], pairwise = FALSE))
+            remain_epis$distance <- as.vector(combs)
+
+            # Merge new closest cluster to all
+            epi_clusters <- c(epi_clusters, remain_epis[distance == min(distance)]$clusters[1])
+            
+            pos_clusters[clusters %in% epi_clusters, prevalence := sum(test) / .N]
+            counter <- counter + 1
+            perc_epi <- dim(pos_clusters[total_friends_indeces])[1] /dim(pos_clusters[clusters %in% epi_clusters])[1]
+          }
+        }
+        indices_local <- pos_clusters[clusters %in% epi_clusters]$id
+        
+        # Simulate trials
         trials <- simulate_trial(n_sim, 1, ind_pos_rate$prevalence)
         pval <- length(which(trials >= (npos / ntotal))) / n_sim
+        mean_prev <- mean(ind_pos_rate$prevalence)
+        
       }else if(method == "centroid"){
         if(verbose){print("Using Centroid method to account for local prevalence.")}
-        pos_rate <- compute_centroid(positions, total_friends_indeces,
+        prev_indices <- compute_centroid(positions, total_friends_indeces,
                                      test_result,max_epi_cont, max_thr_data)
-        pval <- 1 - pbinom(npos - 1, ntotal, pos_rate)
+        
+        # Obtain prevalence and local indices used for that
+        ind_pos_rate <- prev_indices$prevalence
+        indices_local <- prev_indices$local_id
+        
+        pval <- 1 - pbinom(npos - 1, ntotal, ind_pos_rate)
+        mean_prev <- mean(ind_pos_rate)
       }else if(method == "radial"){
+        
         if(verbose){print("Using Radial method to account for local prevalence.")}
-        ind_pos_rate <- sapply(
+        prev_indices <- lapply(
           total_friends_indeces, calc_distance, positions, test_result, thr_dist)
+        
+        # Obtain prevalence and local indices used for that
+        ind_pos_rate <- sapply(prev_indices, function(x) x$prevalence)
+        indices_local <- sapply(prev_indices, function(x) x$local_id)
+        
         trials <- simulate_trial(n_sim, 1, ind_pos_rate)
         pval <- length(which(trials >= (npos / ntotal))) / n_sim
+        mean_prev <- mean(ind_pos_rate)
         
       }else if(method == "base"){
         if(verbose){print("Accounting for global prevalence.")}
@@ -156,6 +201,10 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
         ntotal <- length(total_friends_indeces)
         pos_rate <- total_positives/total_n
         pval <- 1 - pbinom(npos - 1, ntotal, pos_rate)
+        
+        # For base approach global indices == local indices
+        indices_local <- positions$id
+        mean_prev <- pos_rate
       }else{
         stop("None of the methods specified is valid. Please check the documentation.")
       }
@@ -174,10 +223,12 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
       mean_pos_ext <-  as.data.table(t(colMeans(positions[total_friends_indeces,])))
       epifriends_catalogue[["mean_position_all"]] <- append(epifriends_catalogue[["mean_position_all"]], list(mean_pos_ext))
       epifriends_catalogue[["mean_pr"]] <- append(epifriends_catalogue[["mean_pr"]], mean_pr)
+      epifriends_catalogue[["mean_local_prev"]] <- append(epifriends_catalogue[["mean_local_prev"]], mean_prev)
       epifriends_catalogue[["positives"]] <- append(epifriends_catalogue[["positives"]], as.integer(npos))
       epifriends_catalogue[["negatives"]] <- append(epifriends_catalogue[["negatives"]], as.integer(ntotal - npos))
       epifriends_catalogue[["total"]] <- append(epifriends_catalogue[["total"]], as.integer(ntotal))
       epifriends_catalogue[["indeces"]] <- append(epifriends_catalogue[["indeces"]], list(total_friends_indeces))
+      epifriends_catalogue[["indeces_local_prev"]] <- append(epifriends_catalogue[["indeces_local_prev"]], list(indices_local))
       epifriends_catalogue[["p"]] <- append(epifriends_catalogue[["p"]], pval)
     }else{
       cluster_id[cluster_id_indeces] <- 0

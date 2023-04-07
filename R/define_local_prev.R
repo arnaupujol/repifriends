@@ -105,15 +105,27 @@ compute_centroid <- function(
   combs_eval <- combs[1: (thr_data * nrow(combs))]
   combs_eval[, is_epifriends := ifelse(id %in% total_friends_indeces, 1, 0)]
   
-  # Evaluate if there is more than 50% of obs belonging to epifriends.
-  # In that case, increase sample size to satisfy condition
-  if( (nrow(combs_eval[is_epifriends == 1]) / nrow(combs_eval)) > max_epi_cont){
-    n_total_eval = nrow(combs_eval[is_epifriends == 1]) / max_epi_cont
+  rows_epi <-  nrow(combs_eval[is_epifriends == 1])
+  if(rows_epi < length(total_friends_indeces)){
+    n_total_eval <- length(total_friends_indeces)/max_epi_cont
     combs_eval <- combs[1:n_total_eval]
     combs_eval <- na.omit(combs_eval)
+    
+  }else{
+    
+    # Evaluate if there is more than 50% of obs belonging to epifriends.
+    # In that case, increase sample size to satisfy condition
+    if( (rows_epi / nrow(combs_eval)) > max_epi_cont){
+      n_total_eval = nrow(combs_eval[is_epifriends == 1]) / max_epi_cont
+      combs_eval <- combs[1:n_total_eval]
+      combs_eval <- na.omit(combs_eval)
+    }
   }
   
-  return(sum(combs_eval$test) / nrow(combs_eval))
+  return(list(
+    'prevalence' = sum(combs_eval$test) / nrow(combs_eval),
+    'local_id' = sort(combs_eval$id))
+  )
 }
 
 #' This function computes the distance of one ID versus the rest and obtains the n closest ones.
@@ -147,8 +159,10 @@ calc_distance <- function(value, positions, test_result, thr_dist){
   df <- positions[id %in% value]
   combs <- calc_ind_prev(df, positions, test_result)
   combs_eval <- combs[distance <= thr_dist]
-  combs_eval$test
-  return(sum(combs_eval$test) / nrow(combs_eval))
+  return(list(
+    'prevalence' = sum(combs_eval$test) / nrow(combs_eval),
+    'local_id' = sort(combs_eval$id))
+    )
 }
 
 

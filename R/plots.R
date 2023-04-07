@@ -1,4 +1,4 @@
-scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalogue, radious = NULL, method = NULL){
+scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalogue, method = NULL){
   # This method shows a scatter plot of the data distribution, showing in 
   # colour the positive cases that belong to foci (with the colour 
   # representing their p-value) and in grey the rest of the data. 
@@ -44,7 +44,6 @@ scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalog
     pos_filt <- pos[id_data >0,]
     pos_filt$p_vals <- p_vals
     pos_filt <- merge(pos_filt, coordinates[,.(id, prevalence)], by = "id", how = "left")
-    
     graph <- ggplot(coordinates,aes(x=x, y=y, size = prevalence))+
       geom_point(color = "#F38B8B", shape=21, stroke = 1) +
       geom_point(
@@ -54,11 +53,6 @@ scatter_pval <- function(coordinates, id_data, positive, prevalence, epi_catalog
       scale_size_continuous(range = c(1, 4), limits = c(0,1)) +
       ggtitle(title)
     
-    if(!is.null(radious)){
-      graph = graph + 
-        geom_circle(data = radious, aes(x0 = x, y0 = y, r = radious), 
-                    size = 3, fill = NA, color = "blue")
-      }
   }else{
     
     pos_filt <- pos[id_data >0,]
