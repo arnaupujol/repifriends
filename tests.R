@@ -55,7 +55,7 @@ link_d_to_analyse = c(0.05)
 min_neighbours = 2
 methods_list <- c("kmeans", "radial", "centroid", "base")
 store_PDF = TRUE
-automatic_link_d = TRUE
+automatic_link_d = FALSE
 
 for(file in files){
   
