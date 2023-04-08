@@ -140,7 +140,7 @@ for(file in files){
       general <- data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
       general$pvalue <- categories$epifriends_catalogue$p
       general$mean_pr <- categories$epifriends_catalogue$mean_pr
-      general$mean_pr <- categories$epifriends_catalogue$mean_local_prev
+      general$mean_prev <- categories$epifriends_catalogue$mean_local_prev
       general$n_positives <- categories$epifriends_catalogue$positives
       general$n_negatives <- categories$epifriends_catalogue$negatives
       general$n_total <- categories$epifriends_catalogue$total
