@@ -9,6 +9,9 @@
 #' @param id_data data frame with the cluster ID associated to each positive case, o for no associated cluster
 #' @param positive Boolean vector that indicates if the case is infected. 
 #' @param epi_catalogue List of the EpiFRIenDs catalogue
+#' @param xlims: Vector with the limits of the X axis.
+#' @param ylims: Vector with the limits of the Y axis
+#' @param title: Title of the plot. If NULL, it defaults to 'P-value of hotspots'
 #' 
 #' @return  Scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
 #' representing their p-value) and in grey the rest of the data.
@@ -35,7 +38,14 @@
 #' 
 #' scatter_pval(pos, cat$cluster_id, (test == 1), cat$epifriends_catalogue)
 #' 
-scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
+scatter_pval <- function(
+    coordinates, 
+    id_data, 
+    positive, 
+    epi_catalogue,
+    xlims = NULL,
+    ylims = NULL,
+    title = NULL){
   pos <- data.frame(coordinates[positive,],id_data)
   p_vals <- c()
   for(i in id_data[id_data > 0]){
@@ -43,11 +53,22 @@ scatter_pval <- function(coordinates, id_data, positive, epi_catalogue){
   }
   # plot(coordinates$x, coordinates$y, pch = 19, col = "grey")
   # points(pos$x[id_data > 0], pos$y[id_data>0], pch = 19, col = rainbow(100)[factor(p_vals)])
+  if(is.null(title)){
+    title <- "P-value of hotspots"
+  }
+  
+  pos_filt <- pos[id_data >0,]
+  pos_filt$p_vals <- p_vals
   graph <- ggplot(coordinates,aes(x=x, y=y))+
     geom_point(color = "grey", size = 2.5)+
-    geom_point(data = pos[id_data >0,], aes(colour = p_vals), size = 2.5)+
-    scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
-    ggtitle("P-value of hotspots") + coord_equal()
+    geom_point(data =pos_filt, aes(colour = p_vals), size = 2.5)+
+    scale_colour_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
+    ggtitle(title) + coord_equal()
+  
+  if(!is.null(xlim)){ # Set limits in x & y coordinates
+    graph <- graph + xlim(xlims) + ylim(ylims)
+  }
+  
   return(graph)
 }
 

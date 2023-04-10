@@ -5,7 +5,15 @@
 \title{This method shows a scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
 representing their p-value) and in grey the rest of the data.}
 \usage{
-scatter_pval(coordinates, id_data, positive, epi_catalogue)
+scatter_pval(
+  coordinates,
+  id_data,
+  positive,
+  epi_catalogue,
+  xlims = NULL,
+  ylims = NULL,
+  title = NULL
+)
 }
 \arguments{
 \item{coordinates}{data frame with the values of the coordinates}
@@ -15,6 +23,12 @@ scatter_pval(coordinates, id_data, positive, epi_catalogue)
 \item{positive}{Boolean vector that indicates if the case is infected.}
 
 \item{epi_catalogue}{List of the EpiFRIenDs catalogue}
+
+\item{xlims:}{Vector with the limits of the X axis.}
+
+\item{ylims:}{Vector with the limits of the Y axis}
+
+\item{title:}{Title of the plot. If NULL, it defaults to 'P-value of hotspots'}
 }
 \value{
 Scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 

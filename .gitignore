@@ -40,5 +40,9 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
+# Temporary files
+www/*
+tmp/*
+
 # Mac-env variables
 *.DS_Store

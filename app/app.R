@@ -5,8 +5,10 @@ library(gridExtra)
 library(RANN)
 library(ggplot2)
 library(chron)
+library(shinyjs)
 
 ui <- fluidPage(
+  useShinyjs(),
   titlePanel("EpiFRIenDs"),
   tabsetPanel(
     tabPanel("Distribution Analysis",
@@ -133,6 +135,17 @@ ui <- fluidPage(
                             plotOutput(outputId = "epifriends_v2_temp"),
                             plotOutput(outputId = "epifriends_v3_temp"),
                             
+                   ),
+                   tabPanel("Animation-EpiFRIenDs",
+                            h3("Store animated video of the detected hotspots"),
+                            br(),
+                            textInput(inputId = "gif_input",
+                                      label = "Path to store the Animated GIF file",
+                                      value = getwd()),
+                            textInput(inputId = "filename",
+                                      label = "Name of the file",
+                                      value = "temporal_analysis.gif"),
+                            actionButton("download_gif", "Download GIF")
                    ),
                  )
                )
@@ -276,7 +289,8 @@ server <- function(input, output) {
       keep_null_tests = keep_null_tests, 
       in_latlon = in_latlon,
       to_epsg = as.numeric(input$to_epsg), 
-      verbose = FALSE))
+      verbose = FALSE,
+      store_gif = TRUE))
     algorithm_run_temp(TRUE)
   })
   
@@ -412,6 +426,26 @@ server <- function(input, output) {
       graph <- lifetime_timeline(epi_catalogue_list$temporal_catalogues, epi_catalogue_list$mean_date, input$time_steps_temp)
       grid.arrange(graph, ncol=1)
     }
+  })
+  
+  file_path <- reactive({
+    # Your process to determine the file path of the file to be downloaded
+    # For example:
+    file_path <- paste0(getwd(),"/www/animated_gif.gif")
+    return(file_path)
+  })
+  
+  observeEvent(input$download_gif, {
+    folder_path <- paste0(input$gif_input, "/")
+    
+    # Use the file.copy() function to copy the file to the user's desired folder
+    file.copy(from = file_path(), to = folder_path)
+    file.rename(
+      from = paste0(folder_path, basename(file_path())),
+      to = paste0(folder_path, basename(input$filename)))
+    
+    showNotification("File has been successfully stored!", type = "message")
+    
   })
 }
 
