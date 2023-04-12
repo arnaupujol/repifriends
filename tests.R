@@ -51,7 +51,7 @@ for(file in files){
 ##############################################################################
 ##############                     RUN ANALYSIS                 ##############
 ##############################################################################
-link_d_to_analyse = c(0.05)
+link_d_to_analyse = c(0.01, 0.02, 0.05, 0.1)
 min_neighbours = 2
 methods_list <- c("kmeans", "radial", "centroid", "base")
 store_PDF = TRUE
@@ -59,17 +59,19 @@ automatic_link_d = FALSE
 
 for(file in files){
   
-  catalogue_methods <- c()
+  catalogue_methods <- list()
   for(method in methods_list){
-    if (store_PDF){
-      pdf_name <- paste0("pdfs/", strsplit(file, ".csv")[[1]],"_",method,".pdf")
-      pdf(pdf_name, width = 11, height = 8.5)
-    }
     
     # Get linking distance
-    link_d_to_analyse <- get_link(file)
+    if(automatic_link_d){
+      link_d_to_analyse <- get_link(file)
+    }
     
     for(link_d in link_d_to_analyse){
+      if (store_PDF){
+        pdf_name <- paste0("pdfs/", strsplit(file, ".csv")[[1]],"_",method,"_link_d_", link_d, ".pdf")
+        pdf(pdf_name, width = 11, height = 8.5)
+      }
       
       #########################
       ####### READ DATA #######
@@ -95,7 +97,7 @@ for(file in files){
       categories <- catalogue(
         position_rand, test_rand, link_d, cluster_id = NULL, min_neighbours = min_neighbours,
         method = method)
-      catalogue_methods[[method]] <-  categories
+      catalogue_methods[[paste0(method,"_", link_d)]] <-  categories
       
       # PLOT ALL CLUSTERS
       coords <- data.table::copy(position_rand)
@@ -225,20 +227,25 @@ for(file in files){
       #print(graph_clusters + graphs_no_prev)
       print(histo)
       
+      if (store_PDF){
+        dev.off()
+      }
     }
     
+  }
+  
+  for(link_d in link_d_to_analyse){
+    if (store_PDF){
+      pdf_name <- paste0("pdfs/", strsplit(file, ".csv")[[1]],"_link_d_", link_d, "_GENERAL_INSIGHTS.pdf")
+      pdf(pdf_name, width = 11, height = 8.5)
+    }
+    all_combs <- names(catalogue_methods)
+    links_combs <- as.numeric(sapply(all_combs, function(x){ strsplit(x, "_")[[1]][2]}))
+    general <- get_all_results(catalogue_methods, names(catalogue_methods)[which(links_combs == link_d)])
+    print(general$chart)
     if (store_PDF){
       dev.off()
     }
-  }
-  
-  pdf_name <- paste0("pdfs/", strsplit(file, ".csv")[[1]],"_GENERAL_INSIGHTS.pdf")
-  pdf(pdf_name, width = 11, height = 8.5)
-  
-  general <- get_all_results(catalogue_methods, methods_list)
-  print(general$chart)
-  if (store_PDF){
-    dev.off()
   }
 }
 

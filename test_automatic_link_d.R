@@ -25,7 +25,7 @@ source("./utils.R")
 min_neighbors <- 2
 
 data <- as.data.table(read.csv("./data/example_1.csv"))
-data[, id := 1:dim(datarand)[1]]
+data[, id := 1:dim(data)[1]]
 
 position_rand <- data[,.(x,y)]
 positive_rand = (data$test == 1)
@@ -40,7 +40,7 @@ print(graph_base)
 position = position_rand; positive = positive_rand; test = test_rand$test; min_neighbours = min_neighbours
 
 # Get minimum distance & quantiles of it
-min_distances <- get_min_distances(position[,.(x,y)], positive, min_neighbours)
+min_distances <- get_min_distances(position[,.(x,y)], positive, min_neighbors)
 hist(min_distances)
 
 
@@ -51,8 +51,8 @@ print(quantiles_dist)
 sign_level <- c()
 for(quant in 1:length(quantiles_dist)){
   categories <- catalogue(
-    data.table::copy(position), test, quantiles_dist[quant], cluster_id = NULL, min_neighbours = min_neighbours,
-    method = method)
+    data.table::copy(position), test, quantiles_dist[quant], cluster_id = NULL, min_neighbours = min_neighbors,
+    method = 'base')
   
   sign_level[quant] <- length(which(categories$pval_cluster <= 0.05))
 }
