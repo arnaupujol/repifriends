@@ -169,3 +169,30 @@ get_link <- function(file){
   
   return(as.numeric(best_link_d(position_rand, positive_rand, test_rand, min_neighbours)))
 }
+
+store_indiv <- function(pdf_path, files){
+  for( output in as.character(sapply(files, function(x) strsplit(x, ".csv")[[1]][1] ))){
+    
+    path_specific <- paste0(pdf_path, output)
+    # Create directory if not exists
+    if(!(dir.exists(paste0(pdf_path, output)))){
+      dir.create(path_specific)
+    }
+    
+    # Remove files if not empty
+    if (length(dir(path_specific)) != 0) {
+      unlink(path_specific, recursive = TRUE)
+    }
+    
+    files_specific <- list.files(pdf_path, pattern = output)
+    files_specific <- files_specific[!(files_specific %in% output)]
+    
+    for(file_specific in files_specific){
+      file.copy(
+        paste0(pdf_path, file_specific), 
+        paste0(pdf_path, output, "/", file_specific))
+      file.remove(paste0(pdf_path, file_specific))
+    }
+  }
+}
+

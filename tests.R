@@ -28,6 +28,7 @@ source("./utils.R")
 ##############################################################################
 files <- list.files("./data/", pattern = "example")
 
+counter <- 1
 for(file in files){
   data_v1 <- as.data.table(read_csv(paste0("./data/", file)))
   data_v1[, id := 1:nrow(data_v1)]
@@ -38,23 +39,32 @@ for(file in files){
   
   # Plot data
   graph_base <- ggplot(data_v1, aes(x = x, y = y, color = as.factor(test))) +
-    geom_point(size = 2.5) +
+    geom_point(size = 3) +
     labs(
       title = "Distribution of Positive and Negative Cases",
-      subtitle = file
+      subtitle = paste0("example_", counter, ".csv")
       )
   
   print(graph_base)
+  
+  file.rename(
+    paste0("./data/", file), 
+    paste0("./data/example_", counter, ".csv")
+    )
+  counter <- counter + 1
   
 }
 
 ##############################################################################
 ##############                     RUN ANALYSIS                 ##############
 ##############################################################################
+files <- list.files("./data/", pattern = "example")
 link_d_to_analyse = c(0.01, 0.02, 0.05, 0.1)
 min_neighbours = 2
 methods_list <- c("kmeans", "radial", "centroid", "base")
 store_PDF = TRUE
+store_individually = TRUE
+pdf_path = "./pdfs/"
 automatic_link_d = FALSE
 
 for(file in files){
@@ -69,7 +79,7 @@ for(file in files){
     
     for(link_d in link_d_to_analyse){
       if (store_PDF){
-        pdf_name <- paste0("pdfs/", strsplit(file, ".csv")[[1]],"_",method,"_link_d_", link_d, ".pdf")
+        pdf_name <- paste0(pdf_path, strsplit(file, ".csv")[[1]],"_",method,"_link_d_", link_d, ".pdf")
         pdf(pdf_name, width = 11, height = 8.5)
       }
       
@@ -99,136 +109,141 @@ for(file in files){
         method = method)
       catalogue_methods[[paste0(method,"_", link_d)]] <-  categories
       
-      # PLOT ALL CLUSTERS
-      coords <- data.table::copy(position_rand)
-      coords[, cluster := 0]
-      coords[, index := 1:nrow(coords)]
-      for(clusters in 1:length(categories$epifriends_catalogue$p)){
-        coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
-      }
+      if(!is.null(categories$epifriends_catalogue)){
       
-      graph_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
-        geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
-        labs(title = "Distribution of Clusters")
-      
-      if(method != 'radial'){
-        graph_clusters <- graph_clusters + geom_encircle(
-          data = get_region_prev(data_v1, categories$epifriends_catalogue), 
-          aes(x=x, y=y, group = epifriends, color = as.factor(epifriends)), expand = 0.1 , size = 2)
-      }
-      
-      # PLOT SIGNIFICANT CLUSTERS
-      coords <- data.table::copy(position_rand)
-      coords[, cluster := 0]
-      coords[, index := 1:nrow(coords)]
-      for(clusters in which(categories$epifriends_catalogue$p <= 0.05)){
-        coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
-      }
-      
-      graph_sign_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
-        geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
-        labs(title = "Distribution of Significant Clusters")
-      
-      if(method != 'radial'){
-        graph_sign_clusters <- graph_sign_clusters + geom_encircle(
-          data = get_region_prev(data_v1, categories$epifriends_catalogue, TRUE), 
-          aes(x=x, y=y, group = epifriends, color = as.factor(epifriends)), expand = 0.1 , size = 2)
-      }
-      
-      ###################################
-      ####### TABLE WITH INSIGHTS #######
-      ###################################
-      # Table general overview
-      general <- data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
-      general$pvalue <- categories$epifriends_catalogue$p
-      general$mean_pr <- categories$epifriends_catalogue$mean_pr
-      general$mean_prev <- categories$epifriends_catalogue$mean_local_prev
-      general$n_positives <- categories$epifriends_catalogue$positives
-      general$n_negatives <- categories$epifriends_catalogue$negatives
-      general$n_total <- categories$epifriends_catalogue$total
-      general[, significant := ifelse(pvalue <= 0.05, 'YES', 'NO')]
-      
-      general_two = data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
-      general_two <- cbind(general_two,rbindlist(categories$epifriends_catalogue$mean_position_all))
-      
-      #grid::grid.newpage()
-      grid.arrange(tableGrob(general), tableGrob(general_two), ncol = 1)
-
-      if(method == 'kmeans'){
-        kmeans_prev <- compute_kmeans(
-          clean_data(data_v1[,.(x, y, test)])[,.(x,y)], 
-          clean_data(data_v1[,.(x, y, test)])$test)
-        prevalence <- kmeans_prev$prevalence
-        
-        k_results <- ggplot(kmeans_prev, aes(x = x, y = y, color = as.factor(clusters))) + 
-          geom_point(size = 2.5) + labs(title = "Detected Clusters using KMeans")
-
-        print(graph_clusters + k_results)
-        
-      }else if(method == "radial"){
-        index_friends <- unique(unlist(categories$epifriends_catalogue$indeces))
-        radial_prev <- prevalence_radial(data_v1, position_rand)
-        prevalence <- radial_prev$prevalence$prevalence
-      }else if (method == "base"){
-        prevalence <- rep(sum(test_rand) / length(test_rand), length(test_rand))
-      }else if (method == "centroid"){
-        copy_position <- data.table::copy(position_rand)
-        copy_position[, id := 1:nrow(copy_position)]
-        total_friends_indeces <- categories$epifriends_catalogue$indeces
-        copy_position[, prevalence := 0]
-        copy_position[, radious := 0]
-        radial <- c()
-        centroid_df <- list()
-        for(i in 1:length(total_friends_indeces)){
-          result <- get_radious(
-            positions = copy_position,
-            test_result = data.table("test" = test_rand),
-            total_friends_indeces = total_friends_indeces[[i]],
-            thr_data = 0.1, 
-            max_epi_cont = 0.5)
-          
-          # Assign computed prevalence
-          rows <- dim(copy_position[id %in% result$id])[1]
-          copy_position[id %in% result$id,
-                        prevalence := rep(result$prevalence, rows)]
-          
-          prevalence <- copy_position$prevalence
-          centroid_df[[i]] <- result$centroid
-          radial[i] <- result$radious
+        # PLOT ALL CLUSTERS
+        coords <- data.table::copy(position_rand)
+        coords[, cluster := 0]
+        coords[, index := 1:nrow(coords)]
+        for(clusters in 1:length(categories$epifriends_catalogue$p)){
+          coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
         }
         
-        centroid_df <- rbindlist(centroid_df)
-        centroid_df[, radious := radial]
+        graph_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+          geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+          labs(title = "Distribution of Clusters")
+        
+        if(method != 'radial'){
+          graph_clusters <- graph_clusters + geom_encircle(
+            data = get_region_prev(data_v1, categories$epifriends_catalogue), 
+            aes(x=x, y=y, group = epifriends, color = as.factor(epifriends)), expand = 0.1 , size = 2)
+        }
+        
+        # PLOT SIGNIFICANT CLUSTERS
+        coords <- data.table::copy(position_rand)
+        coords[, cluster := 0]
+        coords[, index := 1:nrow(coords)]
+        for(clusters in which(categories$epifriends_catalogue$p <= 0.05)){
+          coords[index %in% categories$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+        }
+        
+        graph_sign_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+          geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+          labs(title = "Distribution of Significant Clusters")
+        
+        if(method != 'radial'){
+          graph_sign_clusters <- graph_sign_clusters + geom_encircle(
+            data = get_region_prev(data_v1, categories$epifriends_catalogue, TRUE), 
+            aes(x=x, y=y, group = epifriends, color = as.factor(epifriends)), expand = 0.1 , size = 2)
+        }
+        
+        ###################################
+        ####### TABLE WITH INSIGHTS #######
+        ###################################
+        # Table general overview
+        general <- data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
+        general$pvalue <- categories$epifriends_catalogue$p
+        general$mean_pr <- categories$epifriends_catalogue$mean_pr
+        general$mean_prev <- categories$epifriends_catalogue$mean_local_prev
+        general$n_positives <- categories$epifriends_catalogue$positives
+        general$n_negatives <- categories$epifriends_catalogue$negatives
+        general$n_total <- categories$epifriends_catalogue$total
+        general[, significant := ifelse(pvalue <= 0.05, 'YES', 'NO')]
+        
+        general_two = data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
+        general_two <- cbind(general_two,rbindlist(categories$epifriends_catalogue$mean_position_all))
+        
+        #grid::grid.newpage()
+        grid.arrange(tableGrob(general), tableGrob(general_two), ncol = 1)
+  
+        if(method == 'kmeans'){
+          kmeans_prev <- compute_kmeans(
+            clean_data(data_v1[,.(x, y, test)])[,.(x,y)], 
+            clean_data(data_v1[,.(x, y, test)])$test)
+          prevalence <- kmeans_prev$prevalence
+          
+          k_results <- ggplot(kmeans_prev, aes(x = x, y = y, color = as.factor(clusters))) + 
+            geom_point(size = 2.5) + labs(title = "Detected Clusters using KMeans")
+  
+          print(graph_clusters + k_results)
+          
+        }else if(method == "radial"){
+          index_friends <- unique(unlist(categories$epifriends_catalogue$indeces))
+          radial_prev <- prevalence_radial(data_v1, position_rand)
+          prevalence <- radial_prev$prevalence$prevalence
+        }else if (method == "base"){
+          prevalence <- rep(sum(test_rand) / length(test_rand), length(test_rand))
+        }else if (method == "centroid"){
+          copy_position <- data.table::copy(position_rand)
+          copy_position[, id := 1:nrow(copy_position)]
+          total_friends_indeces <- categories$epifriends_catalogue$indeces
+          copy_position[, prevalence := 0]
+          copy_position[, radious := 0]
+          radial <- c()
+          centroid_df <- list()
+          for(i in 1:length(total_friends_indeces)){
+            result <- get_radious(
+              positions = copy_position,
+              test_result = data.table("test" = test_rand),
+              total_friends_indeces = total_friends_indeces[[i]],
+              thr_data = 0.1, 
+              max_epi_cont = 0.5)
             
-      }else{
-        prevalence <- NULL
-      }
-      
-      graphs_prev <- scatter_pval(
-          data.table::copy(position_rand), 
+            # Assign computed prevalence
+            rows <- dim(copy_position[id %in% result$id])[1]
+            copy_position[id %in% result$id,
+                          prevalence := rep(result$prevalence, rows)]
+            
+            prevalence <- copy_position$prevalence
+            centroid_df[[i]] <- result$centroid
+            radial[i] <- result$radious
+          }
+          
+          centroid_df <- rbindlist(centroid_df)
+          centroid_df[, radious := radial]
+              
+        }else{
+          prevalence <- NULL
+        }
+        
+        graphs_prev <- scatter_pval(
+            data.table::copy(position_rand), 
+            categories$cluster_id, 
+            data.table::copy(positive_rand), 
+            data.table::copy(prevalence),
+            categories$epifriends_catalogue,
+            paste0(method,"-Link_d: ",link_d)) 
+        
+        graphs_no_prev <- scatter_pval(
+          position_rand, 
           categories$cluster_id, 
-          data.table::copy(positive_rand), 
-          data.table::copy(prevalence),
+          positive_rand, 
+          NULL,
           categories$epifriends_catalogue,
           paste0(method,"-Link_d: ",link_d)) 
-      
-      graphs_no_prev <- scatter_pval(
-        position_rand, 
-        categories$cluster_id, 
-        positive_rand, 
-        NULL,
-        categories$epifriends_catalogue,
-        paste0(method,"-Link_d: ",link_d)) 
-      histo <- size_histogram(categories)
-      
-      print(graph_base + graph_clusters)
-      print(graph_clusters + graph_sign_clusters)
-      print(graph_clusters+graphs_prev)
-      #print(graph_clusters + graphs_no_prev)
-      print(histo)
-      
-      if (store_PDF){
-        dev.off()
+        histo <- size_histogram(categories)
+        
+        print(graph_base + graph_clusters)
+        print(graph_clusters + graph_sign_clusters)
+        print(graph_clusters+graphs_prev)
+        #print(graph_clusters + graphs_no_prev)
+        print(histo)
+        
+        if (store_PDF){
+          dev.off()
+        }
+      }else{
+        file.remove(pdf_name)
       }
     }
     
@@ -236,17 +251,28 @@ for(file in files){
   
   for(link_d in link_d_to_analyse){
     if (store_PDF){
-      pdf_name <- paste0("pdfs/", strsplit(file, ".csv")[[1]],"_link_d_", link_d, "_GENERAL_INSIGHTS.pdf")
+      pdf_name <- paste0(pdf_path, strsplit(file, ".csv")[[1]],"_link_d_", link_d, "_GENERAL_INSIGHTS.pdf")
       pdf(pdf_name, width = 11, height = 8.5)
     }
     all_combs <- names(catalogue_methods)
     links_combs <- as.numeric(sapply(all_combs, function(x){ strsplit(x, "_")[[1]][2]}))
     general <- get_all_results(catalogue_methods, names(catalogue_methods)[which(links_combs == link_d)])
-    print(general$chart)
-    if (store_PDF){
-      dev.off()
+    
+    if(is.null(general$table$pvalue)){
+      if (store_PDF){
+        dev.off()
+        file.remove(pdf_name)
+      }
+    }else{
+      print(general$chart)
+      if (store_PDF){
+        dev.off()
+      }
     }
   }
 }
 
+if(store_individually & store_PDF){
+  store_indiv(pdf_path, files)
+}
 

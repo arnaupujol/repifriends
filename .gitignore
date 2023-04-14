@@ -42,3 +42,8 @@ vignettes/*.pdf
 
 # Mac-env variables
 *.DS_Store
+
+# RShiny directories
+*www/
+*tmp/
+*.gif
