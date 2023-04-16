@@ -46,4 +46,7 @@ vignettes/*.pdf
 # RShiny directories
 *www/
 *tmp/
+
+# PDF directories
+*pdfs/
 *.gif

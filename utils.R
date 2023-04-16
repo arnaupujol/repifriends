@@ -128,7 +128,12 @@ get_min_distances <- function(position, positive, min_neighbors){
     rad_test <- radial_dist[coord1 == coords]
     rad_test <- rad_test[order(distance)]
     rad_test[, index := 1:dim(rad_test)[1]]
-    min_distances[counter] <- min(rad_test[index >= min_neighbors]$distance)[1]
+    
+    if( nrow(rad_test[index >= min_neighbors]) == 0){
+      min_distances[counter] <- 0
+    }else{
+      min_distances[counter] <- min(rad_test[index >= min_neighbors]$distance)[1]
+    }
     counter <- counter +1 
   }
   
