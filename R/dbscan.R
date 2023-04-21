@@ -5,7 +5,9 @@
 #'
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
+#' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
 #' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param link_neighbours: Number of surrounding neighbors to link. 
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
@@ -31,8 +33,9 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- dbscan(pos, 2 ,3)
 #' 
-dbscan <- function(positions, link_d, min_neighbours = 2, test = NULL,
-                   in_latlon = FALSE, to_epsg = NULL, verbose = FALSE){
+dbscan <- function(positions, link_d=NULL, use_link_d = TRUE,  min_neighbours = 2,
+                   link_neighbours = 10, test = NULL, in_latlon = FALSE, 
+                   to_epsg = NULL, verbose = FALSE){
   
   # Remove or impute missings
   positions = clean_unknown_data(positions,test,verbose=verbose)
@@ -49,7 +52,9 @@ dbscan <- function(positions, link_d, min_neighbours = 2, test = NULL,
   #Create cluster id
   cluster_id <- integer(dim(positions)[1])
   #Query KDTree
-  indeces <- find_indeces(positions, link_d, positions)
+  indeces <- find_indeces(positions = positions,positions_eval = positions,
+                          link_d=link_d, use_link_d=use_link_d,
+                          link_neighbours=link_neighbours)
   #inicialize ID variable
   last_cluster_id = 0
   #Have in count the posible exception of not having any positions
@@ -93,26 +98,35 @@ dbscan <- function(positions, link_d, min_neighbours = 2, test = NULL,
   return(cluster_id)
 }
 
-find_indeces <- function(positions, link_d, tree){
-  # This method returns the indeces of all the friends
-  # of each position from positions given a KDTree.
-  #
-  # Parameters:
-  # -----------
-  # positions: List of class data.frame
-  #   A list with the position parameters we want to query with shape (n,2),
-  #   where n is the number of positions.
-  # link_d: double
-  #   The linking distance to label friends.
-  # tree: List of class data.frame
-  #   A list build with the positions of the target data.
-  #
-  # Returns:
-  # --------
-  # indeces: list
-  #   List with an array of the indeces of the friends of each
-  #   position.
-  #Creation of empty list where the clusters of points will be saved
+
+#' This method returns the indeces of all the friends of each position from positions given a KDTree.#'
+#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
+#' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
+#' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
+#' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param link_neighbours: Number of surrounding neighbors to link. 
+#' @param positions_eval:  A list build with the positions of the target data.
+#'
+#' @return  List with an array of the indeces of the friends of each position.
+#' @export
+#' #'
+#'
+#' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' library("RANN")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#'
+#' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
+#' indeces <- find_indeces(pos, 2 ,pos, FALSE)
+#' 
+find_indeces <- function(positions, positions_eval, use_link_d, link_d = NULL, link_neighbours = NULL){
   indeces <- list()
   #Have in count the posible exception of not having any positions
   if(dim(positions)[1] == 0){
@@ -130,21 +144,27 @@ find_indeces <- function(positions, link_d, tree){
     #inicialitation of distance and k number of nearest positions
     dist = 0
     kth = 0
-    #loop which stops when the maximum linking distance is overcomed
-    while((dist <= link_d) && (kth < dim(tree)[1])){
-      #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
-      kth = kth + 1
-      query <- nn2(tree, positions[i,], kth)
-      index <- query$nn.idx[length(query$nn.idx)]
-      dist <- query$nn.dists[length(query$nn.dists)]
-      #Addition of the last point to the indeces list if it is in the wanted range
-      if((dist[length(dist)] <= link_d) && (kth < dim(tree)[1])){
-        indecesaux <- append(indecesaux,index)
-      }else{
-        #Final list for the position i
-        indeces[[i]] <- indecesaux
-        break
+    if(use_link_d){
+      #loop which stops when the maximum linking distance is overcomed
+      while((dist <= link_d) && (kth < dim(positions_eval)[1])){
+        #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
+        kth = kth + 1
+        query <- nn2(positions_eval, positions[i,], kth)
+        index <- query$nn.idx[length(query$nn.idx)]
+        dist <- query$nn.dists[length(query$nn.dists)]
+        #Addition of the last point to the indeces list if it is in the wanted range
+        if((dist[length(dist)] <= link_d) && (kth < dim(positions_eval)[1])){
+          indecesaux <- append(indecesaux,index)
+        }else{
+          #Final list for the position i
+          indeces[[i]] <- indecesaux
+          break
+        }
       }
+    }else{
+      query <- nn2(positions_eval, positions[i,], link_neighbours)
+      index <- as.numeric(query$nn.idx)
+      indeces[[i]] <- index
     }
   }
   return(indeces)

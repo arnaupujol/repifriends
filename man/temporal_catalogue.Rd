@@ -8,8 +8,10 @@ temporal_catalogue(
   positions,
   test_result,
   dates,
-  link_d,
+  link_d = NULL,
   min_neighbours = 2,
+  use_link_d = TRUE,
+  link_neighbours = 10,
   time_width,
   min_date = NULL,
   max_date = NULL,
@@ -30,10 +32,6 @@ temporal_catalogue(
 \item{test_result}{data.frame with the test results (0 or 1).}
 
 \item{dates}{Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.}
-
-\item{link_d}{the linking distance of the DBSCAN algorithm. Should be in the same scale as the positions.}
-
-\item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
 
 \item{time_width}{Number of days of the time window used to select cases in each time step.}
 
@@ -58,6 +56,12 @@ temporal_catalogue(
 \item{linking_dist}{Linking distance used to link the clusters from the different time frames. Only necesary if add_temporal_id is TRUE.}
 
 \item{get_timelife}{It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.}
+
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+
+\item{link_neighbours:}{Number of surrounding neighbors to link.}
 }
 \value{
 List with the next objects:

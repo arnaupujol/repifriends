@@ -7,7 +7,9 @@
 #' @param test_result data.frame with the test results (0 or 1).
 #' @param link_d The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param cluster_id Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.
-#' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
+#' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param link_neighbours: Number of surrounding neighbors to link. 
 #' @param max_p Maximum value of the p-value to consider the cluster detection.
 #' @param min_pos Threshold of minimum number of positive cases in clusters applied.
 #' @param min_total Threshold of minimum number of cases in clusters applied.
@@ -50,10 +52,10 @@
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- catalogue(pos, test, 2)
 #' 
-catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
-                      min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, keep_null_tests = FALSE, in_latlon = FALSE, 
-                      to_epsg = NULL, verbose = FALSE){
+catalogue <- function(positions, test_result, link_d = NULL, cluster_id = NULL,
+                      min_neighbours = 2, use_link_d = TRUE, link_neighbours = 10,
+                      max_p = 1, min_pos = 2, min_total = 2, min_pr = 0, 
+                      keep_null_tests = FALSE, in_latlon = FALSE, to_epsg = NULL, verbose = FALSE){
   
   # Remove or impute missings
   pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
@@ -72,7 +74,9 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
   positive_positions <- positions[which(test_result == 1),]
   #Computing cluster_id if needed
   if(is.null(cluster_id)){
-    cluster_id = dbscan(positive_positions, link_d, min_neighbours = min_neighbours)
+    cluster_id = dbscan(positions = positive_positions, link_d = link_d, 
+                        use_link_d = use_link_d, min_neighbours = min_neighbours,
+                        link_neighbours=link_neighbours)
   }
   #Define total number of positive cases
   total_positives = sum(test_result)
@@ -103,7 +107,9 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
     #for all these indeces, get list of friends from all positions
-    all_friends_indeces <- find_indeces(positive_positions[cluster_id_indeces,], link_d, positions)
+    all_friends_indeces <- find_indeces(positions =positive_positions[cluster_id_indeces,],
+                                        positions_eval=positions, use_link_d=use_link_d,
+                                        link_d=link_d,link_neighbours=link_neighbours)
     #get unique values of such indeces
     total_friends_indeces <- sort(unique(unlist(all_friends_indeces)))
     #get positivity rate from all the unique indeces
@@ -119,9 +125,9 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
 
       mean_pr_cluster[cluster_id_indeces] <- mean_pr
       pval_cluster[cluster_id_indeces] <- pval
-      mean_pos <- colMeans(positive_positions[cluster_id_indeces,])
+      mean_pos <- as.data.table(t(colMeans(positive_positions[cluster_id_indeces,])))
       epifriends_catalogue[["mean_position_pos"]] <- append(epifriends_catalogue[["mean_position_pos"]], list(mean_pos))
-      mean_pos_ext <-  colMeans(positions[total_friends_indeces,])
+      mean_pos_ext <-  as.data.table(t(colMeans(positions[total_friends_indeces,])))
       epifriends_catalogue[["mean_position_all"]] <- append(epifriends_catalogue[["mean_position_all"]], list(mean_pos_ext))
       epifriends_catalogue[["mean_pr"]] <- append(epifriends_catalogue[["mean_pr"]], mean_pr)
       epifriends_catalogue[["positives"]] <- append(epifriends_catalogue[["positives"]], as.integer(npos))
