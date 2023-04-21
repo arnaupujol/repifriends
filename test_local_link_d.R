@@ -121,7 +121,7 @@ print(past<e0("The distance belong to the percentile: ", dt[diff == min(diff)]$q
 print(paste0("The prevalence of the cluster is: ", unique(dt$cluster_prev)))
 print(paste0("The mean individual prevalence of the positive cases given the link_d provided is: ",dt[diff == min(diff)]$mean_prev))
 
-# PROBLEM: LIKELY THAT PERCENTILE 1 IS ALWAYS SELECTED
+# PROBLEM: LIKELY THAT PERCENTILE 100 IS ALWAYS SELECTED
 
 
 ##################################################################################
@@ -133,7 +133,7 @@ print(paste0("The mean individual prevalence of the positive cases given the lin
 
 df_insights <- data.table('cluster_n' = c(), 'mean_init' = c(), 'mean_random' = c())
 
-random_init <- 500
+random_init <- 100
 for(cluster_n in unique(kmeans_prev$clusters)){
   print(cluster_n)
   mean_min_vect <- c()
@@ -168,4 +168,5 @@ for(cluster_n in unique(kmeans_prev$clusters)){
 }
 df_insights
 
+kmeans_filt[,.(sum(test)), .(clusters)]
 

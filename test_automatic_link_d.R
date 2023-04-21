@@ -67,7 +67,7 @@ if(selection == 'random'){
 
 
 quantiles_dist <- quantile(min_distances,probs = c(quantiles),na.rm = TRUE)
-dist_thr <- 0.01
+dist_thr <- 0.01 # think of proportions
 
 dt = data.table('quantiles' = quantiles, 'distances'= as.numeric(quantiles_dist))
 print(dt)
