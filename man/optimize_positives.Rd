@@ -52,7 +52,9 @@ minimum neighbor restriction.
 \examples{
 # Required packages
 if(!require("RANN")) install.packages("RANN")
+if(!require("doParallel")) install.packages("doParallel")
 library("RANN")
+library("doParallel")
 
 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
