@@ -25,14 +25,16 @@
 #' @examples
 #' # Required packages
 #' if(!require("RANN")) install.packages("RANN")
+#' if(!require("doParallel")) install.packages("doParallel")
 #' library("RANN")
+#' library("doParallel")
 #'
 #' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 #' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 #' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 #' test <-c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #' 
-#' df <- datatable(x = x, y = y, test = test)
+#' df <- data.table(x = x, y = y, test = test)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' link_d <- opt_link_d(df, 2)
@@ -233,7 +235,9 @@ simplify_distributions<- function(dt, dist_prop){
 #' @examples
 #' # Required packages
 #' if(!require("RANN")) install.packages("RANN")
+#' if(!require("doParallel")) install.packages("doParallel")
 #' library("RANN")
+#' library("doParallel")
 #'
 #' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 #' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)

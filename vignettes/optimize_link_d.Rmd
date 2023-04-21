@@ -13,6 +13,7 @@ We first import the packages required from this RMarkdown.
 
 ```{r}
 library("RANN")
+library("doParallel")
 library("data.table")
 library("ggplot2")
 library("epifriends")
@@ -27,6 +28,7 @@ The data created with the epifriends_on_different_distributions.ipynb file of py
 setwd("./../")
 dataclus <- data.table(read.csv("./data/mock_data_clustered.csv"))
 
+min_neighbors <- 2
 # Set some random missings
 dataclus[X %in% sample(X, 5, TRUE), y := NA]
 
@@ -38,16 +40,16 @@ In order to work better with the data, some subdatasets are created:
 
 ```{r}
 # Obtain position coordinates & test results
-position <- df[,.(x,y)]
-positive = (df$test == 1)
-test_result <- df[,.(test)]
+position <- dataclus[,.(x,y)]
+positive = (dataclus$test == 1)
+test_result <- dataclus[,.(test)]
 ```
 
 This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:
 
 ```{r}
 # Plot data
-graph_base <- ggplot(df, aes(x = x, y = y, color = as.factor(test))) +
+graph_base <- ggplot(dataclus, aes(x = x, y = y, color = as.factor(test))) +
   geom_point(size = 3) +
   labs(title = "Distribution of Positive and Negative Cases")
 graph_base
