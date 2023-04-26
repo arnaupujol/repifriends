@@ -65,7 +65,7 @@ scatter_pval <- function(
     scale_colour_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
     ggtitle(title) + coord_equal()
   
-  if(!is.null(xlim)){ # Set limits in x & y coordinates
+  if(!is.null(xlims)){ # Set limits in x & y coordinates
     graph <- graph + xlim(xlims) + ylim(ylims)
   }
   
