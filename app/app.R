@@ -125,9 +125,6 @@ ui <- fluidPage(
                    tabPanel("Data",
                             tableOutput(outputId = "load_data_temp")
                    ),
-                   tabPanel("Distribution",
-                            plotOutput(outputId = "distribution_temp")
-                   ),
                    tabPanel("Summary-EpiFRIenDs",
                             h3("Summary plots"),
                             br(),
@@ -382,19 +379,6 @@ server <- function(input, output) {
   })
   
   ## TEMPORAL ALGO PLOTS
-  output$distribution_temp <- renderPlot({
-    df <- data_temp()
-    dtparts = t(as.data.frame(strsplit(df$date," ")))
-    row.names(dtparts) = NULL
-    datesform <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
-    dates <- as.numeric(datesform)
-    graph <- ggplot(df,aes(x=x, y=y))+
-        geom_point(aes(fill = dates, colour = as.factor(test)), shape = 21, size = 2.5)+
-        scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
-        scale_color_manual(values = c("grey", "red"), name = "Test", labels = c("Negative","Positive")) + coord_equal()
-    grid.arrange(graph, ncol=1)
-  })
-  
   output$epifriends_v1_temp <- renderPlot({
     if(algorithm_run_temp()){
       epi_catalogue_list <- epifriends_temp()
@@ -405,7 +389,7 @@ server <- function(input, output) {
       
       df_all = data.table("mean_date" = epi_catalogue_list$mean_date,
                           "num_clusters" = num_clusters)
-      graph <- ggplot(df_all, aes(x = mean_date, y = num_clusters)) +
+      graph <- ggplot(df_all, aes(x = as.Date(mean_date), y = num_clusters)) +
         geom_line() + labs(x = "Dates", y = "Number of cluster",
                            title = "Number of clusters across dates")
       grid.arrange(graph, ncol=1)

@@ -171,7 +171,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
     list.files(path=out_temp_path, pattern = '*.png', full.names = TRUE) %>% 
       image_read() %>% # reads each path file
       image_join() %>% # joins image
-      image_animate(fps=10) %>% # animates, can opt for number of loops
+      image_animate(fps=50) %>% # animates, can opt for number of loops
       magick::image_write(gif_output_name) # write to current dir
   }
   
