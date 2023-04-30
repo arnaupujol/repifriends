@@ -50,7 +50,7 @@ opt_link_d <- function(df, min_neighbors, cluster_id=NULL, dist_prop = 0.1,
   
   # Obtain minimum distances that satisfy the min_neighbors constrain
   if(verbose){print("Obtain minimum distances satisfying the min_neighbor restriction")}
-  min_distances <- get_min_distances(position[,.(x,y)], positive, min_neighbors)
+  min_distances <- get_min_distances(position[positive,.(x,y)], min_neighbors)
 
   # Get quantiles from whose distance will be evaluated
   if(verbose){print("Estimate quantiles based on distances")}
@@ -72,6 +72,7 @@ opt_link_d <- function(df, min_neighbors, cluster_id=NULL, dist_prop = 0.1,
   
   return(opt$optimal_link_d)
 }
+
 
 #' Obtain desired quantiles that will be used to evaluate distances.
 #'
@@ -109,7 +110,6 @@ quantile_estimation <- function(quantile_est, verbose){
 #' minimum neighbor restriction.
 #'
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
-#' @param positive Array with location of positive tests.
 #' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #'
 #' @return Minimum distance for each positive test where a given contrain of min_neighbors is satisfied.
@@ -131,32 +131,13 @@ quantile_estimation <- function(quantile_est, verbose){
 #'
 #' # Get minimum distances based on neighbors
 #' min_distances <- get_min_distances(position, positive, min_neighbors)
-get_min_distances <- function(position, positive, min_neighbors){
-  
-  n <- dim(position[positive, .(x,y)])[1]
-  radial_dist <- data.table(coord1 = rep(1:n, each = n),
-                            coord2 = rep(1:n, n),
-                            distance = as.vector(as.matrix(proxy::dist(position[positive, .(x,y)], pairwise = TRUE))))
-  # Remove identities
-  radial_dist <- radial_dist[coord1 != coord2]
-  
-  # Determine minimal distance based on min_neighbors
-  min_distances <- c()
-  counter <- 1
-  for(coords in unique(radial_dist$coord1)){
-    rad_test <- radial_dist[coord1 == coords]
-    rad_test <- rad_test[order(distance)]
-    rad_test[, index := 1:dim(rad_test)[1]]
-    
-    if( nrow(rad_test[index >= min_neighbors]) == 0){
-      min_distances[counter] <- 0
-    }else{
-      min_distances[counter] <- min(rad_test[index >= min_neighbors]$distance)[1]
-    }
-    counter <- counter +1 
+get_min_distances <- function(position, min_neighbors){
+  dist <- c()
+  for(i in 1:dim(position)[1]){
+    query <- nn2(position,position[i,],min_neighbors)
+    dist[i] <- query$nn.dists[length(query$nn.dists)]
   }
-  
-  return(min_distances)
+  return(dist)
 }
 
 #' Merge quantiles based on proximity of distances given its distribution.
@@ -194,7 +175,7 @@ simplify_distributions<- function(dt, dist_prop){
         break
       }
       # Check if distances are lower than threshold (dist_thr)
-      if (abs(dt$distances[i] - dt$distances[i+1])  < dist_prop) {
+      if ( ((dt$distances[i+1] - dt$distances[i]) / dt$distances[i])   > dist_prop) {
         # Compute mean of distances and update first row
         dt[i, distances := mean(c(dt$distances[i], dt$distances[i+1]))]
         dt[i, quantiles := mean(c(dt$quantiles[i], dt$quantiles[i+1]))]
@@ -283,12 +264,7 @@ optimize_positives<- function(position, test_result, min_neighbors,cluster_id,
           min_neighbours = min_neighbors, keep_null_tests = keep_null_tests, in_latlon=in_latlon,
           to_epsg=to_epsg)
         
-        kpi <- 0
-        for(j in 1:length(categories$cluster_id)){
-          if(categories$cluster_id[j]!=0){
-            kpi <- kpi + (1-categories$pval_cluster[j])
-          }
-        }
+        kpi <- sum(categories$epifriends_catalogue$positives * (1-categories$epifriends_catalogue$p))
         
         return(kpi)
       }
@@ -302,13 +278,7 @@ optimize_positives<- function(position, test_result, min_neighbors,cluster_id,
           min_neighbours = min_neighbors, keep_null_tests = keep_null_tests, in_latlon=in_latlon,
           to_epsg=to_epsg)
         
-        kpi <- 0
-        for(j in 1:length(categories$cluster_id)){
-          if(categories$cluster_id[j]!=0){
-            kpi <- kpi + (1-categories$pval_cluster[j])
-          }
-        }
-        
+        kpi <- sum(categories$epifriends_catalogue$positives * (1-categories$epifriends_catalogue$p))
         metric[quant] <- kpi
       }
       

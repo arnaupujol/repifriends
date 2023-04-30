@@ -58,7 +58,7 @@ graph_base
 Obtain minimum distance between positive tests based on the contrain of the min_neighbors. For each positive test case, the distance with the closes specified neighbors will be computed, which will lead to a distribution of minimum distances.
 ```{r}
 # Plot data
-min_distances <- get_min_distances(position[,.(x,y)], positive, min_neighbors)
+min_distances <- get_min_distances(position[positive,.(x,y)], min_neighbors)
 hist(min_distances)
 ```
 

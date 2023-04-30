@@ -5,11 +5,9 @@
 \title{This method optimizes the linking distance based on the distribution of the minimum distances that satisfy a given
 minimum neighbor restriction.}
 \usage{
-get_min_distances(position, positive, min_neighbors)
+get_min_distances(position, min_neighbors)
 }
 \arguments{
-\item{positive}{Array with location of positive tests.}
-
 \item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
 
 \item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
