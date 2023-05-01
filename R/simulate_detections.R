@@ -13,7 +13,6 @@
 #' @param min_pos Threshold of minimum number of positive cases in clusters applied.
 #' @param min_total Threshold of minimum number of cases in clusters applied.
 #' @param min_pr Threshold of minimum positivity rate in clusters applied.
-#' @param filter_fd If True, filter detected false positives.
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
@@ -42,9 +41,9 @@
 #' cat <- rm_false_detections(pos, test, 2, 100, filter_fd = TRUE)
 #' catalogues <- cat$catalogue
 #' 
-rm_false_detections <- function(positions, test_result, link_d, n_simulations,
+get_false_detection <- function(positions, test_result, link_d, n_simulations,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, filter_fd = FALSE, keep_null_tests = FALSE, in_latlon = FALSE, 
+                      min_pr = 0,  keep_null_tests = FALSE, in_latlon = FALSE, 
                       to_epsg = NULL, verbose = FALSE){
   
   ## Generate simulations
@@ -74,55 +73,8 @@ rm_false_detections <- function(positions, test_result, link_d, n_simulations,
   fp <- merge(cat_real, random_dist, by = c("num_pos"), how = "left")
   fp[, prob_fd := mean_epi / epifriends]
   
-  pos_fd <- min(fp[prob_fd >= 0.1]$num_pos)
-  if(verbose){print(paste0("Won't consider any isolated case below ", pos_fd + 1, " epifriends"))}
-  
-  # Index to remove
-  index_rm <- cat_ids[positive %in% pos_fd]$id
-  
-  # Remove false positives if needed
-  if(filter_fd){
-    for(to_rm in index_rm){
-      cat$epifriends_catalogue$positives[to_rm] <- NA
-      cat$epifriends_catalogue$negatives[to_rm] <- NA
-      cat$epifriends_catalogue$p[to_rm] <- NA
-      cat$epifriends_catalogue$id[to_rm] <- NA
-      cat$epifriends_catalogue$mean_pr[to_rm] <- NA
-      cat$epifriends_catalogue$mean_position_pos[[to_rm]] <- NA
-      cat$epifriends_catalogue$mean_position_all[[to_rm]] <- NA
-      cat$epifriends_catalogue$total[to_rm] <- NA
-      cat$epifriends_catalogue$indeces[[to_rm]] <- NA
-      
-      location <- which(cat$cluster_id %in% to_rm)
-      cat$cluster_id[location] <- NA
-      cat$mean_pr_cluster[location] <- NA
-      cat$pval_cluster[location] <- NA
-    }
-    
-    # Remove the NAs
-    size_cluster_id <- length(cat$epifriends_catalogue$id)
-    
-    cat$cluster_id <- na.omit(cat$cluster_id)
-    cat$mean_pr_cluster <- na.omit(cat$mean_pr_cluster)
-    cat$pval_cluster <- na.omit(cat$pval_cluster)
-    
-    cat$epifriends_catalogue$id <- na.omit(cat$epifriends_catalogue$id)
-    mean_pos <-  cat$epifriends_catalogue$mean_position_pos
-    cat$epifriends_catalogue$mean_position_pos <- mean_pos[!is.na(mean_pos)]
-    mean_all <- cat$epifriends_catalogue$mean_position_all
-    cat$epifriends_catalogue$mean_position_all <- mean_all[!is.na(mean_all)]
-    indices <- cat$epifriends_catalogue$indeces
-    cat$epifriends_catalogue$indeces <- indices[!is.na(indices)]
-    cat$epifriends_catalogue$mean_pr <- na.omit(cat$epifriends_catalogue$mean_pr)
-    cat$epifriends_catalogue$positives <- na.omit(cat$epifriends_catalogue$positives)
-    cat$epifriends_catalogue$negatives <- na.omit(cat$epifriends_catalogue$negatives)
-    cat$epifriends_catalogue$total <- na.omit(cat$epifriends_catalogue$total)
-    cat$epifriends_catalogue$p <- na.omit(cat$epifriends_catalogue$p)
-  }
-  
-  
   # Pending to think about how 
-  return(list('fp_detected' = fp, 'catalogue' = cat))
+  return(fp)
 }
 
 #' Generate random distributions based on the global prevalence of infections and compute its Epifriends to
@@ -192,7 +144,7 @@ generate_simulations <- function(positions, test_result, link_d, n_simulations,
       'negative' = cat$epifriends_catalogue$negatives
     )
     
-    cat_count <- cat_count[negative == 0, .N, by = "positive"]
+    cat_count <- cat_count[, .N, by = "positive"]
     names(cat_count) <- c("num_pos", "epifriends")
     cat_count[, iteration := i]
     

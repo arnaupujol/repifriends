@@ -91,30 +91,54 @@ cat_real <- data.table(
     'negative' = cat$epifriends_catalogue$negatives
   )
   
-cat_real <- cat_real[negative == 0, .N, by = "positive"]
+cat_real <- cat_real[, .N, by = "positive"]
 names(cat_real) <- c("num_pos", "epifriends")
 cat_real[, num_pos := as.numeric(num_pos)]
 head(cat_real)
 ```
 
-Both data.frames are merged to compute the probability of a false detection. In this case there is 1 isolated epifriend detected, while by randomness the mean epifriends of 2 isolated positives is 2, meaning that it's likely the detected epifriends is a False Positive.
+Both data.frames are merged to compute the probability of a false detection. In this case there is 1 epifriend detected, while by randomness the mean epifriends of 2 positives is 18, meaning that it's likely the detected epifriends is a False Positive.
 
 ```{r}
 fp <- merge(cat_real, random_dist, by = c("num_pos"), how = "left")
 fp[, prob_fd := mean_epi / epifriends]
 head(fp)
 ```
-Finally we can exclude those observations that are detected as False Positives.
+
+Let's now visuallize the p-values and detected clusters of the epifriends, without considering the false detections.
 
 ```{r}
-cat_filtered <- rm_false_detections(position, test_result, link_d, n_simulations,
-                                     filter_fd = TRUE,min_neighbours = 2, max_p = 1, 
-                                     min_pos = 2, min_total = 2, min_pr = 0, keep_null_tests = FALSE,
-                                     in_latlon = FALSE,to_epsg = NULL, verbose = FALSE)
-catalogue_filtered <- cat_filtered$catalogue
-cat_filtered$fp_detected
+plot1 <- scatter_pval(position, cat$cluster_id, positive, cat$epifriends_catalogue)
+plot1
+```
+
+
+Finally we can adjust the p-value based on the following formulas:
+
+
+p-value = 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
+real-p-value = 1 - p-value
+
+real-prob-false-detection =  1 - prob-df
+
+adjusted-p-value = real-p-value * real-prob-false-detection
+p-value = 1 - adjusted-p-value
+
+
+Now let's recompute the catalogues but adjusting the p-value using the false detections.
+```{r}
+catalogues <- catalogue(position, test_result, link_d, cluster_id = NULL,
+                      min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
+                      min_pr = 0, keep_null_tests = FALSE, in_latlon = FALSE, 
+                      to_epsg = NULL, consider_fd = TRUE, n_simulations= 100,
+                      verbose = FALSE)
 ```
 
 ```{r}
-catalogue_filtered
+plot2 <- scatter_pval(position, catalogues$cluster_id, positive, catalogues$epifriends_catalogue, title = "P-value after removing False Detections")
+plot2
+```
+
+```{r}
+plot1 + plot2
 ```
