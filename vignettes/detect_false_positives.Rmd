@@ -138,7 +138,3 @@ catalogues <- catalogue(position, test_result, link_d, cluster_id = NULL,
 plot2 <- scatter_pval(position, catalogues$cluster_id, positive, catalogues$epifriends_catalogue, title = "P-value after removing False Detections")
 plot2
 ```
-
-```{r}
-plot1 + plot2
-```
