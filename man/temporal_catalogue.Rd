@@ -22,7 +22,6 @@ temporal_catalogue(
   linking_time,
   linking_dist,
   get_timelife = TRUE,
-  cluster_id = NULL,
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,

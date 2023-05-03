@@ -73,7 +73,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
                                time_width, min_date = NULL, max_date = NULL, time_steps = 1,
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
                                add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
-                               cluster_id = NULL, keep_null_tests = FALSE, in_latlon = FALSE, to_epsg = NULL, 
+                               keep_null_tests = FALSE, in_latlon = FALSE, to_epsg = NULL, 
                                verbose = FALSE, 
                                store_gif = FALSE,
                                out_gif_path = paste0(getwd(),"/www/")
@@ -122,7 +122,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
 
     #get catalogue
     Newcatalogue <- catalogue(positions = selected_positions, test_result = selected_test_results,
-                              link_d = link_d, cluster_id = cluster_id, min_neighbours = min_neighbours,
+                              link_d = link_d, cluster_id = NULL, min_neighbours = min_neighbours,
                               max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
                               keep_null_tests = keep_null_tests, in_latlon = in_latlon, to_epsg = to_epsg,
                               verbose = verbose)
