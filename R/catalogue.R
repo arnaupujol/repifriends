@@ -50,10 +50,10 @@
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- catalogue(pos, test, 2)
 #' 
-catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
+catalogue <- function(positions, test_result, link_d=NULL, cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
                       min_pr = 0, keep_null_tests = FALSE, in_latlon = FALSE, 
-                      to_epsg = NULL, verbose = FALSE){
+                      to_epsg = NULL, optimize_link_d = FALSE, verbose = FALSE){
   
   # Remove or impute missings
   pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
@@ -67,6 +67,14 @@ catalogue <- function(positions, test_result, link_d, cluster_id = NULL,
     in_latlon = in_latlon, 
     to_epsg = to_epsg,
     verbose = verbose)
+  
+  if(optimize_link_d | is.null(link_d)){
+    if(verbose){print("Automating the calculus of the linking distance")}
+    link_d <- opt_link_d(df=data.table(x = positions$x, y = positions$y, test = pos$test), 
+                         min_neighbors=min_neighbors, cluster_id=cluster_id, 
+                         keep_null_tests = keep_null_tests, in_latlon = in_latlon, 
+                         to_epsg = to_epsg, verbose = verbose)
+  }
 
   #Define positions of positive cases
   positive_positions <- positions[which(test_result == 1),]

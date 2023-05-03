@@ -48,3 +48,11 @@ app/tmp/*
 
 # Mac-env variables
 *.DS_Store
+
+# RShiny directories
+*www/
+*tmp/
+
+# PDF directories
+*pdfs/
+*.gif

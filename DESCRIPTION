@@ -12,4 +12,5 @@ RoxygenNote: 7.2.3
 Depends:
     R (>= 3.4.0),
     data.table (>= 1.9.8),
-    sf (>= 1.0-9)
+    sf (>= 1.0-9),
+    doParallel(>= 1.0.17)

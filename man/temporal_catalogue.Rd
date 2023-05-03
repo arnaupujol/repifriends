@@ -22,6 +22,7 @@ temporal_catalogue(
   linking_time,
   linking_dist,
   get_timelife = TRUE,
+  optimize_link_d = FALSE,
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,

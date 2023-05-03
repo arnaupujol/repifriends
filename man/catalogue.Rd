@@ -7,7 +7,7 @@
 catalogue(
   positions,
   test_result,
-  link_d,
+  link_d = NULL,
   cluster_id = NULL,
   min_neighbours = 2,
   max_p = 1,
@@ -17,6 +17,7 @@ catalogue(
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
+  optimize_link_d = FALSE,
   verbose = FALSE
 )
 }
