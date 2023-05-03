@@ -26,7 +26,9 @@ temporal_catalogue(
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  store_gif = FALSE,
+  out_gif_path = paste0(getwd(), "/www/")
 )
 }
 \arguments{
@@ -71,6 +73,10 @@ temporal_catalogue(
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
+
+\item{store_gif:}{If TRUE, store the different time-frame images in an animated GIF format.}
+
+\item{out_gif_path:}{Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.}
 }
 \value{
 List with the next objects:
@@ -91,8 +97,12 @@ The epifriends package uses the RANN package which can gives the exact nearest n
 # Required packages
 if(!require("RANN")) install.packages("RANN")
 if(!require("chron")) install.packages("chron")
+if(!require("magick")) install.packages("magick")
+if(!require("magrittr")) install.packages("magrittr")
 library("RANN")
 library("chron")
+library("magick)
+library("magrittr)
 
 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)

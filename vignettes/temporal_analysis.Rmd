@@ -34,6 +34,7 @@ The data created with the temporal_analysis.ipynb file of python and saved on th
 ```{r, warning=FALSE}
 setwd("./../")
 mock_rand <- data.table(read.csv("./data/mock_data_rand_temp.csv"))
+mock_rand$date <- as.character(mock_rand$date)
 ```
 
 In order to work better with the data, some subdatasets are created:
