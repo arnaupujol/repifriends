@@ -31,8 +31,8 @@ latlon2xy <- function(lon, lat, to_epsg = NULL, verbose = TRUE){
   
   # Create coordinates data.table
   coords <- data.table(
-    "x" = x,
-    "y" = y
+    "x" = lon,
+    "y" = lat
   )
   
   #Define dataframe as GIS dataframe with its actual projection

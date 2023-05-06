@@ -93,7 +93,7 @@ dbscan <- function(positions, link_d, min_neighbours = 2, test = NULL,
   return(cluster_id)
 }
 
-find_indeces <- function(positions, link_d, tree){
+find_indeces <- function(positions, link_d, positions_eval){
   # This method returns the indeces of all the friends
   # of each position from positions given a KDTree.
   #
@@ -131,14 +131,14 @@ find_indeces <- function(positions, link_d, tree){
     dist = 0
     kth = 0
     #loop which stops when the maximum linking distance is overcomed
-    while((dist <= link_d) && (kth < dim(tree)[1])){
+    while((dist <= link_d) && (kth < dim(positions_eval)[1])){
       #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
       kth = kth + 1
-      query <- nn2(tree, positions[i,], kth)
+      query <- nn2(positions_eval, positions[i,], kth)
       index <- query$nn.idx[length(query$nn.idx)]
       dist <- query$nn.dists[length(query$nn.dists)]
       #Addition of the last point to the indeces list if it is in the wanted range
-      if((dist[length(dist)] <= link_d) && (kth < dim(tree)[1])){
+      if((dist[length(dist)] <= link_d) && (kth < dim(positions_eval)[1])){
         indecesaux <- append(indecesaux,index)
       }else{
         #Final list for the position i
