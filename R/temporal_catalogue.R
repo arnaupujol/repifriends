@@ -23,6 +23,8 @@
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
+#' @param consider_fd: If True, consider false detections and adjust p-value of that.
+#' @param n_simulations: Numeric value with the number of desired iterations to compute the false-detected clusters.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #' @param store_gif: If TRUE, store the different time-frame images in an animated GIF format.
 #' @param out_gif_path: Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.
@@ -74,7 +76,8 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
                                add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
                                optimize_link_d = FALSE, keep_null_tests = FALSE, in_latlon = FALSE, 
-                               to_epsg = NULL,verbose = FALSE, store_gif = FALSE,
+                               to_epsg = NULL, consider_fd = FALSE, n_simulations= 500,
+                               verbose = FALSE, store_gif = FALSE,
                                out_gif_path = paste0(getwd(),"/www/")
                                ){
 
