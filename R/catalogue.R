@@ -15,6 +15,9 @@
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
+#' @param consider_fd: If True, consider false detections and adjust p-value of that.
+#' @param n_simulations: Numeric value with the number of desired iterations to compute the false-detected clusters.
+#' @param optimize_link_d: If True, optimize the linking distance based on minimum distribution of distances between neighbors.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
@@ -53,7 +56,8 @@
 catalogue <- function(positions, test_result, link_d=NULL, cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
                       min_pr = 0, keep_null_tests = FALSE, in_latlon = FALSE, 
-                      to_epsg = NULL, optimize_link_d = FALSE, verbose = FALSE){
+                      to_epsg = NULL, consider_fd = FALSE, n_simulations= 500,
+                      optimize_link_d = FALSE, verbose = FALSE){
   
   # Remove or impute missings
   pos = clean_unknown_data(positions,test_result[[1]],keep_null_tests,verbose)
@@ -107,6 +111,20 @@ catalogue <- function(positions, test_result, link_d=NULL, cluster_id = NULL,
   if(length(sort_unici) == 0){
     return(epifriends_catalogue)
   }
+  
+  # Generate simulations for false positive detection
+  if(consider_fd){
+    false_det <- get_false_detection(positions=positions, test_result=test_result,
+                                     link_d=link_d, n_simulations=n_simulations,
+                                     min_neighbours = min_neighbours, max_p = max_p, 
+                                     min_pos = min_pos, min_total = min_total,
+                                     min_pr = min_pr, keep_null_tests = keep_null_tests, 
+                                     in_latlon = in_latlon,to_epsg = to_epsg, verbose = verbose)
+  }else{
+    false_det <- NULL
+  }
+  
+  
   for(i in 1:length(sort_unici)){
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
@@ -119,6 +137,16 @@ catalogue <- function(positions, test_result, link_d=NULL, cluster_id = NULL,
     npos <- sum(test_result[total_friends_indeces,])
     ntotal <- length(total_friends_indeces)
     pval <- 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
+    
+    # Adjust p-value based on: adj-pval = (1-p-val) * (1-p-fd)
+    if(!is.null(false_det)){
+      if(nrow(fp[num_pos ==npos]) != 0){
+        prob_fd <- max(1-fp[num_pos ==npos]$prob_fd, 0)
+        adj_pval <- (1-pval)*(prob_fd)
+        pval <- 1 - adj_pval
+      }
+    }
+    
     #setting EpiFRIenDs catalogue
     if(pval <= max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)
