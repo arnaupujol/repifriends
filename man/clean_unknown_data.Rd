@@ -2,7 +2,8 @@
 % Please edit documentation in R/clean_data.R
 \name{clean_unknown_data}
 \alias{clean_unknown_data}
-\title{This method imputes or removes missing data}
+\title{This method removes missing data in the coordinates and imputes or removes the values
+over the tests column}
 \usage{
 clean_unknown_data(
   positions,
@@ -25,7 +26,8 @@ clean_unknown_data(
 Data.table with cleaned/imputed variables based on user choose.
 }
 \description{
-This method imputes or removes missing data
+This method removes missing data in the coordinates and imputes or removes the values
+over the tests column
 }
 \details{
 This function cleans the position data if contains missing values. User can choose whether to remove the missings or impute them with a specific value.

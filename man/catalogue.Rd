@@ -24,6 +24,9 @@ catalogue(
   n_sim = 10000,
   max_epi_cont = 0.5,
   max_thr_data = 0.1,
+  consider_fd = FALSE,
+  n_simulations = 500,
+  optimize_link_d = FALSE,
   verbose = FALSE
 )
 }
@@ -57,6 +60,12 @@ catalogue(
 \item{max_epi_cont:}{Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.}
 
 \item{max_thr_data:}{Percentage of data used to compute the local prevalence. Only applies for "centroid" method.}
+
+\item{consider_fd:}{If True, consider false detections and adjust p-value of that.}
+
+\item{n_simulations:}{Numeric value with the number of desired iterations to compute the false-detected clusters.}
+
+\item{optimize_link_d:}{If True, optimize the linking distance based on minimum distribution of distances between neighbors.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }

@@ -21,7 +21,16 @@ temporal_catalogue(
   add_temporal_id = TRUE,
   linking_time,
   linking_dist,
-  get_timelife = TRUE
+  get_timelife = TRUE,
+  optimize_link_d = FALSE,
+  keep_null_tests = FALSE,
+  in_latlon = FALSE,
+  to_epsg = NULL,
+  consider_fd = FALSE,
+  n_simulations = 500,
+  verbose = FALSE,
+  store_gif = FALSE,
+  out_gif_path = paste0(getwd(), "/www/")
 )
 }
 \arguments{
@@ -58,6 +67,22 @@ temporal_catalogue(
 \item{linking_dist}{Linking distance used to link the clusters from the different time frames. Only necesary if add_temporal_id is TRUE.}
 
 \item{get_timelife}{It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.}
+
+\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+
+\item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
+
+\item{consider_fd:}{If True, consider false detections and adjust p-value of that.}
+
+\item{n_simulations:}{Numeric value with the number of desired iterations to compute the false-detected clusters.}
+
+\item{verbose:}{If TRUE, print information of the process; else, do not print.}
+
+\item{store_gif:}{If TRUE, store the different time-frame images in an animated GIF format.}
+
+\item{out_gif_path:}{Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.}
 }
 \value{
 List with the next objects:
@@ -78,8 +103,12 @@ The epifriends package uses the RANN package which can gives the exact nearest n
 # Required packages
 if(!require("RANN")) install.packages("RANN")
 if(!require("chron")) install.packages("chron")
+if(!require("magick")) install.packages("magick")
+if(!require("magrittr")) install.packages("magrittr")
 library("RANN")
 library("chron")
+library("magick)
+library("magrittr)
 
 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)

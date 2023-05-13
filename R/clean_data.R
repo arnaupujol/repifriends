@@ -1,7 +1,8 @@
 # This source code is licensed under the GNU GENERAL PUBLIC LICENSE license found in the
 # LICENSE file in the root directory of this source tree.
 
-#' This method imputes or removes missing data
+#' This method removes missing data in the coordinates and imputes or removes the values
+#' over the tests column
 #'
 #' @param positions data.table with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param cols_impute Vector of columns that want to be imputed based on keep_null_tests parameter.
@@ -41,6 +42,9 @@ clean_unknown_data <- function(
 
   if( (is.null(cols_impute)) | (length(cols_impute) == 0)){
     positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]
+    if(nrow(positions) == 0){
+      stop("All coordinates have either X or Y missing. Please check the data")
+    }
     return(positions)
   }else{
     positions <- positions[!is.na(rowSums(positions[,..cols_remove]))]

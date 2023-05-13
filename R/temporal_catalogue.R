@@ -20,7 +20,15 @@
 #' @param linking_time Maximum number of timesteps of distance to link hotspots with the same temporal ID. Only necesary if add_temporal_id is TRUE.
 #' @param linking_dist Linking distance used to link the clusters from the different time frames. Only necesary if add_temporal_id is TRUE.
 #' @param get_timelife It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.
-#'
+#' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
+#' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
+#' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
+#' @param consider_fd: If True, consider false detections and adjust p-value of that.
+#' @param n_simulations: Numeric value with the number of desired iterations to compute the false-detected clusters.
+#' @param verbose: If TRUE, print information of the process; else, do not print.
+#' @param store_gif: If TRUE, store the different time-frame images in an animated GIF format.
+#' @param out_gif_path: Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.
+#' 
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
 #'
 #' @return  List with the next objects:
@@ -39,8 +47,12 @@
 #' # Required packages
 #' if(!require("RANN")) install.packages("RANN")
 #' if(!require("chron")) install.packages("chron")
+#' if(!require("magick")) install.packages("magick")
+#' if(!require("magrittr")) install.packages("magrittr")
 #' library("RANN")
 #' library("chron")
+#' library("magick)
+#' library("magrittr)
 #'
 #' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 #' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
@@ -62,7 +74,12 @@
 temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighbours = 2,
                                time_width, min_date = NULL, max_date = NULL, time_steps = 1,
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
-                               add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE){
+                               add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
+                               optimize_link_d = FALSE, keep_null_tests = FALSE, in_latlon = FALSE, 
+                               to_epsg = NULL, consider_fd = FALSE, n_simulations= 500,
+                               verbose = FALSE, store_gif = FALSE,
+                               out_gif_path = paste0(getwd(),"/www/")
+                               ){
 
   #Case of empty list of dates
   if(length(dates) == 0){
@@ -106,14 +123,36 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
     selected_test_results <- as.data.frame(test_result[selected_data,])
 
     #get catalogue
-    Newcatalogue <- catalogue(selected_positions, selected_test_results,
-                              link_d, min_neighbours = min_neighbours,
-                              max_p = max_p, min_pos = min_pos,
-                              min_total = min_total, min_pr = min_pr)
+    Newcatalogue <- catalogue(positions = selected_positions, test_result = selected_test_results,
+                              link_d = link_d, cluster_id = NULL, min_neighbours = min_neighbours,
+                              max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
+                              optimize_link_d=optimize_link_d, keep_null_tests = keep_null_tests, 
+                              in_latlon = in_latlon, to_epsg = to_epsg,verbose = verbose)
+
     #we only add the mean date if the catalogue is not empty
     if(FALSE %in% lapply(Newcatalogue$epifriends_catalogue, is.null)){
       mean_date <- append(mean_date, min_date + time_steps*step_num + 0.5*time_width)
-      Newcatalogue$epifriends_catalogue["Date"] <- toString(min_date + time_steps*step_num + 0.5*time_width)
+      
+      # Check if GIF wants to be created
+      if(store_gif){
+        minimum_date <- (min_date + time_steps*step_num + 0.5*time_width)
+        plots <- scatter_pval(
+          selected_positions[,.(x,y)], 
+          Newcatalogue$cluster_id, 
+          (selected_test_results$test == 1), 
+          Newcatalogue$epifriends_catalogue,
+          c(min(positions$x), max(positions$x)),
+          c(min(positions$y), max(positions$y)),
+          paste0("Date: ", as.character(minimum_date))
+        )
+
+        out_temp_path = paste0(getwd(),"/tmp/")
+        if(!dir.exists(out_temp_path)){ # create temp file for storing png if doesn't exist
+          dir.create(out_temp_path)
+        }
+        ggsave(paste0(out_temp_path, "/",minimum_date, ".png"), plot = plots, dpi = 300)
+      }
+      Newcatalogue$epifriends_catalogue$Date <- (min_date + time_steps*step_num + 0.5*time_width)
       temporal_catalogues[[step_num+1]] <- Newcatalogue$epifriends_catalogue
     }
     step_num = step_num + 1
@@ -123,6 +162,22 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
   }
   returns <- list(temporal_catalogues, mean_date)
   names(returns) <- c("temporal_catalogues", "mean_date")
+  
+  # Convert PNG to GIF output
+  if(store_gif){
+    if(!dir.exists(out_gif_path)){ # create temp file for storing png if doesn't exist
+      dir.create(out_gif_path)
+    }
+    #gif_output_name <- paste0(time_width, "_tw_", time_steps, "_ts_", min_date, "_min_", max_date, "_max_", ".gif")
+    gif_output_name <- "animated_gif.gif"
+    gif_output_name <- paste0(out_gif_path, "/", gif_output_name)
+    list.files(path=out_temp_path, pattern = '*.png', full.names = TRUE) %>% 
+      image_read() %>% # reads each path file
+      image_join() %>% # joins image
+      image_animate(fps=50) %>% # animates, can opt for number of loops
+      magick::image_write(gif_output_name) # write to current dir
+  }
+  
   return(returns)
 }
 

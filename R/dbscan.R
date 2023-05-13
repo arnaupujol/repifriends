@@ -6,7 +6,6 @@
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
-#' @param keep_null_tests: Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
@@ -33,11 +32,10 @@
 #' db <- dbscan(pos, 2 ,3)
 #' 
 dbscan <- function(positions, link_d, min_neighbours = 2, test = NULL,
-                   keep_null_tests = FALSE, in_latlon = FALSE, 
-                   to_epsg = NULL, verbose = FALSE){
+                   in_latlon = FALSE, to_epsg = NULL, verbose = FALSE){
   
   # Remove or impute missings
-  positions = clean_unknown_data(positions,test,keep_null_tests,verbose)
+  positions = clean_unknown_data(positions,test,verbose=verbose)
   
   #Defining 2d-positions
   positions = get_2dpositions(

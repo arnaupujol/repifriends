@@ -18,6 +18,9 @@
 #' @param n_sim: Number of observations in each of the simulations to be performed. Will help during p-value calculus. Applies both to "kmeans" & "radial" method.
 #' @param max_epi_cont: Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.
 #' @param max_thr_data: Percentage of data used to compute the local prevalence. Only applies for "centroid" method.
+#' @param consider_fd: If True, consider false detections and adjust p-value of that.
+#' @param n_simulations: Numeric value with the number of desired iterations to compute the false-detected clusters.
+#' @param optimize_link_d: If True, optimize the linking distance based on minimum distribution of distances between neighbors.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
@@ -58,8 +61,9 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
                       min_pr = 0, thr_expand= 2, thr_dist = link_d * 4, 
                       method = "kmeans",keep_null_tests = FALSE,in_latlon = FALSE,
                       to_epsg = NULL, n_sim = 10000, max_epi_cont = 0.5, 
-                      max_thr_data = 0.1, verbose = FALSE){
-  
+                      max_thr_data = 0.1, consider_fd = FALSE, n_simulations= 500,
+                      optimize_link_d = FALSE, verbose = FALSE){
+
   # Remove or impute missings
   positions[, c("test", "prevalence") := list(test_result, prevalence)]
   to_impute <- colnames(positions)[!(colnames(positions) %in% c("x", "y"))]
@@ -75,7 +79,16 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
     to_epsg = to_epsg,
     verbose = verbose)
   positions[, id := 1:nrow(positions)]
+
   
+  if(optimize_link_d | is.null(link_d)){
+    if(verbose){print("Automating the calculus of the linking distance")}
+    link_d <- opt_link_d(df=data.table(x = positions$x, y = positions$y, test = pos$test), 
+                         min_neighbors=min_neighbors, cluster_id=cluster_id, 
+                         keep_null_tests = keep_null_tests, in_latlon = in_latlon, 
+                         to_epsg = to_epsg, verbose = verbose)
+  }
+
   #Define positions of positive cases
   positive_positions <- positions[which(test_result == 1), .(x,y)]
   #Computing cluster_id if needed
@@ -109,6 +122,19 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
     return(epifriends_catalogue)
   }
   
+  # Generate simulations for false positive detection
+  if(consider_fd){
+    false_det <- get_false_detection(positions=positions, test_result=test_result,
+                                     link_d=link_d, n_simulations=n_simulations,
+                                     min_neighbours = min_neighbours, max_p = max_p, 
+                                     min_pos = min_pos, min_total = min_total,
+                                     min_pr = min_pr, keep_null_tests = keep_null_tests, 
+                                     in_latlon = in_latlon,to_epsg = to_epsg, verbose = verbose)
+  }else{
+    false_det <- NULL
+  }
+  
+  
   for(i in 1:length(sort_unici)){
     
     #get all indeces with this cluster id
@@ -121,7 +147,7 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
     mean_pr <- test_result[total_friends_indeces, .(mean(test))][[1]]
     npos <- sum(test_result[total_friends_indeces,])
     ntotal <- length(total_friends_indeces)
-    
+
     if(!is.null(prevalence)){
       if(verbose){print("Using user-given prevalence.")}
       ind_pos_rate = prevalence[positive_positions]
@@ -209,6 +235,17 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
       }
     }
       
+    pval <- 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
+    
+    # Adjust p-value based on: adj-pval = (1-p-val) * (1-p-fd)
+    if(!is.null(false_det)){
+      if(nrow(fp[num_pos ==npos]) != 0){
+        prob_fd <- max(1-fp[num_pos ==npos]$prob_fd, 0)
+        adj_pval <- (1-pval)*(prob_fd)
+        pval <- 1 - adj_pval
+      }
+    }
+    
     #setting EpiFRIenDs catalogue
     if(pval <= max_p && npos >= min_pos && ntotal >= min_total && mean_pr >= min_pr){
       epifriends_catalogue[['id']] <- append(epifriends_catalogue[['id']], next_id)

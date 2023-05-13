@@ -9,7 +9,6 @@ dbscan(
   link_d,
   min_neighbours = 2,
   test = NULL,
-  keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
   verbose = FALSE
@@ -21,8 +20,6 @@ dbscan(
 \item{link_d:}{The linking distance to connect cases. Should be in the same scale as the positions.}
 
 \item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
-
-\item{keep_null_tests:}{Whether to remove or not missings. If numeric, provide value to impute.}
 
 \item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
 
