@@ -52,10 +52,10 @@
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
-#' cat <- catalogue(pos, test[[1]], 2)
+#' cat <- catalogue(pos, test, 2)
 #' 
 catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,

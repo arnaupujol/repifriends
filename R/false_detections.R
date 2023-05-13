@@ -111,7 +111,7 @@ get_false_detection <- function(positions, test_result, link_d, n_simulations,
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- generate_simulations(pos, test, 2, 100)

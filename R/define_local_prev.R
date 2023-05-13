@@ -23,7 +23,7 @@
 #' pos <- data.table("x" = x,"y" = y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' pos_rate <- compute_kmeans(pos, test)
@@ -84,7 +84,7 @@ compute_kmeans <- function(positions, test, seed = 123, coord_cols = c("x", "y")
 #' friends_ind <- c(1,2,3)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Calculus of prevalence based on the centroid
 #' pos_rate <- compute_centroid(pos, friends_ind, test)
@@ -153,11 +153,8 @@ compute_centroid <- function(
 #' pos <- data.table("x" = x,"y" = y, "test" = test)
 #' friends_ind <- c(1,2,3)
 #'
-#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
-#'
 #' # Calculus of prevalence based on the centroid
-#' pos_rate <- merge_kmeans_clusters(pos, total_friends_indeces)
+#' pos_rate <- merge_kmeans_clusters(pos, friends_ind)
 #'
 merge_kmeans_clusters<- function(pos_clusters,total_friends_indeces, thr_perc_epi = 0.5){
   

@@ -29,7 +29,7 @@ y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.table("x" = x,"y" = y)
 
 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 # Creation of catalogue for this positions, linking distance 2 and default values.
 pos_rate <- compute_kmeans(pos, test)

@@ -27,11 +27,8 @@ test <- c(1,1,0,1,0,0,0,1,1,0,1,0,0,1,1,0)
 pos <- data.table("x" = x,"y" = y, "test" = test)
 friends_ind <- c(1,2,3)
 
-# Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
-
 # Calculus of prevalence based on the centroid
-pos_rate <- merge_kmeans_clusters(pos, total_friends_indeces)
+pos_rate <- merge_kmeans_clusters(pos, friends_ind)
 
 }
 \author{
