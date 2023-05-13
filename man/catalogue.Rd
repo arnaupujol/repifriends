@@ -17,7 +17,7 @@ catalogue(
   min_pr = 0,
   thr_expand = 2,
   thr_dist = link_d * 4,
-  method = "kmeans",
+  method = "base",
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
@@ -37,6 +37,8 @@ catalogue(
 
 \item{link_d}{The linking distance to connect cases. Should be in the same scale as the positions.}
 
+\item{prevalence}{Probability of having an infected case for each individual.}
+
 \item{cluster_id}{Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.}
 
 \item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
@@ -55,7 +57,7 @@ catalogue(
 
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
-\item{n_sim:}{Number of observations in each of the simulations to be performed. Will help during p-value calculus. Applies both to "kmeans" & "radial" method.}
+\item{n_sim:}{Number of observations in each of the simulations to be performed. Will help during p-value calculus. Applies to "kmeans" method.}
 
 \item{max_epi_cont:}{Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.}
 
@@ -101,7 +103,7 @@ pos <- data.frame(x,y)
 test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
 
 # Creation of catalogue for this positions, linking distance 2 and default values.
-cat <- catalogue(pos, test, 2)
+cat <- catalogue(pos, test[[1]], 2)
 
 }
 \author{

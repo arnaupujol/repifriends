@@ -9,6 +9,7 @@ temporal_catalogue(
   test_result,
   dates,
   link_d,
+  prevalence = NULL,
   min_neighbours = 2,
   time_width,
   min_date = NULL,
@@ -23,6 +24,7 @@ temporal_catalogue(
   linking_dist,
   get_timelife = TRUE,
   optimize_link_d = FALSE,
+  method = "base",
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
@@ -41,6 +43,8 @@ temporal_catalogue(
 \item{dates}{Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.}
 
 \item{link_d}{the linking distance of the DBSCAN algorithm. Should be in the same scale as the positions.}
+
+\item{prevalence}{Probability of having an infected case for each individual.}
 
 \item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
 

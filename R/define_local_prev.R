@@ -36,11 +36,14 @@ compute_kmeans <- function(positions, test, seed = 123, coord_cols = c("x", "y")
 
   # Leverage clValid to automatic detect optimal number of clusters
   set.seed(seed)
-  # Optimal cluster based on connectivity
-  intern <- clValid(as.data.frame(df[,..coord_cols]),
-                    nClust = 2:8,clMethods = c("kmeans"),
-                    validation = "internal",
-                    maxitems = nrow(df))
+  
+  suppressWarnings({
+    # Optimal cluster based on connectivity
+    intern <- clValid(as.data.frame(df[,..coord_cols]),
+                      nClust = 2:8,clMethods = c("kmeans"),
+                      validation = "internal",
+                      maxitems = nrow(df))
+  })
   
   rows <- rownames(optimalScores(intern))
   optimal <- as.data.table(optimalScores(intern))
@@ -128,15 +131,15 @@ compute_centroid <- function(
   )
 }
 
-#' This function computes the distance of one ID versus the rest and obtains the n closest ones.
+
+#' Recursively merge KMean clusters based on proximity if percentage of epifriend data is above specific threshold.
 #'
-#' @param value index detected by epifriends.
-#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
-#' @param test_result data.frame with the test results (0 or 1).
-#' @param thr_dist Maximum distance threshold.
+#' @param pos_clusters data.frame with the positions.
+#' @param total_friends_indeces indices of the events detected by the epifriends.
 #'
-#' @return Prevalence based on n closest elements cross a given ID
-#'   
+#' @return Local prevalence based on the positive cases for the closest datapoints to the centroid 
+#' defined by epifriends indices
+#' 
 #' @export
 #' 
 #' @author Eric Matamoros.
@@ -146,23 +149,46 @@ compute_centroid <- function(
 #' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 #' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 #' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
-#' pos <- data.table("x" = x,"y" = y)
-#' value <- c(1)
+#' test <- c(1,1,0,1,0,0,0,1,1,0,1,0,0,1,1,0)
+#' pos <- data.table("x" = x,"y" = y, "test" = test)
+#' friends_ind <- c(1,2,3)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
 #' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
 #'
-#' # Creation of catalogue for this positions, linking distance 2 and default values.
-#' pos_rate <- calc_distance(value, pos, test, 0.2)
+#' # Calculus of prevalence based on the centroid
+#' pos_rate <- merge_kmeans_clusters(pos, total_friends_indeces)
 #'
-calc_distance <- function(value, positions, test_result, thr_dist){
-  df <- positions[id %in% value]
-  combs <- calc_ind_prev(df, positions, test_result)
-  combs_eval <- combs[distance <= thr_dist]
-  return(list(
-    'prevalence' = sum(combs_eval$test) / nrow(combs_eval),
-    'local_id' = sort(combs_eval$id))
-    )
+merge_kmeans_clusters<- function(pos_clusters,total_friends_indeces, thr_perc_epi = 0.5){
+  
+  epi_clusters <- unique(pos_clusters[total_friends_indeces]$clusters)
+  perc_epi <- dim(pos_clusters[total_friends_indeces])[1] /dim(pos_clusters[clusters %in% epi_clusters])[1]
+  
+  if(perc_epi >= thr_perc_epi){
+    # Merge clusters sequentially and re-compute prevalence based on new added clusters
+    counter <- 0
+    while( (perc_epi >= thr_perc_epi) & (counter < 3)){
+      mean_epis <- pos_clusters[clusters %in% epi_clusters, .(x = mean(x), y = mean(y))]
+      remain_epis <- pos_clusters[!(clusters %in% epi_clusters),
+                                  .(x = mean(x), y = mean(y)), by = c("clusters")]
+      # If no clusters rema
+      if(dim(remain_epis)[1] == 0){
+        break
+      }
+      combs <- t(proxy::dist(mean_epis,remain_epis[,.(x, y)], pairwise = FALSE))
+      remain_epis$distance <- as.vector(combs)
+      
+      # Merge new closest cluster to all
+      epi_clusters <- c(epi_clusters, remain_epis[distance == min(distance)]$clusters[1])
+      
+      pos_clusters[clusters %in% epi_clusters, prevalence := sum(test) / .N]
+      counter <- counter + 1
+      perc_epi <- dim(pos_clusters[total_friends_indeces])[1] /dim(pos_clusters[clusters %in% epi_clusters])[1]
+    }
+  }
+  
+  return(list("pos_clusters" = pos_clusters, "epi_clusters" = epi_clusters))
+  
 }
 
 

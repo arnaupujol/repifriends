@@ -79,6 +79,8 @@ Here we define the required parameters to run the method **temporal_catalogue** 
 #Parameters
 #linking distance to link cases in space
 link_d = 0.1
+# Prevalence of the data in every time observation
+prevalence =NULL
 #Minimum number of positive cases within link_d to link them
 min_neighbours = 2
 #Width of the time window (in number of days) used to select the cases 
@@ -96,11 +98,11 @@ max_date = max(datesform)
 ```
 
 ```{r}
-epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = FALSE)
+epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = FALSE)
 ```
 
 ```{r}
-epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = 3, linking_dist = 0.15, get_timelife = TRUE)
+epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = 3, linking_dist = 0.15, get_timelife = TRUE)
 ```
 
 Here we visualise the detected clusters in each step, showing one scatter plot for each time step with:
@@ -140,36 +142,6 @@ while(min_date + time_steps*step_num + time_width <= max_date){
 }
 ```
 
-```{r}
-# auxmock <- mock_rand
-# step_num <- 0
-# 
-# while(min_date + time_steps*step_num + time_width <= max_date){
-#   print(paste0("Time step number", step_num)) 
-#   #select data in time window
-#   selected_data <- (dates >= min_date + time_steps*step_num)&
-#                     (dates <= min_date + time_steps*step_num + time_width)
-#   
-#   #Ploting all points with grey color and positive cases with red edge
-#   graph <- ggplot(mock_rand[mock_rand["test"] == 0,],aes(x=x, y=y))+
-#             geom_point(color = "grey", size = 2.5)+
-#             geom_point(data = mock_rand[mock_rand["test"] == 1,],aes(x=x, y=y), colour = "red", shape=21, fill = "grey", size = 2.5)+
-#             scale_color_manual(values = c("grey", "red"), name = "Test", labels = c("Negative","Positive"))
-#   
-#   auxmock$cluster <- auxmock$x*0
-#   for(epi in 1:length(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id)){
-#     indeces <- epi_catalogue_list$temporal_catalogues[[step_num+1]]$indeces[[epi]]
-#     auxmock$cluster[indeces] <- rep(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id[[epi]],length(indeces))
-#   }
-#   graph <- graph + geom_point(data = auxmock, aes(x = x, y = y, fill = as.factor(cluster), colour = as.factor(test)), shape = 21, size = 2.5)
-# 
-#   print(graph)
-#   
-#   step_num <- step_num + 1
-#   
-# }
-```
-
 Here we show the number of clusters detected as a function of time: 
 
 ```{r}
@@ -191,7 +163,7 @@ linking_time = 3
 linking_dist = 0.15
 
 #Get temporal IDs
-epi_catalogue_list_id <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = linking_time, linking_dist = linking_dist, get_timelife = TRUE)
+epi_catalogue_list_id <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = linking_time, linking_dist = linking_dist, get_timelife = TRUE)
 ```
 
 

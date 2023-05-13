@@ -233,7 +233,7 @@ simplify_distributions<- function(dt, dist_prop){
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' link_d_list <- optimize_positives(pos, test, 2, NULL, min_distances)
 #' 
-optimize_positives<- function(position, test_result, min_neighbors,cluster_id,
+optimize_positives <- function(position, test_result, min_neighbors,cluster_id,
                               min_distances, quantiles, thr_impr = 0.05, 
                               diff_quantile = 0.05, keep_null_tests = FALSE, 
                               in_latlon = FALSE, to_epsg = NULL){

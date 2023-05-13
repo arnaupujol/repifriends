@@ -57,7 +57,7 @@ Now we generate 500 random distributions with random infections with probability
 ```{r}
 # Generate random distributions
 n_simulations = 100
-scenarios <- generate_simulations(positions = position, test_result = test_result, 
+scenarios <- generate_simulations(positions = position, test_result = test_result$test, 
                                  link_d = link_d, n_simulations = n_simulations,
                                  min_neighbours = min_neighbours)
 head(scenarios, n = 20)
@@ -78,7 +78,7 @@ The interpretation of the above chart is that you have a high probability of get
 
 Now the catalogue with all the real data is computed, and the number of isolated cases as well.
 ```{r}
-cat <- catalogue(position, test_result, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
+cat <- catalogue(position, test_result$test, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
 cat_real <- data.table(
     'positive' = cat$epifriends_catalogue$positives,
     'negative' = cat$epifriends_catalogue$negatives
@@ -101,7 +101,7 @@ head(fp)
 Let's now visuallize the p-values and detected clusters of the epifriends, without considering the false detections.
 
 ```{r}
-plot1 <- scatter_pval(position, cat$cluster_id, positive, cat$epifriends_catalogue)
+plot1 <- scatter_pval(position, cat$cluster_id, positive, prevalence = NULL, cat$epifriends_catalogue)
 plot1
 ```
 
@@ -120,7 +120,7 @@ p-value = 1 - adjusted-p-value
 
 Now let's recompute the catalogues but adjusting the p-value using the false detections.
 ```{r}
-catalogues <- catalogue(position, test_result, link_d, cluster_id = NULL,
+catalogues <- catalogue(position, test_result$test, link_d, cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
                       min_pr = 0, keep_null_tests = FALSE, in_latlon = FALSE, 
                       to_epsg = NULL, consider_fd = TRUE, n_simulations= 100,
@@ -128,6 +128,6 @@ catalogues <- catalogue(position, test_result, link_d, cluster_id = NULL,
 ```
 
 ```{r}
-plot2 <- scatter_pval(position, catalogues$cluster_id, positive, catalogues$epifriends_catalogue, title = "P-value after removing False Detections")
+plot2 <- scatter_pval(position, catalogues$cluster_id, positive, prevalence = NULL, catalogues$epifriends_catalogue, title = "P-value after removing False Detections")
 plot2
 ```

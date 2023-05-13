@@ -6,6 +6,7 @@
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param test_result data.frame with the test results (0 or 1).
 #' @param link_d The linking distance to connect cases. Should be in the same scale as the positions.
+#' @param prevalence Probability of having an infected case for each individual.
 #' @param cluster_id Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.
 #' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #' @param max_p Maximum value of the p-value to consider the cluster detection.
@@ -15,7 +16,7 @@
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
-#' @param n_sim: Number of observations in each of the simulations to be performed. Will help during p-value calculus. Applies both to "kmeans" & "radial" method.
+#' @param n_sim: Number of observations in each of the simulations to be performed. Will help during p-value calculus. Applies to "kmeans" method.
 #' @param max_epi_cont: Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.
 #' @param max_thr_data: Percentage of data used to compute the local prevalence. Only applies for "centroid" method.
 #' @param consider_fd: If True, consider false detections and adjust p-value of that.
@@ -54,18 +55,20 @@
 #' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
-#' cat <- catalogue(pos, test, 2)
+#' cat <- catalogue(pos, test[[1]], 2)
 #' 
 catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
                       min_pr = 0, thr_expand= 2, thr_dist = link_d * 4, 
-                      method = "kmeans",keep_null_tests = FALSE,in_latlon = FALSE,
+                      method = "base",keep_null_tests = FALSE,in_latlon = FALSE,
                       to_epsg = NULL, n_sim = 10000, max_epi_cont = 0.5, 
                       max_thr_data = 0.1, consider_fd = FALSE, n_simulations= 500,
                       optimize_link_d = FALSE, verbose = FALSE){
 
   # Remove or impute missings
-  positions[, c("test", "prevalence") := list(test_result, prevalence)]
+  suppressWarnings({
+    positions[, c("test", "prevalence") := list(test_result, prevalence)]
+  })
   to_impute <- colnames(positions)[!(colnames(positions) %in% c("x", "y"))]
   positions = clean_unknown_data(positions,to_impute,keep_null_tests,verbose)
   test_result = data.table("test" = positions$test)
@@ -80,7 +83,7 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
     verbose = verbose)
   positions[, id := 1:nrow(positions)]
 
-  
+  # Optimize linking distance if not provided or specified to do so
   if(optimize_link_d | is.null(link_d)){
     if(verbose){print("Automating the calculus of the linking distance")}
     link_d <- opt_link_d(df=data.table(x = positions$x, y = positions$y, test = pos$test), 
@@ -124,7 +127,7 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
   
   # Generate simulations for false positive detection
   if(consider_fd){
-    false_det <- get_false_detection(positions=positions, test_result=test_result,
+    false_det <- get_false_detection(positions=positions, test_result=test_result$test,
                                      link_d=link_d, n_simulations=n_simulations,
                                      min_neighbours = min_neighbours, max_p = max_p, 
                                      min_pos = min_pos, min_total = min_total,
@@ -163,31 +166,10 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
         pos_clusters <- compute_kmeans(positions, test_result)
         ind_pos_rate <- pos_clusters[total_friends_indeces]
         
-        epi_clusters <- unique(pos_clusters[total_friends_indeces]$clusters)
-        perc_epi <- dim(pos_clusters[total_friends_indeces])[1] /dim(pos_clusters[clusters %in% epi_clusters])[1]
-        
-        if(perc_epi >= 0.5){
-          # Merge clusters sequentially and re-compute prevalence based on new added clusters
-          counter <- 0
-          while( (perc_epi >= 0.5) & (counter < 3)){
-            mean_epis <- pos_clusters[clusters %in% epi_clusters, .(x = mean(x), y = mean(y))]
-            remain_epis <- pos_clusters[!(clusters %in% epi_clusters),
-                                        .(x = mean(x), y = mean(y)), by = c("clusters")]
-            # If no clusters rema
-            if(dim(remain_epis)[1] == 0){
-              break
-            }
-            combs <- t(proxy::dist(mean_epis,remain_epis[,.(x, y)], pairwise = FALSE))
-            remain_epis$distance <- as.vector(combs)
-
-            # Merge new closest cluster to all
-            epi_clusters <- c(epi_clusters, remain_epis[distance == min(distance)]$clusters[1])
-            
-            pos_clusters[clusters %in% epi_clusters, prevalence := sum(test) / .N]
-            counter <- counter + 1
-            perc_epi <- dim(pos_clusters[total_friends_indeces])[1] /dim(pos_clusters[clusters %in% epi_clusters])[1]
-          }
-        }
+        # Merge recursively clusters if epifriend percentage over local population is above thr
+        merged_clusters <- merge_kmeans_clusters(pos_clusters,total_friends_indeces, max_epi_cont)
+        epi_clusters <- merged_clusters$epi_clusters
+        pos_clusters <- merged_clusters$pos_clusters
         indices_local <- pos_clusters[clusters %in% epi_clusters]$id
         
         # Simulate trials
@@ -206,20 +188,6 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
         
         pval <- 1 - pbinom(npos - 1, ntotal, ind_pos_rate)
         mean_prev <- mean(ind_pos_rate)
-      }else if(method == "radial"){
-        
-        if(verbose){print("Using Radial method to account for local prevalence.")}
-        prev_indices <- lapply(
-          total_friends_indeces, calc_distance, positions, test_result, thr_dist)
-        
-        # Obtain prevalence and local indices used for that
-        ind_pos_rate <- sapply(prev_indices, function(x) x$prevalence)
-        indices_local <- sapply(prev_indices, function(x) x$local_id)
-        
-        trials <- simulate_trial(n_sim, 1, ind_pos_rate)
-        pval <- length(which(trials >= (npos / ntotal))) / n_sim
-        mean_prev <- mean(ind_pos_rate)
-        
       }else if(method == "base"){
         if(verbose){print("Accounting for global prevalence.")}
         total_positives = sum(test_result)
@@ -235,8 +203,6 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
       }
     }
       
-    pval <- 1 - pbinom(npos - 1, ntotal, total_positives/total_n)
-    
     # Adjust p-value based on: adj-pval = (1-p-val) * (1-p-fd)
     if(!is.null(false_det)){
       if(nrow(fp[num_pos ==npos]) != 0){

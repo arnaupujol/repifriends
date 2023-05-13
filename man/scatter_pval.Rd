@@ -9,6 +9,7 @@ scatter_pval(
   coordinates,
   id_data,
   positive,
+  prevalence,
   epi_catalogue,
   xlims = NULL,
   ylims = NULL,

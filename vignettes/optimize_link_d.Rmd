@@ -84,7 +84,7 @@ After the distances for each of the remaining quantiles is obtaned, an optimizat
 
 ```{r}
 # Optimization
-opt <- optimize_positives(position, test_result, min_neighbors,NULL,min_distances, dt$quantiles)
+opt <- optimize_positives(position, test_result$test, min_neighbors,NULL,min_distances, dt$quantiles)
 opt_link_d <- as.numeric(quantile(min_distances,opt$optimal_link_d,na.rm = TRUE))
 
 print(paste0("Linking Distance: ", opt_link_d))

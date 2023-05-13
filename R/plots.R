@@ -42,6 +42,7 @@ scatter_pval <- function(
     coordinates, 
     id_data, 
     positive, 
+    prevalence,
     epi_catalogue,
     xlims = NULL,
     ylims = NULL,
@@ -51,14 +52,8 @@ scatter_pval <- function(
   for(i in id_data[id_data > 0]){
     p_vals <- append(p_vals, epi_catalogue$p[epi_catalogue$id == i])
   }
-  # plot(coordinates$x, coordinates$y, pch = 19, col = "grey")
-  # points(pos$x[id_data > 0], pos$y[id_data>0], pch = 19, col = rainbow(100)[factor(p_vals)])
-
-  if(!is.null(method)){
-    title <- paste0("P-value on positive cases of hotspots - Method: ", method)
-  }else{
-    title <- "P-value on positive cases of hotspots"
-  }
+ 
+  title <- "P-value on positive cases of hotspots"
   
   if(!is.null(prevalence)){
     
@@ -279,4 +274,55 @@ lifetime_timeline <- function(list_catalogues, mean_dates, time_steps) {
          title = "Size evolution of the clusters colored by their total lifetime")
   
   return(graph)
+}
+
+
+# Plot the coordinates with different colors for each of the clusters identified by the EpiFRIenDs.
+#'
+#' @param coordinates data frame with the values of the coordinates. 
+#' @param catalogue List of EpiFRIenDs catalogues.
+#' @param only_significant If True, color only the clusters identified as significant by the algorithm.
+#' 
+#' @return  ggplot object with the clusters identified by the EpiFRIenDs algorithm.
+#'
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' library("RANN")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#'
+#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#'
+#' # Creation of catalogue for this positions, linking distance 2 and default values.
+#' cat <- catalogue(pos, test, 2)
+#' 
+#' plot_clusters(pos, cat)
+plot_clusters <- function(coordinates, catalogue, only_significant = FALSE){
+  coords <- data.table::copy(coordinates)
+  coords[, cluster := 0]
+  coords[, index := 1:nrow(coords)]
+  
+  if(only_significant){
+    indexes <- which(categories$epifriends_catalogue$p <= 0.05)
+  }else{
+    indexes <- 1:length(catalogue$epifriends_catalogue$p)
+  }
+  for(clusters in indexes){
+    coords[index %in% catalogue$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+  }
+  
+  graph_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+    geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+    labs(title = "Distribution of Clusters")
+  
+  return(graph_clusters)
 }
