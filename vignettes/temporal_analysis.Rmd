@@ -40,16 +40,17 @@ mock_rand$date <- as.character(mock_rand$date)
 In order to work better with the data, some subdatasets are created:
 
 ```{r}
-position_rand <- mock_rand[, 3:4]
-positive_rand = (mock_rand$test == 1)
-test_rand <- mock_rand[,5]
-date_rand <- mock_rand[,7]
+x_rand <- mock_rand$x
+y_rand <- mock_rand$y
+test_rand <- mock_rand$test
+positive_rand = (test_rand == 1)
+date_rand <-mock_rand$date 
 ```
 
 The dates are changed to date format:
 
 ```{r}
-dtparts = t(as.data.frame(strsplit(mock_rand$date," ")))
+dtparts = t(as.data.frame(strsplit(date_rand," ")))
 row.names(dtparts) = NULL
 datesform <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
 dates <- as.numeric(datesform)
@@ -58,7 +59,7 @@ dates <- as.numeric(datesform)
 We also want to discretize the test variable, i.e. to convert it to integers
 
 ```{r}
-tests <- as.integer(mock_rand$test)
+tests <- as.integer(test_rand)
 ```
 
 In this plot we visualise the generated mock data. The colours of the points represent the date of the samples, and those marked with a red edge are the positive cases:
@@ -98,11 +99,11 @@ max_date = max(datesform)
 ```
 
 ```{r}
-epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = FALSE)
+epi_catalogue_list <- temporal_catalogue(x_rand, y_rand, test_rand, date_rand, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = FALSE)
 ```
 
 ```{r}
-epi_catalogue_list <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = 3, linking_dist = 0.15, get_timelife = TRUE)
+epi_catalogue_list <- temporal_catalogue(x_rand, y_rand, test_rand, date_rand, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = 3, linking_dist = 0.15, get_timelife = TRUE)
 ```
 
 Here we visualise the detected clusters in each step, showing one scatter plot for each time step with:
@@ -131,7 +132,7 @@ while(min_date + time_steps*step_num + time_width <= max_date){
   # 
   for(epi in 1:length(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id)){
     indeces <- epi_catalogue_list$temporal_catalogues[[step_num+1]]$indeces[[epi]]
-    if(dim(position_rand[selected_data,][indeces,])[1]>0){
+    if(dim(mock_rand[selected_data,][indeces,])[1]>0){
       graph <- graph + geom_point(data = mock_rand[selected_data,][indeces,], aes(x = x, y = y, colour = as.factor(test)), shape = 21, size = 2.5, fill = as.integer(epi_catalogue_list$temporal_catalogues[[step_num+1]]$id[[epi]]))
     }
   }
@@ -163,7 +164,7 @@ linking_time = 3
 linking_dist = 0.15
 
 #Get temporal IDs
-epi_catalogue_list_id <- temporal_catalogue(position_rand, test_rand, mock_rand$date, link_d, prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = linking_time, linking_dist = linking_dist, get_timelife = TRUE)
+epi_catalogue_list_id <- temporal_catalogue(x_rand, y_rand, test_rand, date_rand, link_d, prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = linking_time, linking_dist = linking_dist, get_timelife = TRUE)
 ```
 
 

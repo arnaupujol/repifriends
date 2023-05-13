@@ -57,7 +57,7 @@ get_false_detection <- function(positions, test_result, link_d, n_simulations,
   setorderv(random_dist, "num_pos")
   
   ## Compute catalogue with real infections
-  cat <- catalogue(position = positions,test_result = test_result, link_d=link_d, 
+  cat <- catalogue(x = positions$x, y = positions$y,test_result = test_result, link_d=link_d, 
                    cluster_id = NULL, min_neighbours = min_neighbours)
   cat_real <- data.table(
     'id' = cat$epifriends_catalogue$id,
@@ -135,7 +135,7 @@ generate_simulations <- function(positions, test_result, link_d, n_simulations,
     library(epifriends)
     library(RANN)
     df[, test := stats::rbinom(nrow(df), 1, prevalence)]
-    cat <- catalogue(df[, .(x,y)], df$test, link_d, 
+    cat <- catalogue(x = df$x, y = df$y, test_result = df$test, link_d = link_d, 
                      cluster_id = NULL, min_neighbours = min_neighbours)
     
     cat_count <- data.table(

@@ -14,7 +14,7 @@ clean_unknown_data(
 )
 }
 \arguments{
-\item{positions}{data.table with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{positions}{data.table variables to be imputed.}
 
 \item{cols_impute}{Vector of columns that want to be imputed based on keep_null_tests parameter.}
 

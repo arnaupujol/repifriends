@@ -260,7 +260,7 @@ optimize_positives <- function(position, test_result, min_neighbors,cluster_id,
         library(RANN)
         # Code to execute in parallel
         categories <- catalogue(
-          data.table::copy(position), test_result, quantiles_dist[quant], cluster_id = NULL, 
+          position$x, position$y, test_result, quantiles_dist[quant], cluster_id = NULL, 
           min_neighbours = min_neighbors, keep_null_tests = keep_null_tests, in_latlon=in_latlon,
           to_epsg=to_epsg)
         
@@ -274,7 +274,7 @@ optimize_positives <- function(position, test_result, min_neighbors,cluster_id,
       metric <- c()
       for(quant in 1:length(quantiles_dist)){
         categories <- catalogue(
-          data.table::copy(position), test_result, quantiles_dist[quant], cluster_id = NULL, 
+          position$x, position$y, test_result, quantiles_dist[quant], cluster_id = NULL, 
           min_neighbours = min_neighbors, keep_null_tests = keep_null_tests, in_latlon=in_latlon,
           to_epsg=to_epsg)
         

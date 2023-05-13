@@ -4,7 +4,7 @@
 #' This method removes missing data in the coordinates and imputes or removes the values
 #' over the tests column
 #'
-#' @param positions data.table with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
+#' @param positions data.table variables to be imputed.
 #' @param cols_impute Vector of columns that want to be imputed based on keep_null_tests parameter.
 #' @param keep_null_tests: Whether to remove or not missings. If numeric, provide value to impute.
 #' @param verbose: If TRUE, print information of the process; else, do not print.

@@ -5,7 +5,8 @@
 \title{This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.}
 \usage{
 temporal_catalogue(
-  positions,
+  x,
+  y,
   test_result,
   dates,
   link_d,
@@ -36,9 +37,9 @@ temporal_catalogue(
 )
 }
 \arguments{
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{x}{Vector of y positions.}
 
-\item{test_result}{data.frame with the test results (0 or 1).}
+\item{test_result}{vector of test results (0 or 1).}
 
 \item{dates}{Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.}
 

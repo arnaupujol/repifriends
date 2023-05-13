@@ -3,8 +3,9 @@
 
 #' This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.
 #'
-#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
-#' @param test_result data.frame with the test results (0 or 1).
+#' @param x Vector of x positions.
+#' @param x Vector of y positions.
+#' @param test_result vector of test results (0 or 1).
 #' @param link_d The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param prevalence Probability of having an infected case for each individual.
 #' @param cluster_id Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.
@@ -49,15 +50,14 @@
 #' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 #' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 #' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
-#' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
 #' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
-#' cat <- catalogue(pos, test, 2)
+#' cat <- catalogue(x, y, test, 2)
 #' 
-catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluster_id = NULL,
+catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
                       min_pr = 0, thr_expand= 2, thr_dist = link_d * 4, 
                       method = "base",keep_null_tests = FALSE,in_latlon = FALSE,
@@ -65,9 +65,13 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
                       max_thr_data = 0.1, consider_fd = FALSE, n_simulations= 500,
                       optimize_link_d = FALSE, verbose = FALSE){
 
-  # Remove or impute missings
+  # Create data.frame
   suppressWarnings({
-    positions[, c("test", "prevalence") := list(test_result, prevalence)]
+    positions <- data.table(
+      "x" = x,
+      "y" = y,
+      "test" = test_result,
+      "prevalence" = prevalence)
   })
   to_impute <- colnames(positions)[!(colnames(positions) %in% c("x", "y"))]
   positions = clean_unknown_data(positions,to_impute,keep_null_tests,verbose)
@@ -96,7 +100,7 @@ catalogue <- function(positions, test_result,link_d,  prevalence = NULL,  cluste
   positive_positions <- positions[which(test_result == 1), .(x,y)]
   #Computing cluster_id if needed
   if(is.null(cluster_id)){
-    cluster_id = dbscan(positive_positions, link_d, min_neighbours = min_neighbours)
+    cluster_id = dbscan(x = positive_positions$x, y = positive_positions$y, link_d, min_neighbours = min_neighbours)
   }
 
   #Define total number of positive cases

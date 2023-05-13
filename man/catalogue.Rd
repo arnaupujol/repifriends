@@ -5,7 +5,8 @@
 \title{This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.}
 \usage{
 catalogue(
-  positions,
+  x,
+  y,
   test_result,
   link_d,
   prevalence = NULL,
@@ -31,9 +32,9 @@ catalogue(
 )
 }
 \arguments{
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{x}{Vector of y positions.}
 
-\item{test_result}{data.frame with the test results (0 or 1).}
+\item{test_result}{vector of test results (0 or 1).}
 
 \item{link_d}{The linking distance to connect cases. Should be in the same scale as the positions.}
 
@@ -97,13 +98,12 @@ library("RANN")
 # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
-pos <- data.frame(x,y)
 
 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
 test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 # Creation of catalogue for this positions, linking distance 2 and default values.
-cat <- catalogue(pos, test, 2)
+cat <- catalogue(x, y, test, 2)
 
 }
 \author{
