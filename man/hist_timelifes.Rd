@@ -37,7 +37,7 @@ dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","20
 "2020-10-19 00:01:25")
 
 # Creation of temporal catalogue for this data.
-tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
+tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 
 hist_timelifes(list_catalogues$temporal_catalogues)
 

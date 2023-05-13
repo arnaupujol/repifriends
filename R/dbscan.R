@@ -123,29 +123,12 @@ find_indeces <- function(positions, link_d, positions_eval){
     indeces[[1]] <- 1
     return(indeces)
   }
-  #loop for each position
-  for(i in 1:dim(positions)[1]){
-    #creatios of list where the linked positions of the given position will be saved
-    indecesaux <- c()
-    #inicialitation of distance and k number of nearest positions
-    dist = 0
-    kth = 0
-    #loop which stops when the maximum linking distance is overcomed
-    while((dist <= link_d) && (kth < dim(positions_eval)[1])){
-      #Aplication of KDTree method for the k nearest neighbors while the linking distance is not overcomed
-      kth = kth + 1
-      query <- nn2(positions_eval, positions[i,], kth)
-      index <- query$nn.idx[length(query$nn.idx)]
-      dist <- query$nn.dists[length(query$nn.dists)]
-      #Addition of the last point to the indeces list if it is in the wanted range
-      if((dist[length(dist)] <= link_d) && (kth < dim(positions_eval)[1])){
-        indecesaux <- append(indecesaux,index)
-      }else{
-        #Final list for the position i
-        indeces[[i]] <- indecesaux
-        break
-      }
-    }
-  }
+  
+  indeces <- lapply(1:nrow(positions), function(row) {
+    indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_d)$nn.idx
+    indexes <- indexes[indexes != 0]
+    return(indexes)
+  })
+  
   return(indeces)
 }

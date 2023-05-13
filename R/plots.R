@@ -9,6 +9,7 @@
 #' @param id_data data frame with the cluster ID associated to each positive case, o for no associated cluster
 #' @param positive Boolean vector that indicates if the case is infected. 
 #' @param epi_catalogue List of the EpiFRIenDs catalogue
+#' @param use_geom_map: If True, use a geo-map to plot.
 #' @param xlims: Vector with the limits of the X axis.
 #' @param ylims: Vector with the limits of the Y axis
 #' @param title: Title of the plot. If NULL, it defaults to 'P-value of hotspots'
@@ -43,9 +44,16 @@ scatter_pval <- function(
     id_data, 
     positive, 
     epi_catalogue,
+    use_geom_map = FALSE,
+    lon_min = NULL,
+    lon_max = NULL,
+    lat_min = NULL,
+    lat_max = NULL,
     xlims = NULL,
     ylims = NULL,
-    title = NULL){
+    title = NULL,
+    region = '"Mozambique',
+    thr_amplify = 0.05){
   pos <- data.frame(coordinates[positive,],id_data)
   p_vals <- c()
   for(i in id_data[id_data > 0]){
@@ -59,18 +67,42 @@ scatter_pval <- function(
   
   pos_filt <- pos[id_data >0,]
   pos_filt$p_vals <- p_vals
-  graph <- ggplot(coordinates,aes(x=x, y=y))+
-    geom_point(color = "grey", size = 2.5)+
-    geom_point(data =pos_filt, aes(colour = p_vals), size = 2.5)+
-    scale_colour_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
-    ggtitle(title) + coord_equal()
   
-  if(!is.null(xlims)){ # Set limits in x & y coordinates
+  if(use_geom_map){
+    maps <- subset(map_data("world"), region == region)
+    
+    pos_filt <- as.data.table(pos_filt)
+    pos_filt[, label := ifelse(
+      p_vals >= 0 & p_vals <= 0.05, 'PVAL <= 0.05',
+      ifelse(p_vals > 0.05 & p_vals <= 0.15, 'PVAL > 0.05 & <= 0.15', 'PVAL > 0.15'))]
+    coordinates[, label := 'POSITION']
+    
+    # Start by plotting the map of the region of interest
+    map_plot <- ggplot() +
+      geom_polygon(data = maps, aes(x = long, y = lat, group = group), fill = "lightblue", color = "black") +
+      coord_cartesian(xlim = c(lon_min - thr_amplify* lon_min, lon_max + thr_amplify*lon_max), 
+                      ylim = c(lat_min - thr_amplify*lat_min, lat_max + thr_amplify*lat_max))
+    
+    graph <- map_plot +
+      geom_point(data =coordinates, aes(x =x, y=y, color = label), size = 2.5)+
+      geom_point(data =pos_filt,  aes(x=x, y=y, colour = label), size = 2.5) +
+      ggtitle(title) + labs(color = "Legend")
+
+  }else{
+    graph <- ggplot(coordinates,aes(x=x, y=y))+
+      geom_point(color = "grey", size = 2.5)+
+      geom_point(data =pos_filt, aes(colour = p_vals), size = 2.5)+
+      scale_colour_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
+      ggtitle(title) + coord_equal()
+  }
+  
+  if(!is.null(xlims) & (use_geom_map == FALSE)){ # Set limits in x & y coordinates
     graph <- graph + xlim(xlims) + ylim(ylims)
   }
   
   return(graph)
 }
+
 
 #' This method shows a histogram of the size (total number of cases) in foci for foci with p>0.05 and with p<0.05. 
 #'
@@ -152,7 +184,7 @@ size_histogram <- function(catalogue){
 #' "2020-10-19 00:01:25")
 #'
 #' # Creation of temporal catalogue for this data.
-#' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
+#' tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 #' 
 #' hist_timelifes(list_catalogues$temporal_catalogues)
 #' 

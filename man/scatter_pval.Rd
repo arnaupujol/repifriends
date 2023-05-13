@@ -10,9 +10,16 @@ scatter_pval(
   id_data,
   positive,
   epi_catalogue,
+  use_geom_map = FALSE,
+  lon_min = NULL,
+  lon_max = NULL,
+  lat_min = NULL,
+  lat_max = NULL,
   xlims = NULL,
   ylims = NULL,
-  title = NULL
+  title = NULL,
+  region = "\\"Mozambique",
+  thr_amplify = 0.05
 )
 }
 \arguments{
@@ -23,6 +30,8 @@ scatter_pval(
 \item{positive}{Boolean vector that indicates if the case is infected.}
 
 \item{epi_catalogue}{List of the EpiFRIenDs catalogue}
+
+\item{use_geom_map:}{If True, use a geo-map to plot.}
 
 \item{xlims:}{Vector with the limits of the X axis.}
 

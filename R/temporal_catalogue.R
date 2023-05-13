@@ -25,6 +25,7 @@
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #' @param store_gif: If TRUE, store the different time-frame images in an animated GIF format.
+#' @param use_geom_map: If TRUE, the generated plot will have a geo-map.
 #' @param out_gif_path: Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.
 #' 
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
@@ -74,7 +75,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
                                add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
                                optimize_link_d = FALSE, keep_null_tests = FALSE, in_latlon = FALSE, 
-                               to_epsg = NULL,verbose = FALSE, store_gif = FALSE,
+                               to_epsg = NULL,verbose = FALSE, store_gif = FALSE, use_geom_map = FALSE,
                                out_gif_path = paste0(getwd(),"/www/")
                                ){
 
@@ -107,6 +108,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
       max_date <- chron(dates=dtparts[[1]][1],times=dtparts[[1]][2],format=c('y-m-d','h:m:s'))
     }
   }
+  
   #temporal loop until the last time frame that fully overlaps the data
   temporal_catalogues <- list()
   #Mean dates defines as the median time in each time window
@@ -118,7 +120,12 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
       (dates <= min_date + time_steps*step_num + time_width)
     selected_positions <- positions[selected_data,]
     selected_test_results <- as.data.frame(test_result[selected_data,])
-
+    
+    # Remove or impute missings
+    pos = clean_unknown_data(selected_positions,selected_test_results[[1]],keep_null_tests,verbose)
+    selected_positions = pos$position
+    selected_test_results = data.frame("test" = pos$test)
+  
     #get catalogue
     Newcatalogue <- catalogue(positions = selected_positions, test_result = selected_test_results,
                               link_d = link_d, cluster_id = NULL, min_neighbours = min_neighbours,
@@ -134,15 +141,20 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
       if(store_gif){
         minimum_date <- (min_date + time_steps*step_num + 0.5*time_width)
         plots <- scatter_pval(
-          selected_positions[,.(x,y)], 
-          Newcatalogue$cluster_id, 
-          (selected_test_results$test == 1), 
-          Newcatalogue$epifriends_catalogue,
-          c(min(positions$x), max(positions$x)),
-          c(min(positions$y), max(positions$y)),
+          coordinates = selected_positions[,.(x,y)], 
+          id_data = Newcatalogue$cluster_id, 
+          positive = (selected_test_results$test == 1), 
+          epi_catalogue = Newcatalogue$epifriends_catalogue,
+          use_geom_map = use_geom_map,
+          lon_min = min(na.omit(positions)$x),
+          lon_max =  max(na.omit(positions)$x),
+          lat_min = min(na.omit(positions)$y),
+          lat_max =  max(na.omit(positions)$y),
+          c(min(na.omit(positions)$x), max(na.omit(positions)$x)),
+          c(min(na.omit(positions)$y), max(na.omit(positions)$y)),
           paste0("Date: ", as.character(minimum_date))
         )
-
+        
         out_temp_path = paste0(getwd(),"/tmp/")
         if(!dir.exists(out_temp_path)){ # create temp file for storing png if doesn't exist
           dir.create(out_temp_path)
@@ -286,21 +298,30 @@ add_temporal_id <- function(
   if(length(catalogue_list) == 0){
     return()
   }
+  
   #setting empty values of temp_id
   for(t in 1:length(catalogue_list)){
-    aux <- data.frame(matrix(NA,length(catalogue_list[[t]]$id)))
+    min_length <- max(1, length(catalogue_list[[t]]$id))
+    aux <- data.frame(matrix(NA,min_length))
     colnames(aux) <- "tempID"
     catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
     #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
   }
+  
   #Initialising tempID value to assign
   next_temp_id <- 0
   #Loop over all timesteps
   for(t in 1:(length(catalogue_list)-1)){
     #Loop over all timesteps within linking_time
     for (f in 1:length(catalogue_list[[t]]$id)){
+      if(is.null(catalogue_list[[t]]$id)){
+        next
+      }
       #Loop over all points of catalogue number 1
       for(t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+        if(is.null(catalogue_list[[t2]]$id)){
+          next
+        }
         #Loop over all points of catalogue number 2
         for(f2 in 1:length(catalogue_list[[t2]]$id)){
           dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])

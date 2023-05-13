@@ -28,6 +28,7 @@ temporal_catalogue(
   to_epsg = NULL,
   verbose = FALSE,
   store_gif = FALSE,
+  use_geom_map = FALSE,
   out_gif_path = paste0(getwd(), "/www/")
 )
 }
@@ -75,6 +76,8 @@ temporal_catalogue(
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 
 \item{store_gif:}{If TRUE, store the different time-frame images in an animated GIF format.}
+
+\item{use_geom_map:}{If TRUE, the generated plot will have a geo-map.}
 
 \item{out_gif_path:}{Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.}
 }
