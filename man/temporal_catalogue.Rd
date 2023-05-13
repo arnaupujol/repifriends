@@ -26,6 +26,8 @@ temporal_catalogue(
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
+  consider_fd = FALSE,
+  n_simulations = 500,
   verbose = FALSE,
   store_gif = FALSE,
   use_geom_map = FALSE,
@@ -72,6 +74,10 @@ temporal_catalogue(
 \item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
 
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
+
+\item{consider_fd:}{If True, consider false detections and adjust p-value of that.}
+
+\item{n_simulations:}{Numeric value with the number of desired iterations to compute the false-detected clusters.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 
