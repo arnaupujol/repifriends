@@ -206,6 +206,28 @@ general
 Finally let's do a scatter plot of the positions colored by the p-value and the size given by the prevalence.
 
 ```{r}
+
+copy_position <- data.table::copy(df[,.(x,y)])	
+copy_position[, id := 1:nrow(copy_position)]	
+total_friends_indeces <- categories$epifriends_catalogue$indeces	
+copy_position[, prevalence := 0]	
+radial <- c()	
+centroid_df <- list()	
+for(i in 1:length(total_friends_indeces)){
+  result <- get_radious(	
+    positions = copy_position,
+    test_result = data.table("test" = test_rand),	
+    total_friends_indeces = total_friends_indeces[[i]],	
+    thr_data = 0.1, 	
+    max_epi_cont = 0.5)	
+  
+  # Assign computed prevalence	
+  rows <- dim(copy_position[id %in% result$id])[1]	
+  copy_position[id %in% result$id,
+                prevalence := rep(result$prevalence, rows)]	
+}
+          
+          
 graphs_prev <- scatter_pval(
             data.table::copy(df[,.(x,y)]), 
             categories$cluster_id, 

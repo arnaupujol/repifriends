@@ -72,3 +72,36 @@ clean_unknown_data <- function(
   return(positions)
   
 }
+
+#' Method to clean an input data.table with automatically computing the columns to be imputed.
+#'
+#' @param positions data.table variables to be imputed.
+#' @param keep_null_tests: Whether to remove or not missings. If numeric, provide value to impute.
+#'
+#' @details This function takes an input data.table and takes all numeric columns non-coordinate related to impute.
+#'
+#' @return Data.table with cleaned/imputed variables based on user choose.
+#' 
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("data.table")) install.packages("data.table")
+#' library("data.table")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,NA,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,NA,14,15,30)
+#' test <- c(1,0,1,1,0,NA,NA,0,1,1,1,0,0,1,1,0)
+#' pos <- data.table(x,y)
+#'
+#' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
+#' db <- clean_data(pos, FALSE)
+#' 
+clean_data <- function(positions, keep_null_tests = FALSE){
+  to_impute <- colnames(positions)[!(colnames(positions) %in% c("x", "y"))]
+  positions = clean_unknown_data(positions,to_impute,keep_null_tests,FALSE)
+  return(positions)
+}

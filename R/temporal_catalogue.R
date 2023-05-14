@@ -147,6 +147,7 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
           selected_positions[,.(x,y)], 
           Newcatalogue$cluster_id, 
           (selected_test_results == 1), 
+          NULL,
           Newcatalogue$epifriends_catalogue,
           c(min(positions$x), max(positions$x)),
           c(min(positions$y), max(positions$y)),

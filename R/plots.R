@@ -72,7 +72,7 @@ scatter_pval <- function(
         aes(color = "#F38B8B", fill = p_vals, size = prevalence), shape=21, stroke = 1)+
       scale_fill_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
       scale_size_continuous(range = c(1, 4), limits = c(0,1)) +
-      ggtitle(title)
+      ggtitle(title) + coord_equal()
     
   }else{
     
@@ -83,7 +83,7 @@ scatter_pval <- function(
       geom_point(data = pos_filt, aes(colour = p_vals), size = 2.5)+
       scale_color_continuous(limits = c(0, 0.2), low = "grey", high = "red") +
       #scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
-      ggtitle(title)
+      ggtitle(title) + coord_equal()
     
   }
 
