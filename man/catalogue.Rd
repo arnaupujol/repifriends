@@ -10,6 +10,8 @@ catalogue(
   link_d = NULL,
   cluster_id = NULL,
   min_neighbours = 2,
+  use_link_d = TRUE,
+  link_neighbours = NULL,
   max_p = 1,
   min_pos = 2,
   min_total = 2,
@@ -43,6 +45,12 @@ catalogue(
 \item{min_pr}{Threshold of minimum positivity rate in clusters applied.}
 
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+
+\item{link_neighbours:}{Number of surrounding neighbors to link.}
 
 \item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
 

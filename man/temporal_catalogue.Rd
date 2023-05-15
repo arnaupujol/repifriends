@@ -9,6 +9,7 @@ temporal_catalogue(
   test_result,
   dates,
   link_d,
+  use_link_d = TRUE,
   min_neighbours = 2,
   time_width,
   min_date = NULL,
@@ -69,6 +70,8 @@ temporal_catalogue(
 \item{get_timelife}{It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.}
 
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
 
 \item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
 
