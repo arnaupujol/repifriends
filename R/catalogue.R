@@ -14,6 +14,7 @@
 #' @param min_pos Threshold of minimum number of positive cases in clusters applied.
 #' @param min_total Threshold of minimum number of cases in clusters applied.
 #' @param min_pr Threshold of minimum positivity rate in clusters applied.
+#' @param method Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
@@ -59,8 +60,7 @@
 #' 
 catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id = NULL,
                       min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, thr_expand= 2, thr_dist = link_d * 4, 
-                      method = "base",keep_null_tests = FALSE,in_latlon = FALSE,
+                      min_pr = 0, method = "base",keep_null_tests = FALSE,in_latlon = FALSE,
                       to_epsg = NULL, n_sim = 10000, max_epi_cont = 0.5, 
                       max_thr_data = 0.1, consider_fd = FALSE, n_simulations= 500,
                       optimize_link_d = FALSE, verbose = FALSE){

@@ -16,8 +16,6 @@ catalogue(
   min_pos = 2,
   min_total = 2,
   min_pr = 0,
-  thr_expand = 2,
-  thr_dist = link_d * 4,
   method = "base",
   keep_null_tests = FALSE,
   in_latlon = FALSE,
@@ -51,6 +49,8 @@ catalogue(
 \item{min_total}{Threshold of minimum number of cases in clusters applied.}
 
 \item{min_pr}{Threshold of minimum positivity rate in clusters applied.}
+
+\item{method}{Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.}
 
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
 
