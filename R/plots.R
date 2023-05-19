@@ -11,15 +11,9 @@
 #' @param prevalence Vector with the individual prevalence for each item in coordinates.
 #' @param epi_catalogue List of the EpiFRIenDs catalogue
 #' @param use_geom_map If True, use a geo-map to plot.
-#' @param lon_min Minimum value for longitude
-#' @param lon_max Maxmimum value for longitude
-#' @param lat_min Minimum value for latitude
-#' @param lat_max Maximum value for latitude
 #' @param xlims: Vector with the limits of the X axis.
 #' @param ylims: Vector with the limits of the Y axis
 #' @param title: Title of the plot. If NULL, it defaults to 'P-value of hotspots'
-#' @param region Region to pull the map from
-#' @param How much to amplify the region
 #' 
 #' @return  Scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
 #' representing their p-value) and in grey the rest of the data.
@@ -53,15 +47,9 @@ scatter_pval <- function(
     prevalence,
     epi_catalogue,
     use_geom_map = FALSE,
-    lon_min = NULL,
-    lon_max = NULL,
-    lat_min = NULL,
-    lat_max = NULL,
     xlims = NULL,
     ylims = NULL,
-    title = NULL,
-    region = '"Mozambique',
-    thr_amplify = 0.05){
+    title = NULL){
   pos <- data.frame(coordinates[positive,],id_data)
   p_vals <- c()
   for(i in id_data[id_data > 0]){
@@ -74,19 +62,15 @@ scatter_pval <- function(
   pos_filt$p_vals <- p_vals
   
   if(use_geom_map){
-    maps <- subset(map_data("world"), region == region)
+    my_location <- c(min(coordinates$x),min(coordinates$y), max(coordinates$x), max(coordinates$y))
+    my_map <- get_map(location = my_location, source = "stamen", maptype = "terrain")
+    map_plot <- ggmap::ggmap(my_map)
     
     pos_filt <- as.data.table(pos_filt)
     pos_filt[, label := ifelse(
       p_vals >= 0 & p_vals <= 0.05, 'PVAL <= 0.05',
       ifelse(p_vals > 0.05 & p_vals <= 0.15, 'PVAL > 0.05 & <= 0.15', 'PVAL > 0.15'))]
     coordinates[, label := 'POSITION']
-    
-    # Start by plotting the map of the region of interest
-    map_plot <- ggplot() +
-      geom_polygon(data = maps, aes(x = long, y = lat, group = group), fill = "lightblue", color = "black") +
-      coord_cartesian(xlim = c(lon_min - thr_amplify* lon_min, lon_max + thr_amplify*lon_max), 
-                      ylim = c(lat_min - thr_amplify*lat_min, lat_max + thr_amplify*lat_max))
     
     graph <- map_plot +
       geom_point(data =coordinates, aes(x =x, y=y, color = label), size = 2.5)+

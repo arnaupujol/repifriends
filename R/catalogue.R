@@ -4,7 +4,7 @@
 #' This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.
 #'
 #' @param x Vector of x positions.
-#' @param x Vector of y positions.
+#' @param y Vector of y positions.
 #' @param test_result vector of test results (0 or 1).
 #' @param link_d The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param prevalence Probability of having an infected case for each individual.

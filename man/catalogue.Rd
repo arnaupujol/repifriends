@@ -30,7 +30,9 @@ catalogue(
 )
 }
 \arguments{
-\item{x}{Vector of y positions.}
+\item{x}{Vector of x positions.}
+
+\item{y}{Vector of y positions.}
 
 \item{test_result}{vector of test results (0 or 1).}
 

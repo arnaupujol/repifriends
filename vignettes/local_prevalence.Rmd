@@ -153,12 +153,12 @@ Now let's generate two more statistical plots:
 
 ```{r}
 graphs_prev <- scatter_pval(
-            data.table::copy(df[,.(x,y)]), 
-            categories$cluster_id, 
-            data.table::copy(positive), 
-            data.table::copy(prevalence),
-            categories$epifriends_catalogue,
-            paste0(method,"-Link_d: ",link_d)) 
+            coordinates = data.table::copy(df[,.(x,y)]), 
+            id_data = categories$cluster_id, 
+            positive = data.table::copy(positive), 
+            prevalence = data.table::copy(prevalence),
+            epi_catalogue = categories$epifriends_catalogue,
+            title = paste0(method,"-Link_d: ",link_d)) 
 graphs_prev
 histo <- size_histogram(categories)
 histo
@@ -229,12 +229,12 @@ for(i in 1:length(total_friends_indeces)){
           
           
 graphs_prev <- scatter_pval(
-            data.table::copy(df[,.(x,y)]), 
-            categories$cluster_id, 
-            data.table::copy(positive), 
-            data.table::copy(prevalence),
-            categories$epifriends_catalogue,
-            paste0(method,"-Link_d: ",link_d)) 
+            coordinates = data.table::copy(df[,.(x,y)]), 
+            id_data = categories$cluster_id, 
+            positive = data.table::copy(positive), 
+            prevalence = data.table::copy(prevalence),
+            epi_catalogue = categories$epifriends_catalogue,
+            title = paste0(method,"-Link_d: ",link_d)) 
 graphs_prev
 histo <- size_histogram(categories)
 histo
@@ -284,12 +284,12 @@ Finally let's do a scatter plot of the positions colored by the p-value and the 
 
 ```{r}
 graphs_prev <- scatter_pval(
-            data.table::copy(df[,.(x, y)]), 
-            categories$cluster_id, 
-            data.table::copy(positive), 
-            rep(sum(df$test) / length(df$test), length(df$test)),
-            categories$epifriends_catalogue,
-            paste0(method,"-Link_d: ",link_d)) 
+            coordinates = data.table::copy(df[,.(x, y)]), 
+            id_data = categories$cluster_id, 
+            positive = data.table::copy(positive), 
+            prevalence = rep(sum(df$test) / length(df$test), length(df$test)),
+            epi_catalogue = categories$epifriends_catalogue,
+            title = paste0(method,"-Link_d: ",link_d)) 
 graphs_prev
 histo <- size_histogram(categories)
 histo

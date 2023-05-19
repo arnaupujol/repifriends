@@ -157,10 +157,6 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
           positive = (selected_test_results$test == 1), 
           epi_catalogue = Newcatalogue$epifriends_catalogue,
           use_geom_map = use_geom_map,
-          lon_min = min(na.omit(positions)$x),
-          lon_max =  max(na.omit(positions)$x),
-          lat_min = min(na.omit(positions)$y),
-          lat_max =  max(na.omit(positions)$y),
           c(min(na.omit(positions)$x), max(na.omit(positions)$x)),
           c(min(na.omit(positions)$y), max(na.omit(positions)$y)),
           paste0("Date: ", as.character(minimum_date))
