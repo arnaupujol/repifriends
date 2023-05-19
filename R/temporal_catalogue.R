@@ -128,16 +128,16 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
     selected_data <- (dates >= min_date + time_steps*step_num)&
       (dates <= min_date + time_steps*step_num + time_width)
     selected_positions <- positions[selected_data,]
-    selected_test_results <- as.data.frame(test_result[selected_data,])
+    selected_test_results <- as.data.frame(test_result[selected_data])
     
     # Remove or impute missings
-    pos = clean_unknown_data(selected_positions,selected_test_results[[1]],keep_null_tests,verbose)
-    selected_positions = pos$position
-    selected_test_results = data.frame("test" = pos$test)
+    to_impute <- colnames(selected_positions)[!(colnames(selected_positions) %in% c("x", "y"))]
+    selected_positions = clean_unknown_data(selected_positions,to_impute,keep_null_tests,verbose)
+    selected_test_results = data.frame("test" = selected_positions$test)
 
     #get catalogue
     Newcatalogue <- catalogue(x = selected_positions$x, y = selected_positions$y, 
-                              test_result = selected_test_results,
+                              test_result = selected_test_results$test,
                               link_d = link_d, prevalence=prevalence, cluster_id = NULL,
                               method=method, min_neighbours = min_neighbours,
                               max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
