@@ -33,10 +33,12 @@ This version have been proven to work for R 4.1.1 version.
 
 Structure of the repository:
 ----------------------------
-The repository contains two main directories:
-- packages/epifriends: where the code is stored
-- examples: where some examples of the software implementation are shown in
-Rmarkdowns.
+The repository contains 4 main directories:
+- data: where data is stored
+- vignettes:where some examples of the software implementation are shown in
+Rmarkdowns. 
+- R: core code of EpiFRIenDs, with functions segmented by their functionalities.
+- app: front-end R-shiny application
 
 How to use it:
 ----------------------------
@@ -57,15 +59,43 @@ variables like a temporal id using some linking times and distances,
 and in this way assigning a temporal ID to the foci, assigning the same temporal ID
 to foci form different time frames when they are close in time and space. 
 Some other posible variables are those relate with the lifetimes of those foci.
+- automate_link_d: from some input positions & test_results, it automatically computes
+the best linking distance based on an optimization of the maximum number of real positive
+tests found under different statistical representative linking distances.
+- convert_coords: converts longitude & latitude positions into real coordinates based on
+a defined projection.
+- define_local_prev: different methodologies used to account for the local prevalence of
+a specific region. If method is kmeans it will use the prevalence detected by the different
+k-clusters. If method is centroid, it will expand the centroid detected by the dbscan
+significant clusters until a certain criteria is met. If method is base, global prevalence will
+be used.
+- plots: different plotting functionalities used accross the code and specially in the vignettes &
+shiny application.
+- false_detections: code used to generate random distributions of a given prevalence with the goal
+to detect random distributions and help in correcting the p-value through accounting for this
+randomness.
+- clean_data: code used to impute or remove missing values in the input data.
 
 #### Examples:
 
-Examples can be found in the directory `examples`, in the following Rmarkdowns:
+Examples can be found in the directory `vignettes`, in the following Rmarkdowns:
 
 - epifriends_on_different_distributions.Rmd: this Rmarkdown uses three
 sets of artificial data generated in the python version 
 and shows how to run EpiFRIenDs to detect foci on them.
 
-- temporal_analysis.Rmd (still in work): this Rmarkdown uses one 
-artificial data set generates in the python version and show how to 
+- temporal_analysis.Rmd: this Rmarkdown uses one 
+artificial data set generates in the python version and shows how to 
 work the temporal catalogues on them.
+
+- detect_false_positives.Rmd: this Rmarkdown intends to guide the user on how the
+approach to detect False Positives work and how it can be leveraged to obtain to
+adjust the p-value of the different clusters.
+
+- local_prevalence.Rmd: this Rmarkdown uses 2 different methodologies to account for the
+local prevalence of a certain region and compares it with the base methodology, which only
+considers the global prevalence.
+
+- optimize_link_d.Rmd: this Rmarkdown shows how to optimize the linking_distance (distance used
+to detect closest neighbors) through a statistical optimization of the number of real positives
+detected

@@ -35,7 +35,7 @@
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- rm_false_detections(pos, test, 2, 100, filter_fd = TRUE)
@@ -57,7 +57,7 @@ get_false_detection <- function(positions, test_result, link_d, n_simulations,
   setorderv(random_dist, "num_pos")
   
   ## Compute catalogue with real infections
-  cat <- catalogue(position = positions,test_result = test_result, link_d=link_d, 
+  cat <- catalogue(x = positions$x, y = positions$y,test_result = test_result, link_d=link_d, 
                    cluster_id = NULL, min_neighbours = min_neighbours)
   cat_real <- data.table(
     'id' = cat$epifriends_catalogue$id,
@@ -111,7 +111,7 @@ get_false_detection <- function(positions, test_result, link_d, n_simulations,
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- generate_simulations(pos, test, 2, 100)
@@ -122,7 +122,7 @@ generate_simulations <- function(positions, test_result, link_d, n_simulations,
                                  to_epsg = NULL, verbose = FALSE){
   
   # Generate data.table
-  df <- data.table(x = positions$x, y = positions$y, test = test_result$test)
+  df <- data.table(x = positions$x, y = positions$y, test = test_result)
   
   prevalence <- sum(df$test) / nrow(df)
   
@@ -135,7 +135,7 @@ generate_simulations <- function(positions, test_result, link_d, n_simulations,
     library(epifriends)
     library(RANN)
     df[, test := stats::rbinom(nrow(df), 1, prevalence)]
-    cat <- catalogue(df[test == 1, .(x,y)], df[test == 1,.(test)], link_d, 
+    cat <- catalogue(x = df$x, y = df$y, test_result = df$test, link_d = link_d, 
                      cluster_id = NULL, min_neighbours = min_neighbours)
     
     cat_count <- data.table(

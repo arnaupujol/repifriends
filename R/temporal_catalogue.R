@@ -3,10 +3,12 @@
 
 #' This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.
 #'
-#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
-#' @param test_result data.frame with the test results (0 or 1).
+#' @param x Vector of x positions.
+#' @param x Vector of y positions.
+#' @param test_result vector of test results (0 or 1).
 #' @param dates Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.
 #' @param link_d the linking distance of the DBSCAN algorithm. Should be in the same scale as the positions.
+#' @param prevalence Probability of having an infected case for each individual.
 #' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #' @param time_width Number of days of the time window used to select cases in each time step.
 #' @param min_date Initial date used in the first time step and time window selection. In format 'y-m-d h:m:s'.
@@ -60,7 +62,7 @@
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <-c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' #Creation of chron dates vector in format 'y-m-d h:m:s'.
 #' dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
@@ -71,16 +73,19 @@
 #' # Creation of temporal catalogue for this data.
 #' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 #' 
-temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighbours = 2,
+temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NULL, min_neighbours = 2,
                                time_width, min_date = NULL, max_date = NULL, time_steps = 1,
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
                                add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
-                               optimize_link_d = FALSE, keep_null_tests = FALSE, in_latlon = FALSE, 
+                               optimize_link_d = FALSE, method = "base", keep_null_tests = FALSE, in_latlon = FALSE, 
                                to_epsg = NULL, consider_fd = FALSE, n_simulations= 500,
                                verbose = FALSE, store_gif = FALSE,
                                out_gif_path = paste0(getwd(),"/www/")
                                ){
-
+  
+  #Create data.table with all coordinates & test
+  positions = data.table("x" = x, "y" = y, "test" = test_result)
+  
   #Case of empty list of dates
   if(length(dates) == 0){
     print("There are no dates")
@@ -120,11 +125,13 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
     selected_data <- (dates >= min_date + time_steps*step_num)&
       (dates <= min_date + time_steps*step_num + time_width)
     selected_positions <- positions[selected_data,]
-    selected_test_results <- as.data.frame(test_result[selected_data,])
+    selected_test_results <- positions[selected_data]$test
 
     #get catalogue
-    Newcatalogue <- catalogue(positions = selected_positions, test_result = selected_test_results,
-                              link_d = link_d, cluster_id = NULL, min_neighbours = min_neighbours,
+    Newcatalogue <- catalogue(x = selected_positions$x, y = selected_positions$y, 
+                              test_result = selected_test_results,
+                              link_d = link_d, prevalence=prevalence, cluster_id = NULL,
+                              method=method, min_neighbours = min_neighbours,
                               max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
                               optimize_link_d=optimize_link_d, keep_null_tests = keep_null_tests, 
                               in_latlon = in_latlon, to_epsg = to_epsg,verbose = verbose)
@@ -139,7 +146,8 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, min_neighb
         plots <- scatter_pval(
           selected_positions[,.(x,y)], 
           Newcatalogue$cluster_id, 
-          (selected_test_results$test == 1), 
+          (selected_test_results == 1), 
+          NULL,
           Newcatalogue$epifriends_catalogue,
           c(min(positions$x), max(positions$x)),
           c(min(positions$y), max(positions$y)),
