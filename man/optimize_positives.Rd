@@ -62,7 +62,7 @@ y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
 
 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 min_distances <- c(0.01, 0.02, 0.05, 0.02, 0.07, 0.08, 0.01, 0.02)
 

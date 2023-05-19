@@ -3,7 +3,8 @@
 
 #' This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.
 #'
-#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
+#' @param x Vector of x positions.
+#' @param x Vector of y positions.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
@@ -31,9 +32,11 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- dbscan(pos, 2 ,3)
 #' 
-dbscan <- function(positions, link_d, min_neighbours = 2, test = NULL,
+dbscan <- function(x, y, link_d, min_neighbours = 2, test = NULL,
                    in_latlon = FALSE, to_epsg = NULL, verbose = FALSE){
   
+  
+  positions <- data.table("x" = x, "y" = y)
   # Remove or impute missings
   positions = clean_unknown_data(positions,test,verbose=verbose)
   
@@ -123,7 +126,7 @@ find_indeces <- function(positions, link_d, positions_eval){
     indeces[[1]] <- 1
     return(indeces)
   }
-  
+
   indeces <- lapply(1:nrow(positions), function(row) {
     indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_d)$nn.idx
     indexes <- indexes[indexes != 0]

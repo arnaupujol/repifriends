@@ -1,4 +1,5 @@
 library(shiny)
+library(magick)
 library(epifriends)
 library(data.table)
 library(gridExtra)
@@ -14,36 +15,51 @@ ui <- fluidPage(
     tabPanel("Distribution Analysis",
              sidebarLayout(
                sidebarPanel(
-                 
-               numericInput(inputId = "min_neighbours",
-                            label = "Min. number of neighbors:",
-                            value = 2, min = 0, max = 10),
-               sliderInput(inputId = "link_d",
-                           label = "Select linking distance:",
-                           min = 0.05, max = 0.2, value = 0.1, step = 0.05),
-               selectInput(inputId = "keep_null_tests",
-                           label = "How to deal with missing data",
-                           choices = c("Remove", "Keep", "Impute"),
-                           selected = "Centroid"),
-               conditionalPanel(
-                 condition = "input.keep_null_tests == 'Impute'",
-                 numericInput(inputId = "imp_value",
-                              label = "Imputation value:",
-                              value = 0)
-               ),
-               selectInput(inputId = "in_latlon",
-                           label = "Treatment of coordinates:",
-                           choices = c("Longitude/Latitude", "Cartesian"),
-                           selected = "Longitude/Latitude"),
-               conditionalPanel(
-                 condition = "input.in_latlon == 'Longitude/Latitude'",
-                 textInput(inputId = "to_epsg",
-                           label = "EPSG number for the projection to use:",
-                           value = "32736")),
-               fileInput(inputId = "data",
-                         label = "Load data (CSV format):"),
-               actionButton(inputId = "load_data_button", label = "Load Data"),
-               actionButton(inputId = "epifriends_run", label = "Run Spatial Analysis")
+                 numericInput(inputId = "min_neighbours",
+                              label = "Min. number of neighbors:",
+                              value = 2, min = 0, max = 10),
+                 sliderInput(inputId = "link_d",
+                             label = "Select linking distance:",
+                             min = 0.05, max = 0.2, value = 0.1, step = 0.05),
+                 selectInput(inputId = "prevalence",
+                             label = "Select column on data refering to prevalence:",
+                             choices = c("None", "prevalence"),
+                             selected = "None"),
+                 selectInput(inputId = "method",
+                             label = "Select method to account fot local prevalence:",
+                             choices = c("base", "kmeans", "centroid"),
+                             selected = "base"),
+                 selectInput(inputId = "false_detect",
+                             label = "Consider False Detections (plus exec time): ",
+                             choices = c("Yes", "No"),
+                             selected = "No"),
+                 selectInput(inputId = "keep_null_tests",
+                             label = "How to deal with missing data",
+                             choices = c("Remove", "Keep", "Impute"),
+                             selected = "Centroid"),
+                 conditionalPanel(
+                   condition = "input.keep_null_tests == 'Impute'",
+                   numericInput(inputId = "imp_value",
+                                label = "Imputation value:",
+                                value = 0)
+                 ),
+                 selectInput(inputId = "in_latlon",
+                             label = "Treatment of coordinates:",
+                             choices = c("Longitude/Latitude", "Cartesian"),
+                             selected = "Longitude/Latitude"),
+                 conditionalPanel(
+                   condition = "input.in_latlon == 'Longitude/Latitude'",
+                   textInput(inputId = "to_epsg",
+                             label = "EPSG number for the projection to use:",
+                             value = "32736")),
+                 selectInput(inputId = "data_type",
+                             label = "Type of data:",
+                             choices = c("Mock up", "Real"),
+                             selected = "Mock up"),
+                 fileInput(inputId = "data",
+                           label = "Load data (CSV format):"),
+                 actionButton(inputId = "load_data_button", label = "Load Data"),
+                 actionButton(inputId = "epifriends_run", label = "Run Spatial Analysis")
                ),
                mainPanel(
                  tabsetPanel(
@@ -63,7 +79,7 @@ ui <- fluidPage(
                             plotOutput(outputId = "epifriends_v1"),
                             plotOutput(outputId = "epifriends_v3"),
                             plotOutput(outputId = "epifriends_v2")
-                            ),
+                   ),
                    tabPanel("Clusters-EpiFRIenDs",
                             h3("Coordinates & clusters detected by Epifriends"),
                             br(),
@@ -73,7 +89,7 @@ ui <- fluidPage(
                )
              )
     ),
-             
+    
     tabPanel("Temporal Analysis", 
              sidebarLayout(
                sidebarPanel(
@@ -81,6 +97,18 @@ ui <- fluidPage(
                  numericInput(inputId = "min_neighbours_temp",
                               label = "Min. number of neighbors:",
                               value = 2, min = 0, max = 10),
+                 selectInput(inputId = "prevalence_temp",
+                             label = "Select column on data refering to prevalence:",
+                             choices = c("None", "prevalence"),
+                             selected = "None"),
+                 selectInput(inputId = "method_temp",
+                             label = "Select method to account fot local prevalence:",
+                             choices = c("base", "kmeans", "centroid"),
+                             selected = "base"),
+                 selectInput(inputId = "false_detect_temp",
+                             label = "Consider False Detections (plus exec time): ",
+                             choices = c("Yes", "No"),
+                             selected = "No"),
                  sliderInput(inputId = "link_d_temp",
                              label = "Select linking distance:",
                              min = 0.05, max = 0.2, value = 0.1, step = 0.05),
@@ -115,6 +143,10 @@ ui <- fluidPage(
                    textInput(inputId = "to_epsg",
                              label = "EPSG number for the projection to use:",
                              value = "32736")),
+                 selectInput(inputId = "data_type_temp",
+                             label = "Type of data:",
+                             choices = c("Mock up", "Real"),
+                             selected = "Mock up"),
                  fileInput(inputId = "data_temp",
                            label = "Load data (CSV format):"),
                  actionButton(inputId = "load_data_button_temp", label = "Load Data"),
@@ -214,6 +246,7 @@ server <- function(input, output) {
     df <- as.data.table(data())
     keep_null_tests <- input$keep_null_tests
     in_latlon <- input$in_latlon
+    prevalence <- input$prevalence
     if(keep_null_tests == 'Remove'){
       keep_null_tests <- FALSE
     }else if (keep_null_tests == 'Keep'){
@@ -225,9 +258,17 @@ server <- function(input, output) {
     if(in_latlon == "Longitude/Latitude"){
       in_latlon <- FALSE
     }
+    
+    if(prevalence == "None"){
+      prevalence = NULL
+    }else{
+      prevalence <- df[[prevalence]]
+    }
     epifriends(catalogue(
-      positions = df[,.(x,y)], 
-      test_result = df[,.(test)], 
+      x = df$x,
+      y = df$y,
+      test_result = df$test,
+      prevalence=prevalence,
       link_d = input$link_d,
       min_neighbours = input$min_neighbours, 
       max_p = 1, 
@@ -250,6 +291,7 @@ server <- function(input, output) {
     df <- as.data.table(data_temp())
     keep_null_tests <- input$keep_null_tests_temp
     in_latlon <- input$in_latlon_temp
+    prevalence <- input$prevalence
     if(keep_null_tests == 'Remove'){
       keep_null_tests <- FALSE
     }else if (keep_null_tests == 'Keep'){
@@ -262,6 +304,19 @@ server <- function(input, output) {
       in_latlon <- FALSE
     }
     
+    if(prevalence == "None"){
+      prevalence = NULL
+    }else{
+      prevalence <- df[[prevalence]]
+    }
+    
+    # Add hour, minute & second to date column so that it can be converted to chron
+    if(input$data_type_temp == 'Real'){
+      for(x in 1:length(df$date)){
+        df$date[x] = paste0(df$date[x], " 00:00:00")
+      }
+    }
+    
     dtparts = t(as.data.frame(strsplit(df$date," ")))
     row.names(dtparts) = NULL
     datesform <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
@@ -269,8 +324,10 @@ server <- function(input, output) {
     
     #Get temporal IDs
     epifriends_temp(temporal_catalogue(
-      positions = df[,.(x,y)], 
-      test_result = df[,.(test)],
+      x = df$x,
+      y = df$y, 
+      test_result = df$test,
+      prevalence = prevalence,
       dates = df$date,
       link_d = input$link_d_temp,
       min_neighbours = input$min_neighbours_temp,
@@ -282,7 +339,6 @@ server <- function(input, output) {
       linking_time = input$linking_time_temp,
       linking_dist = input$linking_dist_temp,
       get_timelife = TRUE,
-      cluster_id = NULL,
       keep_null_tests = keep_null_tests, 
       in_latlon = in_latlon,
       to_epsg = as.numeric(input$to_epsg), 
@@ -345,7 +401,38 @@ server <- function(input, output) {
     if(algorithm_run()){
       df <- as.data.table(data())
       epi <- epifriends()
-      plot1 <- scatter_pval(df[,.(x,y)], epi$cluster_id, (df$test == 1), epi$epifriends_catalogue)
+      
+      if (input$method == 'kmeans'){
+        # Plot of KMeans-Identified Clusters
+        kmeans_prev <- compute_kmeans(
+          clean_data(df[,.(x, y, test)])[,.(x,y)], 
+          clean_data(df[,.(x, y, test)])$test)
+        prevalence <- kmeans_prev$prevalence
+      }else if (input$method == 'centroid'){
+        copy_position <- data.table::copy(df[,.(x,y)])	
+        copy_position[, id := 1:nrow(copy_position)]	
+        total_friends_indeces <- epi$epifriends_catalogue$indeces	
+        copy_position[, prevalence := 0]	
+        radial <- c()	
+        centroid_df <- list()	
+        for(i in 1:length(total_friends_indeces)){
+          result <- get_radious(	
+            positions = copy_position,
+            test_result = data.table("test" = test_rand),	
+            total_friends_indeces = total_friends_indeces[[i]],	
+            thr_data = 0.1, 	
+            max_epi_cont = 0.5)	
+          
+          # Assign computed prevalence	
+          rows <- dim(copy_position[id %in% result$id])[1]	
+          copy_position[id %in% result$id,
+                        prevalence := rep(result$prevalence, rows)]	
+        }
+        prevalence <- copy_position$prevalence
+      }else{
+        prevalence <- rep(sum(df$test) / length(df$test), length(df$test))
+      }
+      plot1 <- scatter_pval(df[,.(x,y)], epi$cluster_id, (df$test == 1), prevalence, epi$epifriends_catalogue)
       grid.arrange(plot1, ncol=1)
     }      
   })
@@ -434,4 +521,3 @@ server <- function(input, output) {
 }
 
 shinyApp(ui = ui, server = server)
-

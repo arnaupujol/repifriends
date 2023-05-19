@@ -226,14 +226,14 @@ simplify_distributions<- function(dt, dist_prop){
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #' 
 #' min_distances <- c(0.01, 0.02, 0.05, 0.02, 0.07, 0.08, 0.01, 0.02)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' link_d_list <- optimize_positives(pos, test, 2, NULL, min_distances)
 #' 
-optimize_positives<- function(position, test_result, min_neighbors,cluster_id,
+optimize_positives <- function(position, test_result, min_neighbors,cluster_id,
                               min_distances, quantiles, thr_impr = 0.05, 
                               diff_quantile = 0.05, keep_null_tests = FALSE, 
                               in_latlon = FALSE, to_epsg = NULL){
@@ -260,7 +260,7 @@ optimize_positives<- function(position, test_result, min_neighbors,cluster_id,
         library(RANN)
         # Code to execute in parallel
         categories <- catalogue(
-          data.table::copy(position), test_result, quantiles_dist[quant], cluster_id = NULL, 
+          position$x, position$y, test_result, quantiles_dist[quant], cluster_id = NULL, 
           min_neighbours = min_neighbors, keep_null_tests = keep_null_tests, in_latlon=in_latlon,
           to_epsg=to_epsg)
         
@@ -274,7 +274,7 @@ optimize_positives<- function(position, test_result, min_neighbors,cluster_id,
       metric <- c()
       for(quant in 1:length(quantiles_dist)){
         categories <- catalogue(
-          data.table::copy(position), test_result, quantiles_dist[quant], cluster_id = NULL, 
+          position$x, position$y, test_result, quantiles_dist[quant], cluster_id = NULL, 
           min_neighbours = min_neighbors, keep_null_tests = keep_null_tests, in_latlon=in_latlon,
           to_epsg=to_epsg)
         
