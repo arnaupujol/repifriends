@@ -86,7 +86,7 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
                                ){
   
   #Create data.table with all coordinates & test
-  positions = data.table("x" = x, "y" = y, "test" = test_result)
+  positions = data.table("x" = x, "y" = y, "test" = test_result, "prevalence" = prevalence)
   
   #Case of empty list of dates
   if(length(dates) == 0){
@@ -138,7 +138,7 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
     #get catalogue
     Newcatalogue <- catalogue(x = selected_positions$x, y = selected_positions$y, 
                               test_result = selected_test_results$test,
-                              link_d = link_d, prevalence=prevalence, cluster_id = NULL,
+                              link_d = link_d, prevalence=selected_positions$prevalence, cluster_id = NULL,
                               method=method, min_neighbours = min_neighbours,
                               max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
                               optimize_link_d=optimize_link_d, keep_null_tests = keep_null_tests, 
