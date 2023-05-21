@@ -96,25 +96,34 @@ dbscan <- function(x, y, link_d, min_neighbours = 2, test = NULL,
   return(cluster_id)
 }
 
+
+#' This method returns the indeces of all the friends of each position from positions given a KDTree.
+#'
+#' @param positions Data.frame with x & y coordinates
+#' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
+#' @param positions_eval: Data.frame from which each x & y coordinate of positions wants to be evaluated
+#'
+#' @details The epifriends package uses the RANN package which gives us the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
+#'
+#' @return List with an array of the indeces of the friends of each position.
+#' @export
+#'
+#' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' library("RANN")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#'
+#' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
+#' indeces <- find_indeces(pos, 0.1 ,pos)
+#' 
 find_indeces <- function(positions, link_d, positions_eval){
-  # This method returns the indeces of all the friends
-  # of each position from positions given a KDTree.
-  #
-  # Parameters:
-  # -----------
-  # positions: List of class data.frame
-  #   A list with the position parameters we want to query with shape (n,2),
-  #   where n is the number of positions.
-  # link_d: double
-  #   The linking distance to label friends.
-  # tree: List of class data.frame
-  #   A list build with the positions of the target data.
-  #
-  # Returns:
-  # --------
-  # indeces: list
-  #   List with an array of the indeces of the friends of each
-  #   position.
   #Creation of empty list where the clusters of points will be saved
   indeces <- list()
   #Have in count the posible exception of not having any positions
