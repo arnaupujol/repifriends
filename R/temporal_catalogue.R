@@ -155,6 +155,7 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
           coordinates = selected_positions[,.(x,y)], 
           id_data = Newcatalogue$cluster_id, 
           positive = (selected_test_results$test == 1), 
+          prevalence = prevalence,
           epi_catalogue = Newcatalogue$epifriends_catalogue,
           use_geom_map = use_geom_map,
           c(min(na.omit(positions)$x), max(na.omit(positions)$x)),
