@@ -8,7 +8,9 @@
 #' @param coordinates data frame with the values of the coordinates
 #' @param id_data data frame with the cluster ID associated to each positive case, o for no associated cluster
 #' @param positive Boolean vector that indicates if the case is infected. 
+#' @param prevalence Vector with the individual prevalence for each item in coordinates.
 #' @param epi_catalogue List of the EpiFRIenDs catalogue
+#' @param use_geom_map If True, use a geo-map to plot.
 #' @param xlims: Vector with the limits of the X axis.
 #' @param ylims: Vector with the limits of the Y axis
 #' @param title: Title of the plot. If NULL, it defaults to 'P-value of hotspots'
@@ -44,6 +46,7 @@ scatter_pval <- function(
     positive, 
     prevalence,
     epi_catalogue,
+    use_geom_map = FALSE,
     xlims = NULL,
     ylims = NULL,
     title = NULL){
@@ -55,40 +58,67 @@ scatter_pval <- function(
  
   title <- "P-value on positive cases of hotspots"
   
-  if(!is.null(prevalence)){
+  pos_filt <- pos[id_data >0,]
+  pos_filt$p_vals <- p_vals
+  
+  if(use_geom_map){
+    my_location <- c(min(coordinates$x),min(coordinates$y), max(coordinates$x), max(coordinates$y))
+    my_map <- get_map(location = my_location, source = "stamen", maptype = "terrain")
+    map_plot <- ggmap::ggmap(my_map)
     
-    pos <- as.data.table(pos)
-    coordinates[, prevalence := prevalence]
-    coordinates[, id := paste0(x, "_", y)]
+    pos_filt <- as.data.table(pos_filt)
+    pos_filt[, label := ifelse(
+      p_vals >= 0 & p_vals <= 0.05, 'PVAL <= 0.05',
+      ifelse(p_vals > 0.05 & p_vals <= 0.15, 'PVAL > 0.05 & <= 0.15', 'PVAL > 0.15'))]
+    coordinates[, label := 'POSITION']
     
-    pos[, id := paste0(x, "_", y)]
-    pos_filt <- pos[id_data >0,]
-    pos_filt$p_vals <- p_vals
-    pos_filt <- merge(pos_filt, coordinates[,.(id, prevalence)], by = "id", how = "left")
-    graph <- ggplot(coordinates,aes(x=x, y=y, size = prevalence))+
-      geom_point(color = "#F38B8B", shape=21, stroke = 1) +
-      geom_point(
-        data =pos_filt, 
-        aes(color = "#F38B8B", fill = p_vals, size = prevalence), shape=21, stroke = 1)+
-      scale_fill_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
-      scale_size_continuous(range = c(1, 4), limits = c(0,1)) +
-      ggtitle(title) + coord_equal()
-    
+    graph <- map_plot +
+      geom_point(data =coordinates, aes(x =x, y=y, color = label), size = 2.5)+
+      geom_point(data =pos_filt,  aes(x=x, y=y, colour = label), size = 2.5) +
+      ggtitle(title) + labs(color = "Legend")
+
   }else{
     
-    pos_filt <- pos[id_data >0,]
-    pos_filt$p_vals <- p_vals
-    graph <- ggplot(coordinates,aes(x=x, y=y))+
-      geom_point(color = "grey", size = 2.5)+
-      geom_point(data = pos_filt, aes(colour = p_vals), size = 2.5)+
-      scale_color_continuous(limits = c(0, 0.2), low = "grey", high = "red") +
-      #scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
-      ggtitle(title) + coord_equal()
-    
+    if(!is.null(prevalence)){
+      
+      pos <- as.data.table(pos)
+      coordinates[, prevalence := prevalence]
+      coordinates[, id := paste0(x, "_", y)]
+      
+      pos[, id := paste0(x, "_", y)]
+      pos_filt <- pos[id_data >0,]
+      pos_filt$p_vals <- p_vals
+      pos_filt <- merge(pos_filt, coordinates[,.(id, prevalence)], by = "id", how = "left")
+      graph <- ggplot(coordinates,aes(x=x, y=y, size = prevalence))+
+        geom_point(color = "#F38B8B", shape=21, stroke = 1) +
+        geom_point(
+          data =pos_filt, 
+          aes(color = "#F38B8B", fill = p_vals, size = prevalence), shape=21, stroke = 1)+
+        scale_fill_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
+        scale_size_continuous(range = c(1, 4), limits = c(0,1)) +
+        ggtitle(title) + coord_equal()
+      
+    }else{
+      
+      pos_filt <- pos[id_data >0,]
+      pos_filt$p_vals <- p_vals
+      graph <- ggplot(coordinates,aes(x=x, y=y))+
+        geom_point(color = "grey", size = 2.5)+
+        geom_point(data = pos_filt, aes(colour = p_vals), size = 2.5)+
+        scale_color_continuous(limits = c(0, 0.2), low = "grey", high = "red") +
+        #scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
+        ggtitle(title) + coord_equal()
+      
+    }
   }
-
+  
+  if(!is.null(xlims) & (use_geom_map == FALSE)){ # Set limits in x & y coordinates
+    graph <- graph + xlim(xlims) + ylim(ylims)
+  }
+  
   return(graph)
 }
+
 
 #' This method shows a histogram of the size (total number of cases) in foci for foci with p>0.05 and with p<0.05. 
 #'
@@ -170,7 +200,7 @@ size_histogram <- function(catalogue){
 #' "2020-10-19 00:01:25")
 #'
 #' # Creation of temporal catalogue for this data.
-#' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
+#' tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 #' 
 #' hist_timelifes(list_catalogues$temporal_catalogues)
 #' 

@@ -11,6 +11,7 @@ scatter_pval(
   positive,
   prevalence,
   epi_catalogue,
+  use_geom_map = FALSE,
   xlims = NULL,
   ylims = NULL,
   title = NULL
@@ -23,7 +24,11 @@ scatter_pval(
 
 \item{positive}{Boolean vector that indicates if the case is infected.}
 
+\item{prevalence}{Vector with the individual prevalence for each item in coordinates.}
+
 \item{epi_catalogue}{List of the EpiFRIenDs catalogue}
+
+\item{use_geom_map}{If True, use a geo-map to plot.}
 
 \item{xlims:}{Vector with the limits of the X axis.}
 

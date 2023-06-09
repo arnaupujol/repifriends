@@ -33,6 +33,7 @@ temporal_catalogue(
   n_simulations = 500,
   verbose = FALSE,
   store_gif = FALSE,
+  use_geom_map = FALSE,
   out_gif_path = paste0(getwd(), "/www/")
 )
 }
@@ -73,7 +74,11 @@ temporal_catalogue(
 
 \item{get_timelife}{It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.}
 
+\item{method}{Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.}
+
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{optimize_link_d:}{If True, optimize the linking distance based on minimum distribution of distances between neighbors.}
 
 \item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
 
@@ -86,6 +91,8 @@ temporal_catalogue(
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 
 \item{store_gif:}{If TRUE, store the different time-frame images in an animated GIF format.}
+
+\item{use_geom_map:}{If TRUE, the generated plot will have a geo-map.}
 
 \item{out_gif_path:}{Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.}
 }

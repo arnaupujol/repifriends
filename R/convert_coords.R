@@ -31,8 +31,8 @@ latlon2xy <- function(lon, lat, to_epsg = NULL, verbose = TRUE){
   
   # Create coordinates data.table
   coords <- data.table(
-    "x" = x,
-    "y" = y
+    "x" = lon,
+    "y" = lat
   )
   
   #Define dataframe as GIS dataframe with its actual projection
@@ -40,14 +40,10 @@ latlon2xy <- function(lon, lat, to_epsg = NULL, verbose = TRUE){
     x = coords ,coords = c('x','y'), crs = 4326)
   
   if(is.null(to_epsg)){
-    if(verbose){
-      print("reprojecting coordinates to EPSG: 32736")
-      coord_df <-  sf::st_transform(x = coord_df, crs = 32736)
-    }
+    if(verbose){print("reprojecting coordinates to EPSG: 32736")}
+    coord_df <-  sf::st_transform(x = coord_df, crs = 32736)
   }else{
-    if(verbose){
-      print(paste0("reprojecting coordinates to EPSG: ", to_epsg))
-    }
+    if(verbose){print(paste0("reprojecting coordinates to EPSG: ", to_epsg))}
     coord_df <- sf::st_transform(x = coord_df, crs = to_epsg)
   }
   

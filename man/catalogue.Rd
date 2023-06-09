@@ -20,17 +20,19 @@ catalogue(
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
-  n_sim = 10000,
   max_epi_cont = 0.5,
   max_thr_data = 0.1,
   consider_fd = FALSE,
   n_simulations = 500,
+  sampling_sim = 1000,
   optimize_link_d = FALSE,
   verbose = FALSE
 )
 }
 \arguments{
-\item{x}{Vector of y positions.}
+\item{x}{Vector of x positions.}
+
+\item{y}{Vector of y positions.}
 
 \item{test_result}{vector of test results (0 or 1).}
 
@@ -58,8 +60,6 @@ catalogue(
 
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
-\item{n_sim:}{Number of observations in each of the simulations to be performed. Will help during p-value calculus. Applies to "kmeans" method.}
-
 \item{max_epi_cont:}{Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.}
 
 \item{max_thr_data:}{Percentage of data used to compute the local prevalence. Only applies for "centroid" method.}
@@ -67,6 +67,8 @@ catalogue(
 \item{consider_fd:}{If True, consider false detections and adjust p-value of that.}
 
 \item{n_simulations:}{Numeric value with the number of desired iterations to compute the false-detected clusters.}
+
+\item{sampling_sim:}{Numeric value with the number of random simulations to be performed to determine the real p-value.}
 
 \item{optimize_link_d:}{If True, optimize the linking distance based on minimum distribution of distances between neighbors.}
 
