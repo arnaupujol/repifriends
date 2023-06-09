@@ -22,6 +22,7 @@
 #' @param max_thr_data: Percentage of data used to compute the local prevalence. Only applies for "centroid" method.
 #' @param consider_fd: If True, consider false detections and adjust p-value of that.
 #' @param n_simulations: Numeric value with the number of desired iterations to compute the false-detected clusters.
+#' @param sampling_sim: Numeric value with the number of random simulations to be performed to determine the real p-value.
 #' @param optimize_link_d: If True, optimize the linking distance based on minimum distribution of distances between neighbors.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #'
@@ -62,7 +63,7 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
                       min_pr = 0, method = "base",keep_null_tests = FALSE,in_latlon = FALSE,
                       to_epsg = NULL, max_epi_cont = 0.5, 
                       max_thr_data = 0.1, consider_fd = FALSE, n_simulations= 500,
-                      optimize_link_d = FALSE, verbose = FALSE){
+                      sampling_sim = 1000, optimize_link_d = FALSE, verbose = FALSE){
 
   # Create data.frame
   suppressWarnings({
@@ -157,8 +158,8 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
     if(!is.null(prevalence)){
       if(verbose){print("Using user-given prevalence.")}
       ind_pos_rate = prevalence[positive_positions]
-      trials <- simulate_trial(n_sim, 1, ind_pos_rate)
-      pos_rate <- length(which(trials >= (npos / ntotal))) / n_sim
+      trials <- simulate_trial(sampling_sim, 1, ind_pos_rate)
+      pos_rate <- length(which(trials >= (npos / ntotal))) / sampling_sim
       
     }else{
       # Approaches to estimate the p-value
@@ -176,8 +177,8 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
         indices_local <- pos_clusters[clusters %in% epi_clusters]$id
         
         # Simulate trials
-        trials <- simulate_trial(1000, 1, ind_pos_rate$prevalence)
-        pval <- length(which(trials >= (npos / ntotal))) / n_sim
+        trials <- simulate_trial(sampling_sim, 1, ind_pos_rate$prevalence)
+        pval <- length(which(trials >= (npos / ntotal))) / sampling_sim
         mean_prev <- mean(ind_pos_rate$prevalence)
         
       }else if(method == "centroid"){

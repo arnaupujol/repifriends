@@ -24,6 +24,7 @@ catalogue(
   max_thr_data = 0.1,
   consider_fd = FALSE,
   n_simulations = 500,
+  sampling_sim = 1000,
   optimize_link_d = FALSE,
   verbose = FALSE
 )
@@ -66,6 +67,8 @@ catalogue(
 \item{consider_fd:}{If True, consider false detections and adjust p-value of that.}
 
 \item{n_simulations:}{Numeric value with the number of desired iterations to compute the false-detected clusters.}
+
+\item{sampling_sim:}{Numeric value with the number of random simulations to be performed to determine the real p-value.}
 
 \item{optimize_link_d:}{If True, optimize the linking distance based on minimum distribution of distances between neighbors.}
 
