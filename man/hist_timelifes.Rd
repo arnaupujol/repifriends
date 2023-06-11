@@ -28,7 +28,7 @@ y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
 
 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 #Creation of chron dates vector in format 'y-m-d h:m:s'.
 dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
@@ -37,7 +37,7 @@ dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","20
 "2020-10-19 00:01:25")
 
 # Creation of temporal catalogue for this data.
-tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
+tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 
 hist_timelifes(list_catalogues$temporal_catalogues)
 

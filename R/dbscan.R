@@ -3,8 +3,8 @@
 
 #' This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.
 #'
-#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
-#' @param test Vector of test coordinates.
+#' @param x Vector of x positions.
+#' @param x Vector of y positions.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param use_link_d:  If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
 #' @param link_array: Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.
@@ -34,9 +34,11 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- dbscan(pos, 2 ,3)
 #' 
-dbscan <- function(positions, test = NULL, link_d, use_link_d = TRUE,  link_array, min_neighbours = 2, 
+dbscan <- function(x, y, test = NULL, link_d, use_link_d = TRUE,  link_array, min_neighbours = 2, 
                    in_latlon = FALSE, to_epsg = NULL, verbose = FALSE){
   
+  
+  positions <- data.table("x" = x, "y" = y)
   # Remove or impute missings
   positions = clean_unknown_data(positions,test,verbose=verbose)
   
@@ -120,9 +122,10 @@ dbscan <- function(positions, test = NULL, link_d, use_link_d = TRUE,  link_arra
 #' pos <- data.frame(x,y)
 #'
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
-#' indeces <- find_indeces(pos, 2 ,pos, FALSE)
+#' indeces <- find_indeces(pos, 2 ,pos, FALSE, NULL)
 #' 
 find_indeces <- function(positions, positions_eval, link_d, use_link_d, link_array){
+  #Creation of empty list where the clusters of points will be saved
   indeces <- list()
   #Have in count the posible exception of not having any positions
   if(dim(positions)[1] == 0){
@@ -134,6 +137,7 @@ find_indeces <- function(positions, positions_eval, link_d, use_link_d, link_arr
     return(indeces)
   }
   
+  # Use linking distance or linking neighbors over each coordinate position.
   if (use_link_d){
     indeces <- lapply(1:nrow(positions), function(row) {
       indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_d)$nn.idx

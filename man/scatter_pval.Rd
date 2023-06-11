@@ -9,7 +9,9 @@ scatter_pval(
   coordinates,
   id_data,
   positive,
+  prevalence,
   epi_catalogue,
+  use_geom_map = FALSE,
   xlims = NULL,
   ylims = NULL,
   title = NULL
@@ -22,7 +24,11 @@ scatter_pval(
 
 \item{positive}{Boolean vector that indicates if the case is infected.}
 
+\item{prevalence}{Vector with the individual prevalence for each item in coordinates.}
+
 \item{epi_catalogue}{List of the EpiFRIenDs catalogue}
+
+\item{use_geom_map}{If True, use a geo-map to plot.}
 
 \item{xlims:}{Vector with the limits of the X axis.}
 
@@ -49,7 +55,7 @@ y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
 
 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 # Creation of catalogue for this positions, linking distance 2 and default values.
 cat <- catalogue(pos, test, 2)

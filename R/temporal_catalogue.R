@@ -3,11 +3,14 @@
 
 #' This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.
 #'
-#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
-#' @param test_result data.frame with the test results (0 or 1).
+#' @param x Vector of x positions.
+#' @param x Vector of y positions.
+#' @param test_result vector of test results (0 or 1).
 #' @param dates Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.
 #' @param link_d the linking distance of the DBSCAN algorithm. Should be in the same scale as the positions.
 #' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
+#' @param prevalence Probability of having an infected case for each individual.
+#' @param link_neighbours: Number of surrounding neighbors to link. 
 #' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #' @param time_width Number of days of the time window used to select cases in each time step.
 #' @param min_date Initial date used in the first time step and time window selection. In format 'y-m-d h:m:s'.
@@ -21,6 +24,8 @@
 #' @param linking_time Maximum number of timesteps of distance to link hotspots with the same temporal ID. Only necesary if add_temporal_id is TRUE.
 #' @param linking_dist Linking distance used to link the clusters from the different time frames. Only necesary if add_temporal_id is TRUE.
 #' @param get_timelife It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.
+#' @param optimize_link_d: If True, optimize the linking distance based on minimum distribution of distances between neighbors.
+#' @param method Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.
 #' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
@@ -28,6 +33,7 @@
 #' @param n_simulations: Numeric value with the number of desired iterations to compute the false-detected clusters.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
 #' @param store_gif: If TRUE, store the different time-frame images in an animated GIF format.
+#' @param use_geom_map: If TRUE, the generated plot will have a geo-map.
 #' @param out_gif_path: Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.
 #' 
 #' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
@@ -61,7 +67,7 @@
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <-c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' #Creation of chron dates vector in format 'y-m-d h:m:s'.
 #' dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
@@ -72,16 +78,19 @@
 #' # Creation of temporal catalogue for this data.
 #' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 #' 
-temporal_catalogue <- function(positions, test_result, dates, link_d, use_link_d = TRUE, min_neighbours = 2,
-                               time_width, min_date = NULL, max_date = NULL, time_steps = 1,
+temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NULL, use_link_d = TRUE,
+                               link_neighbours = NULL,min_neighbours = 2, time_width, min_date = NULL, 
+                               max_date = NULL, time_steps = 1,
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
                                add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
-                               optimize_link_d = FALSE, keep_null_tests = FALSE, in_latlon = FALSE, 
-                               to_epsg = NULL, consider_fd = FALSE, n_simulations= 500,
-                               verbose = FALSE, store_gif = FALSE,
-                               out_gif_path = paste0(getwd(),"/www/")
+                               optimize_link_d = FALSE, method = "base", keep_null_tests = FALSE, in_latlon = FALSE, 
+                               to_epsg = NULL,consider_fd = FALSE, n_simulations= 500, verbose = FALSE, 
+                               store_gif = FALSE, use_geom_map = FALSE, out_gif_path = paste0(getwd(),"/www/")
                                ){
-
+  
+  #Create data.table with all coordinates & test
+  positions = data.table("x" = x, "y" = y, "test" = test_result, "prevalence" = prevalence)
+  
   #Case of empty list of dates
   if(length(dates) == 0){
     print("There are no dates")
@@ -111,6 +120,7 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, use_link_d
       max_date <- chron(dates=dtparts[[1]][1],times=dtparts[[1]][2],format=c('y-m-d','h:m:s'))
     }
   }
+  
   #temporal loop until the last time frame that fully overlaps the data
   temporal_catalogues <- list()
   #Mean dates defines as the median time in each time window
@@ -121,12 +131,19 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, use_link_d
     selected_data <- (dates >= min_date + time_steps*step_num)&
       (dates <= min_date + time_steps*step_num + time_width)
     selected_positions <- positions[selected_data,]
-    selected_test_results <- as.data.frame(test_result[selected_data,])
+    selected_test_results <- as.data.frame(test_result[selected_data])
+    
+    # Remove or impute missings
+    to_impute <- colnames(selected_positions)[!(colnames(selected_positions) %in% c("x", "y"))]
+    selected_positions = clean_unknown_data(selected_positions,to_impute,keep_null_tests,verbose)
+    selected_test_results = data.frame("test" = selected_positions$test)
 
     #get catalogue
-    Newcatalogue <- catalogue(positions = selected_positions, test_result = selected_test_results,
+    Newcatalogue <- catalogue(x = selected_positions$x, y = selected_positions$y, 
+                              test_result = selected_test_results$test,
                               link_d = link_d, use_link_d = use_link_d,
-                              cluster_id = NULL, min_neighbours = min_neighbours,
+                              prevalence=selected_positions$prevalence, cluster_id = NULL,
+                              method=method, min_neighbours = min_neighbours,
                               max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
                               optimize_link_d=optimize_link_d, keep_null_tests = keep_null_tests, 
                               in_latlon = in_latlon, to_epsg = to_epsg,verbose = verbose)
@@ -139,15 +156,17 @@ temporal_catalogue <- function(positions, test_result, dates, link_d, use_link_d
       if(store_gif){
         minimum_date <- (min_date + time_steps*step_num + 0.5*time_width)
         plots <- scatter_pval(
-          selected_positions[,.(x,y)], 
-          Newcatalogue$cluster_id, 
-          (selected_test_results$test == 1), 
-          Newcatalogue$epifriends_catalogue,
-          c(min(positions$x), max(positions$x)),
-          c(min(positions$y), max(positions$y)),
+          coordinates = selected_positions[,.(x,y)], 
+          id_data = Newcatalogue$cluster_id, 
+          positive = (selected_test_results$test == 1), 
+          prevalence = prevalence,
+          epi_catalogue = Newcatalogue$epifriends_catalogue,
+          use_geom_map = use_geom_map,
+          c(min(na.omit(positions)$x), max(na.omit(positions)$x)),
+          c(min(na.omit(positions)$y), max(na.omit(positions)$y)),
           paste0("Date: ", as.character(minimum_date))
         )
-
+        
         out_temp_path = paste0(getwd(),"/tmp/")
         if(!dir.exists(out_temp_path)){ # create temp file for storing png if doesn't exist
           dir.create(out_temp_path)
@@ -291,21 +310,30 @@ add_temporal_id <- function(
   if(length(catalogue_list) == 0){
     return()
   }
+  
   #setting empty values of temp_id
   for(t in 1:length(catalogue_list)){
-    aux <- data.frame(matrix(NA,length(catalogue_list[[t]]$id)))
+    min_length <- max(1, length(catalogue_list[[t]]$id))
+    aux <- data.frame(matrix(NA,min_length))
     colnames(aux) <- "tempID"
     catalogue_list[[t]] <- append(catalogue_list[[t]],aux)
     #catalogue_list[[t]]["tempID"] = vector(mode="list", length=length(catalogue_list[[t]]$id))
   }
+  
   #Initialising tempID value to assign
   next_temp_id <- 0
   #Loop over all timesteps
   for(t in 1:(length(catalogue_list)-1)){
     #Loop over all timesteps within linking_time
     for (f in 1:length(catalogue_list[[t]]$id)){
+      if(is.null(catalogue_list[[t]]$id)){
+        next
+      }
       #Loop over all points of catalogue number 1
       for(t2 in (t + 1):min(t + linking_time, length(catalogue_list))){
+        if(is.null(catalogue_list[[t2]]$id)){
+          next
+        }
         #Loop over all points of catalogue number 2
         for(f2 in 1:length(catalogue_list[[t2]]$id)){
           dist <- distance(catalogue_list[[t]]["mean_position_pos"][[1]][[f]], catalogue_list[[t2]]["mean_position_pos"][[1]][[f2]])

@@ -34,7 +34,7 @@ y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
 
 # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
-indeces <- find_indeces(pos, 2 ,pos, FALSE)
+indeces <- find_indeces(pos, 2 ,pos, FALSE, NULL)
 
 }
 \author{

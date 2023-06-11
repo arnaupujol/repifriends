@@ -5,7 +5,8 @@
 \title{This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.}
 \usage{
 dbscan(
-  positions,
+  x,
+  y,
   test = NULL,
   link_d,
   use_link_d = TRUE,
@@ -17,9 +18,7 @@ dbscan(
 )
 }
 \arguments{
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
-
-\item{test}{Vector of test coordinates.}
+\item{x}{Vector of y positions.}
 
 \item{link_d:}{The linking distance to connect cases. Should be in the same scale as the positions.}
 

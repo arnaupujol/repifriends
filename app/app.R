@@ -1,50 +1,119 @@
-library(shiny)
-library(epifriends)
-library(data.table)
-library(gridExtra)
-library(RANN)
-library(ggplot2)
 library(chron)
+library(data.table)
+library(epifriends)
+library(ggmap)
+library(ggplot2)
+library(gridExtra)
+library(magick)
+library(shiny)
 library(shinyjs)
+library(RANN)
+
 
 ui <- fluidPage(
   useShinyjs(),
   titlePanel("EpiFRIenDs"),
   tabsetPanel(
     tabPanel("Distribution Analysis",
+             #############################################
+             #########   DISTRIBUTION ANALYSIS    ########
+             #############################################
+             ##### SIDEBAR LAYOUT
              sidebarLayout(
                sidebarPanel(
-                 
-               numericInput(inputId = "min_neighbours",
-                            label = "Min. number of neighbors:",
-                            value = 2, min = 0, max = 10),
-               sliderInput(inputId = "link_d",
-                           label = "Select linking distance:",
-                           min = 0.05, max = 0.2, value = 0.1, step = 0.05),
-               selectInput(inputId = "keep_null_tests",
-                           label = "How to deal with missing data",
-                           choices = c("Remove", "Keep", "Impute"),
-                           selected = "Centroid"),
-               conditionalPanel(
-                 condition = "input.keep_null_tests == 'Impute'",
-                 numericInput(inputId = "imp_value",
-                              label = "Imputation value:",
-                              value = 0)
+                 numericInput(inputId = "min_neighbours",
+                              label = "Min. number of neighbors:",
+                              value = 2, min = 0, max = 10),
+                 numericInput(inputId = "link_d",
+                             label = "Select linking distance:",
+                             value = 0,min = 0, step = 0.1),
+                 selectInput(inputId = "prevalence",
+                             label = "Select column on data refering to prevalence:",
+                             choices = c("None", "prevalence"),
+                             selected = "None"),
+                 selectInput(inputId = "keep_null_tests",
+                             label = "How to deal with missing data",
+                             choices = c("Remove", "Keep", "Impute"),
+                             selected = "Centroid"),
+                 conditionalPanel(
+                   condition = "input.keep_null_tests == 'Impute'",
+                   numericInput(inputId = "imp_value",
+                                label = "Imputation value:",
+                                value = 0)
+                 ),
+                 selectInput(inputId = "in_latlon",
+                             label = "Treatment of coordinates:",
+                             choices = c("Longitude/Latitude", "Cartesian"),
+                             selected = "Longitude/Latitude"),
+                 conditionalPanel(
+                   condition = "input.in_latlon == 'Longitude/Latitude'",
+                   textInput(inputId = "to_epsg",
+                             label = "EPSG number for the projection to use:",
+                             value = "32736")),
+                 selectInput(inputId = "data_type",
+                             label = "Type of data:",
+                             choices = c("Mock up", "Real"),
+                             selected = "Mock up"),
+                 # Collapsible section
+                 tags$details(
+                   tags$summary(
+                     tags$span(
+                       id = "advancedToggle",
+                       style = "cursor: pointer;",
+                       HTML("&nbsp;&nbsp;&#43;")
+                     ),
+                     "Advanced Options"
+                   ),
+                   tags$div(
+                     class = "advanced-options",
+                     id = "advancedOptions",
+                     selectInput(inputId = "optimize_link_d",
+                                 label = "Optimize linking distance: ",
+                                 choices = c("Yes", "No"),
+                                 selected = "No"),
+                     selectInput(inputId = "false_detect",
+                                 label = "Consider False Detections (plus exec time): ",
+                                 choices = c("Yes", "No"),
+                                 selected = "No"),
+                     conditionalPanel(
+                       condition = "input.false_detect == 'Yes'",
+                       numericInput(inputId = "n_simulations",
+                                    label = "Number of simulations to perform",
+                                    value = 10000, step = 50)
+                     ),
+                     selectInput(inputId = "method",
+                                 label = "Select method to account fot local prevalence:",
+                                 choices = c("base", "kmeans", "centroid"),
+                                 selected = "base"),
+                     conditionalPanel(
+                       condition = "input.method == 'centroid'",
+                       numericInput(inputId = "max_epi_cont",
+                                    label = "Percentage of epifriends contribution to the cluster:",
+                                    value = 0.5, min = 0, max = 1, step = 0.1),
+                       numericInput(inputId = "max_thr_data",
+                                    label = "Percentage of all data for local prevalence calculus:",
+                                    value = 0.1, min = 0, max = 1, step = 0.1)
+                     ),
+                     numericInput(inputId = "max_p",
+                                  label = "Maximum p-value:",
+                                  value = 1, min = 0, max = 1, step = 0.1),
+                     numericInput(inputId = "min_pos",
+                                  label = "Minimum number of positives in a cluster:",
+                                  value = 2, step = 1),
+                     numericInput(inputId = "min_total",
+                                  label = "Minimum number of entries in a cluster:",
+                                  value = 2, step = 1),
+                     numericInput(inputId = "min_pr",
+                                  label = "Minimum positivity rate:",
+                                  value = 0, step = 0.1)
+                   )
+                 ),
+                 fileInput(inputId = "data",
+                           label = "Load data (CSV format):"),
+                 actionButton(inputId = "load_data_button", label = "Load Data"),
+                 actionButton(inputId = "epifriends_run", label = "Run Spatial Analysis")
                ),
-               selectInput(inputId = "in_latlon",
-                           label = "Treatment of coordinates:",
-                           choices = c("Longitude/Latitude", "Cartesian"),
-                           selected = "Longitude/Latitude"),
-               conditionalPanel(
-                 condition = "input.in_latlon == 'Longitude/Latitude'",
-                 textInput(inputId = "to_epsg",
-                           label = "EPSG number for the projection to use:",
-                           value = "32736")),
-               fileInput(inputId = "data",
-                         label = "Load data (CSV format):"),
-               actionButton(inputId = "load_data_button", label = "Load Data"),
-               actionButton(inputId = "epifriends_run", label = "Run Spatial Analysis")
-               ),
+               ##### DIFFERENT PANELS INSIDE DISTRIBUTION ANALYSIS
                mainPanel(
                  tabsetPanel(
                    tabPanel("Data",
@@ -63,7 +132,7 @@ ui <- fluidPage(
                             plotOutput(outputId = "epifriends_v1"),
                             plotOutput(outputId = "epifriends_v3"),
                             plotOutput(outputId = "epifriends_v2")
-                            ),
+                   ),
                    tabPanel("Clusters-EpiFRIenDs",
                             h3("Coordinates & clusters detected by Epifriends"),
                             br(),
@@ -73,17 +142,23 @@ ui <- fluidPage(
                )
              )
     ),
-             
+    
     tabPanel("Temporal Analysis", 
+             #############################################
+             #########     TEMPORAL ANALYSIS      ########
+             #############################################
              sidebarLayout(
                sidebarPanel(
-                 
                  numericInput(inputId = "min_neighbours_temp",
                               label = "Min. number of neighbors:",
                               value = 2, min = 0, max = 10),
-                 sliderInput(inputId = "link_d_temp",
-                             label = "Select linking distance:",
-                             min = 0.05, max = 0.2, value = 0.1, step = 0.05),
+                 selectInput(inputId = "prevalence_temp",
+                             label = "Select column on data refering to prevalence:",
+                             choices = c("None", "prevalence"),
+                             selected = "None"),
+                 numericInput(inputId = "link_d_temp",
+                              label = "Select linking distance:",
+                              value = 0,min = 0, step = 0.1),
                  numericInput(inputId = "time_width_temp",
                               label = "Width of the time window (in number of days)",
                               value = 180),
@@ -102,7 +177,7 @@ ui <- fluidPage(
                              selected = "Centroid"),
                  conditionalPanel(
                    condition = "input.keep_null_tests_temp == 'Impute'",
-                   numericInput(inputId = "imp_value",
+                   numericInput(inputId = "imp_value_temp",
                                 label = "Imputation value:",
                                 value = 0)
                  ),
@@ -112,9 +187,71 @@ ui <- fluidPage(
                              selected = "Longitude/Latitude"),
                  conditionalPanel(
                    condition = "input.in_latlon_temp == 'Longitude/Latitude'",
-                   textInput(inputId = "to_epsg",
+                   textInput(inputId = "to_epsg_temp",
                              label = "EPSG number for the projection to use:",
                              value = "32736")),
+                 selectInput(inputId = "data_type_temp",
+                             label = "Type of data:",
+                             choices = c("Mock up", "Real"),
+                             selected = "Mock up"),
+                 selectInput(inputId = "get_plots_temp",
+                             label = "Store individual timeframe plots (increase execution time):",
+                             choices = c("Yes", "No"),
+                             selected = "Yes"),
+                 # Collapsible section
+                 tags$details(
+                   tags$summary(
+                     tags$span(
+                       id = "advancedToggle",
+                       style = "cursor: pointer;",
+                       HTML("&nbsp;&nbsp;&#43;")
+                     ),
+                     "Advanced Options"
+                   ),
+                   tags$div(
+                     class = "advanced-options",
+                     id = "advancedOptions_temp",
+                     selectInput(inputId = "optimize_link_d_temp",
+                                 label = "Optimize linking distance: ",
+                                 choices = c("Yes", "No"),
+                                 selected = "No"),
+                     selectInput(inputId = "false_detect_temp",
+                                 label = "Consider False Detections (plus exec time): ",
+                                 choices = c("Yes", "No"),
+                                 selected = "No"),
+                     conditionalPanel(
+                       condition = "input.false_detect == 'Yes'",
+                       numericInput(inputId = "n_simulations_temp",
+                                    label = "Number of simulations to perform",
+                                    value = 10000, step = 50)
+                     ),
+                     selectInput(inputId = "method_temp",
+                                 label = "Select method to account fot local prevalence:",
+                                 choices = c("base", "kmeans", "centroid"),
+                                 selected = "base"),
+                     conditionalPanel(
+                       condition = "input.method_temp == 'centroid'",
+                       numericInput(inputId = "max_epi_cont_temp",
+                                    label = "Percentage of epifriends contribution to the cluster:",
+                                    value = 0.5, min = 0, max = 1, step = 0.1),
+                       numericInput(inputId = "max_thr_data_temp",
+                                    label = "Percentage of all data for local prevalence calculus:",
+                                    value = 0.1, min = 0, max = 1, step = 0.1)
+                     ),
+                     numericInput(inputId = "max_p_temp",
+                                  label = "Maximum p-value:",
+                                  value = 1, min = 0, max = 1, step = 0.1),
+                     numericInput(inputId = "min_pos_temp",
+                                  label = "Minimum number of positives in a cluster:",
+                                  value = 2, step = 1),
+                     numericInput(inputId = "min_total_temp",
+                                  label = "Minimum number of entries in a cluster:",
+                                  value = 2, step = 1),
+                     numericInput(inputId = "min_pr_temp",
+                                  label = "Minimum positivity rate:",
+                                  value = 0, step = 0.1)
+                   )
+                 ),
                  fileInput(inputId = "data_temp",
                            label = "Load data (CSV format):"),
                  actionButton(inputId = "load_data_button_temp", label = "Load Data"),
@@ -162,8 +299,10 @@ server <- function(input, output) {
   algorithm_run_temp <- reactiveVal(FALSE)
   epifriends_temp <- reactiveVal(NULL)
   
+  #########################
   ### LOAD DATA
   ## LOAD SPATIAL DATA
+  #########################
   data <- eventReactive(input$load_data_button, {
     req(input$data)
     read.csv(input$data$datapath)
@@ -185,8 +324,10 @@ server <- function(input, output) {
     data()
   })
   
+  #########################
   ## LOAD TEMPORAL DATA
   # Load & show data
+  #########################
   data_temp <- eventReactive(input$load_data_button_temp, {
     req(input$data_temp)
     read.csv(input$data_temp$datapath)
@@ -208,12 +349,29 @@ server <- function(input, output) {
     data_temp()
   })
   
+  #########################
   ### RUN ALGO
   ## SPATIAL ALGORITHM
+  #########################
   observeEvent(input$epifriends_run, {
+    
+    # DEFINE PARAMETERS
     df <- as.data.table(data())
+    link_d <- input$link_d
+    prevalence <- input$prevalence
+    if(prevalence == "None"){
+      prevalence = NULL
+    }else{
+      prevalence <- df[[prevalence]]
+    }
+    cluster_id <- NULL
+    min_neighbours <- input$min_neighbours
+    max_p <- input$max_p
+    min_pos <- input$min_pos
+    min_total <- input$min_total
+    min_pr <- input$min_pr
+    method <- input$method
     keep_null_tests <- input$keep_null_tests
-    in_latlon <- input$in_latlon
     if(keep_null_tests == 'Remove'){
       keep_null_tests <- FALSE
     }else if (keep_null_tests == 'Keep'){
@@ -221,23 +379,53 @@ server <- function(input, output) {
     }else{
       keep_null_tests <- input$imp_value
     }
-    
+    in_latlon <- input$in_latlon
     if(in_latlon == "Longitude/Latitude"){
+      in_latlon <- TRUE
+    }else{
       in_latlon <- FALSE
     }
+    to_epsg <- as.numeric(input$to_epsg)
+    max_epi_cont <- input$max_epi_cont
+    max_thr_data <- input$max_thr_data
+    consider_fd <- input$false_detect
+    if(consider_fd == 'Yes'){
+      consider_fd <- TRUE
+    }else{
+      consider_fd <- FALSE
+    }
+    n_simulations <- as.numeric(input$n_simulations)
+    optimize_link_d <- input$optimize_link_d
+    if(optimize_link_d == 'Yes'){
+      optimize_link_d <- TRUE
+    }else{
+      optimize_link_d <- FALSE
+    }
+    verbose <- FALSE
+    
+    # RUN CATALOGUE
     epifriends(catalogue(
-      positions = df[,.(x,y)], 
-      test_result = df[,.(test)], 
-      link_d = input$link_d,
-      min_neighbours = input$min_neighbours, 
-      max_p = 1, 
-      min_pos = 2, 
-      min_total = 2,
-      min_pr = 0, 
-      keep_null_tests = keep_null_tests, 
+      x = df$x,
+      y = df$y,
+      test_result = df$test,
+      link_d = link_d,
+      prevalence = prevalence,
+      cluster_id = cluster_id,
+      min_neighbours = min_neighbours,
+      max_p = max_p,
+      min_pos = min_pos,
+      min_total = min_total,
+      min_pr = min_pr,
+      method = method,
+      keep_null_tests = keep_null_tests,
       in_latlon = in_latlon,
-      to_epsg = as.numeric(input$to_epsg), 
-      verbose = FALSE))
+      to_epsg = to_epsg,
+      max_epi_cont = max_epi_cont,
+      max_thr_data = max_thr_data,
+      consider_fd = consider_fd,
+      n_simulations = n_simulations,
+      optimize_link_d = optimize_link_d,
+      verbose = verbose))
     algorithm_run(TRUE)
   })
   
@@ -245,11 +433,32 @@ server <- function(input, output) {
     algorithm_run(TRUE)
   })
   
+  #########################
+  ## RUN ALGO
   ## TEMPORAL ALGORITHM
+  #########################
   observeEvent(input$epifriends_run_temp, {
+    
+    # DEFINE PARAMETERS
     df <- as.data.table(data_temp())
+    link_d <- input$link_d_temp
+    prevalence <- input$prevalence_temp
+    if(prevalence == "None"){
+      prevalence = NULL
+    }else{
+      prevalence <- df[[prevalence]]
+    }
+    min_neighbours <- input$min_neighbours_temp
+    time_width <- input$time_width_temp
+    max_p <- input$max_p_temp
+    min_pos <- input$min_pos_temp
+    min_total <- input$min_total_temp
+    min_pr <- input$min_pr_temp
+    linking_time = input$linking_time_temp
+    linking_dist = input$linking_dist_temp
+    time_steps <- input$time_steps_temp
+    method <- input$method_temp
     keep_null_tests <- input$keep_null_tests_temp
-    in_latlon <- input$in_latlon_temp
     if(keep_null_tests == 'Remove'){
       keep_null_tests <- FALSE
     }else if (keep_null_tests == 'Keep'){
@@ -257,37 +466,90 @@ server <- function(input, output) {
     }else{
       keep_null_tests <- input$imp_value_temp
     }
-    
+    in_latlon <- input$in_latlon_temp
     if(in_latlon == "Longitude/Latitude"){
+      in_latlon <- TRUE
+    }else{
       in_latlon <- FALSE
     }
+    to_epsg <- as.numeric(input$to_epsg_temp)
+    max_epi_cont <- input$max_epi_cont_temp
+    max_thr_data <- input$max_thr_data_temp
+    consider_fd <- input$false_detect_temp
+    if(consider_fd == 'Yes'){
+      consider_fd <- TRUE
+    }else{
+      consider_fd <- FALSE
+    }
+    n_simulations <- as.numeric(input$n_simulations_temp)
+    optimize_link_d <- input$optimize_link_d_temp
+    if(optimize_link_d == 'Yes'){
+      optimize_link_d <- TRUE
+    }else{
+      optimize_link_d <- FALSE
+    }
+    verbose <- FALSE
+    get_plot <- input$get_plots_temp
+    if(get_plot == 'Yes'){
+      get_plot = TRUE
+    }else{
+      get_plot <- FALSE
+    }
     
-    dtparts = t(as.data.frame(strsplit(df$date," ")))
-    row.names(dtparts) = NULL
-    datesform <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
-    dates <- as.numeric(datesform)
+    # Add hour, minute & second to date column so that it can be converted to chron
+    data_type <- input$data_type_temp
+    if(data_type == 'Real'){
+      use_geom_map <- TRUE
+    }else{
+      use_geom_map <- FALSE
+    }
+    
+    # Process dates
+    parsed_dates <- strptime(df$date, format = c("%y:%m:%d %H:%M:%S", "%y:%m:%d"))
+    is_full_datetime <- !is.na(parsed_dates)
+    if (all(is_full_datetime)) {
+      format_type <- "YY:MM:DD HH:MM:SS"
+    } else if (any(is_full_datetime)) {
+      format_type <- "Mixed formats"
+    } else {
+      format_type <- "YY:MM:DD alone"
+    }
+    
+    if(format_type == 'YY:MM:DD alone'){
+      df$date <- paste0(df$date, " 00:00:00")
+    }
     
     #Get temporal IDs
     epifriends_temp(temporal_catalogue(
-      positions = df[,.(x,y)], 
-      test_result = df[,.(test)],
+      x = df$x,
+      y = df$y, 
+      test_result = df$test,
       dates = df$date,
-      link_d = input$link_d_temp,
-      min_neighbours = input$min_neighbours_temp,
-      time_width = input$time_width_temp,
-      min_date = min(datesform),
-      max_date = max(datesform),
-      time_steps = input$time_steps_temp,
+      link_d = link_d,
+      prevalence = prevalence,
+      min_neighbours =  min_neighbours,
+      time_width = time_width,
+      min_date = min(df$date),
+      max_date = max(df$date),
+      time_steps = time_steps,
+      max_p = max_p,
+      min_pos = min_pos,
+      min_total = min_total,
+      min_pr = min_pr,
       add_temporal_id = TRUE,
-      linking_time = input$linking_time_temp,
-      linking_dist = input$linking_dist_temp,
+      linking_time = linking_time,
+      linking_dist = linking_dist,
       get_timelife = TRUE,
-      cluster_id = NULL,
+      optimize_link_d = optimize_link_d,
+      method = method,
       keep_null_tests = keep_null_tests, 
       in_latlon = in_latlon,
-      to_epsg = as.numeric(input$to_epsg), 
+      to_epsg = to_epsg, 
+      consider_fd = consider_fd,
+      n_simulations = n_simulations,
       verbose = FALSE,
-      store_gif = TRUE))
+      store_gif = get_plot,
+      use_geom_map = use_geom_map))
     algorithm_run_temp(TRUE)
   })
   
@@ -296,8 +558,10 @@ server <- function(input, output) {
   })
   
   
+  #########################
   ### TABLES RENDERING
   ## SPATIAL ALGO TABLES
+  #########################
   output$epifriends_summary <- renderTable({
     if(algorithm_run()){
       df <- as.data.table(data())
@@ -332,20 +596,117 @@ server <- function(input, output) {
   table.attr = "class='centered'"
   )
   
+  #########################
   ### PLOTS RENDERING
   ## SPATIAL ALGO PLOTS
+  #########################
   output$distribution <- renderPlot({
-    ggplot(data(), aes(x = x, y = y, color = as.factor(test))) +
-      geom_point(size = 2.5) +
-      labs(title = "Distribution of Positive and Negative Cases") +
-      coord_equal()
+    df <- as.data.table(data())
+    keep_null_tests <- input$keep_null_tests
+    if(keep_null_tests == 'Remove'){
+      keep_null_tests <- FALSE
+    }else if (keep_null_tests == 'Keep'){
+      keep_null_tests <- TRUE
+    }else{
+      keep_null_tests <- input$imp_value_temp
+    }
+    use_geom_map <- input$data_type
+    if(use_geom_map == 'Mock up'){
+      use_geom_map <- FALSE
+    }else{
+      use_geom_map <- TRUE
+    }
+    
+    pos = clean_unknown_data(df, cols_impute = c("test"), keep_null_tests,FALSE)
+    positions = data.table(x = pos$x, y = pos$y, test = pos$test)
+    
+    if(use_geom_map){
+      my_location <- c(min(positions$x),min(positions$y), max(positions$x), max(positions$y))
+      my_map <- get_map(location = my_location, source = "stamen", maptype = "terrain")
+      map_plot <- ggmap::ggmap(my_map)
+      graph <- map_plot +
+        geom_point(data = positions, aes(x = x, y = y, color = as.factor(test))) +
+        geom_point(size = 2.5) +
+        labs(title = "Distribution of Positive and Negative Cases") +
+        coord_equal()
+    }else{
+      graph <- ggplot(data(), aes(x = x, y = y, color = as.factor(test))) +
+        geom_point(size = 2.5) +
+        labs(title = "Distribution of Positive and Negative Cases") +
+        coord_equal()
+      
+    }
+    
+    graph
+    
   })
   
   output$epifriends_v1 <- renderPlot({
     if(algorithm_run()){
       df <- as.data.table(data())
       epi <- epifriends()
-      plot1 <- scatter_pval(df[,.(x,y)], epi$cluster_id, (df$test == 1), epi$epifriends_catalogue)
+      use_geom_map <- input$data_type
+      if(use_geom_map == 'Mock up'){
+        use_geom_map <- FALSE
+      }else{
+        use_geom_map <- TRUE
+      }
+      max_epi_cont <- input$max_epi_cont
+      max_thr_data <- input$max_thr_data
+      
+      keep_null_tests <- input$keep_null_tests
+      if(keep_null_tests == 'Remove'){
+        keep_null_tests <- FALSE
+      }else if (keep_null_tests == 'Keep'){
+        keep_null_tests <- TRUE
+      }else{
+        keep_null_tests <- input$imp_value_temp
+      }
+      
+      if (input$method == 'kmeans'){
+        # Plot of KMeans-Identified Clusters
+        kmeans_prev <- compute_kmeans(
+          clean_data(df[,.(x, y, test)])[,.(x,y)], 
+          clean_data(df[,.(x, y, test)])$test)
+        prevalence <- kmeans_prev$prevalence
+      }else if (input$method == 'centroid'){
+        copy_position <- data.table::copy(df[,.(x,y)])	
+        copy_position[, id := 1:nrow(copy_position)]	
+        total_friends_indeces <- epi$epifriends_catalogue$indeces	
+        copy_position[, prevalence := 0]	
+        radial <- c()	
+        centroid_df <- list()	
+        for(i in 1:length(total_friends_indeces)){
+          result <- compute_centroid(	
+            positions = copy_position,
+            test_result = data.table("test" = df$test),	
+            total_friends_indeces = total_friends_indeces[[i]],	
+            thr_data = max_thr_data,
+            max_epi_cont = max_epi_cont)	
+          
+          # Assign computed prevalence	
+          rows <- dim(copy_position[id %in% result$local_id])[1]	
+          copy_position[id %in% result$local_id,
+                        prevalence := rep(result$prevalence, rows)]	
+        }
+        prevalence <- copy_position$prevalence
+      }else{
+        prevalence <- rep(sum(df$test) / length(df$test), length(df$test))
+      }
+      
+      pos = clean_unknown_data(df, cols_impute = c("test"), keep_null_tests,FALSE)
+      positions = data.table(x = pos$x, y = pos$y, test = pos$test)
+      
+      plot1 <- scatter_pval(
+        coordinates = positions[,.(x,y)], 
+        id_data = epi$cluster_id, 
+        positive = (positions$test == 1), 
+        prevalence = prevalence, 
+        epi_catalogue = epi$epifriends_catalogue,
+        use_geom_map = use_geom_map,
+        xlims = NULL,
+        ylims = NULL,
+        title = NULL)
       grid.arrange(plot1, ncol=1)
     }      
   })
@@ -363,22 +724,53 @@ server <- function(input, output) {
     if(algorithm_run()){
       df <- as.data.table(data())
       epi <- epifriends()
+      use_geom_map <- input$data_type
+      if(use_geom_map == 'Mock up'){
+        use_geom_map <- FALSE
+      }else{
+        use_geom_map <- TRUE
+      }
+      keep_null_tests <- input$keep_null_tests
+      if(keep_null_tests == 'Remove'){
+        keep_null_tests <- FALSE
+      }else if (keep_null_tests == 'Keep'){
+        keep_null_tests <- TRUE
+      }else{
+        keep_null_tests <- input$imp_value_temp
+      }
       # Plot significant clusters
-      coords <- data.table::copy(df)
+      coords = clean_unknown_data(df, cols_impute = c("test"), keep_null_tests,FALSE)
+      coords = data.table(x = coords$x, y = coords$y, test = coords$test)
       coords[, cluster := 0]
       coords[, index := 1:nrow(coords)]
       for(clusters in which(epi$epifriends_catalogue$p <= 0.05)){
         coords[index %in% epi$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
       }
       
-      plot3 <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
-        geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
-        labs(title = "Distribution of Significant Clusters") + coord_equal()
+      if(use_geom_map){
+        my_location <- c(min(coords$x),min(coords$y), max(coords$x), max(coords$y))
+        my_map <- get_map(location = my_location, source = "stamen", maptype = "terrain")
+        map_plot <- ggmap::ggmap(my_map)
+        plot3 <- map_plot +
+          geom_point(data = coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+          geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), 
+                                               shape=21, stroke = 1) +
+          labs(title = "Distribution of Significant Clusters") + coord_equal()
+      }else{
+        plot3 <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+          geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+          labs(title = "Distribution of Significant Clusters") + coord_equal()
+        
+      }
+      
       grid.arrange(plot3, ncol=1)
     }      
   })
   
+  #########################
+  ### PLOTS RENDERING
   ## TEMPORAL ALGO PLOTS
+  #########################
   output$epifriends_v1_temp <- renderPlot({
     if(algorithm_run_temp()){
       epi_catalogue_list <- epifriends_temp()
@@ -434,4 +826,3 @@ server <- function(input, output) {
 }
 
 shinyApp(ui = ui, server = server)
-

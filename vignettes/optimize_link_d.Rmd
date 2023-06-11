@@ -29,20 +29,16 @@ setwd("./../")
 dataclus <- data.table(read.csv("./data/mock_data_clustered.csv"))
 
 min_neighbors <- 2
-# Set some random missings
-dataclus[X %in% sample(X, 5, TRUE), y := NA]
-
-# Clean missings
-dataclus <- clean_unknown_data(dataclus)
 ```
 
 In order to work better with the data, some subdatasets are created:
 
 ```{r}
 # Obtain position coordinates & test results
-position <- dataclus[,.(x,y)]
-positive = (dataclus$test == 1)
-test_result <- dataclus[,.(test)]
+x = dataclus$x
+y = dataclus$y
+test = dataclus$test
+positive = (test == 1)
 ```
 
 This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:
@@ -58,7 +54,7 @@ graph_base
 Obtain minimum distance between positive tests based on the contrain of the min_neighbors. For each positive test case, the distance with the closes specified neighbors will be computed, which will lead to a distribution of minimum distances.
 ```{r}
 # Plot data
-min_distances <- get_min_distances(position[positive,.(x,y)], min_neighbors)
+min_distances <- get_min_distances(dataclus[positive,.(x,y)], min_neighbors)
 hist(min_distances)
 ```
 
@@ -84,7 +80,7 @@ After the distances for each of the remaining quantiles is obtaned, an optimizat
 
 ```{r}
 # Optimization
-opt <- optimize_positives(position, test_result, min_neighbors,NULL,min_distances, dt$quantiles)
+opt <- optimize_positives(dataclus[,.(x, y)], test, min_neighbors,NULL,min_distances, dt$quantiles)
 opt_link_d <- as.numeric(quantile(min_distances,opt$optimal_link_d,na.rm = TRUE))
 
 print(paste0("Linking Distance: ", opt_link_d))

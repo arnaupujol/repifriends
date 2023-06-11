@@ -5,11 +5,14 @@
 \title{This method generates a list of EpiFRIenDs catalogues representing different time frames by including only cases within a time window that moves within each time step.}
 \usage{
 temporal_catalogue(
-  positions,
+  x,
+  y,
   test_result,
   dates,
   link_d,
+  prevalence = NULL,
   use_link_d = TRUE,
+  link_neighbours = NULL,
   min_neighbours = 2,
   time_width,
   min_date = NULL,
@@ -24,6 +27,7 @@ temporal_catalogue(
   linking_dist,
   get_timelife = TRUE,
   optimize_link_d = FALSE,
+  method = "base",
   keep_null_tests = FALSE,
   in_latlon = FALSE,
   to_epsg = NULL,
@@ -31,17 +35,20 @@ temporal_catalogue(
   n_simulations = 500,
   verbose = FALSE,
   store_gif = FALSE,
+  use_geom_map = FALSE,
   out_gif_path = paste0(getwd(), "/www/")
 )
 }
 \arguments{
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{x}{Vector of y positions.}
 
-\item{test_result}{data.frame with the test results (0 or 1).}
+\item{test_result}{vector of test results (0 or 1).}
 
 \item{dates}{Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.}
 
 \item{link_d}{the linking distance of the DBSCAN algorithm. Should be in the same scale as the positions.}
+
+\item{prevalence}{Probability of having an infected case for each individual.}
 
 \item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
 
@@ -69,9 +76,15 @@ temporal_catalogue(
 
 \item{get_timelife}{It specifies if the time periods and timelife of clusters are obtained. Only necesary if add_temporal_id is TRUE.}
 
+\item{method}{Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.}
+
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
 
 \item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{link_neighbours:}{Number of surrounding neighbors to link.}
+
+\item{optimize_link_d:}{If True, optimize the linking distance based on minimum distribution of distances between neighbors.}
 
 \item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
 
@@ -84,6 +97,8 @@ temporal_catalogue(
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 
 \item{store_gif:}{If TRUE, store the different time-frame images in an animated GIF format.}
+
+\item{use_geom_map:}{If TRUE, the generated plot will have a geo-map.}
 
 \item{out_gif_path:}{Output directory of the GIF animated video. Only useful if store_gif parameter is set to TRUE. By default a new folder called /gif will be created in the working directory.}
 }
@@ -119,7 +134,7 @@ y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
 
 # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+test <-c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 #Creation of chron dates vector in format 'y-m-d h:m:s'.
 dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",

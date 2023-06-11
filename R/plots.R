@@ -8,7 +8,9 @@
 #' @param coordinates data frame with the values of the coordinates
 #' @param id_data data frame with the cluster ID associated to each positive case, o for no associated cluster
 #' @param positive Boolean vector that indicates if the case is infected. 
+#' @param prevalence Vector with the individual prevalence for each item in coordinates.
 #' @param epi_catalogue List of the EpiFRIenDs catalogue
+#' @param use_geom_map If True, use a geo-map to plot.
 #' @param xlims: Vector with the limits of the X axis.
 #' @param ylims: Vector with the limits of the Y axis
 #' @param title: Title of the plot. If NULL, it defaults to 'P-value of hotspots'
@@ -31,7 +33,7 @@
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- catalogue(pos, test, 2)
@@ -42,7 +44,9 @@ scatter_pval <- function(
     coordinates, 
     id_data, 
     positive, 
+    prevalence,
     epi_catalogue,
+    use_geom_map = FALSE,
     xlims = NULL,
     ylims = NULL,
     title = NULL){
@@ -51,26 +55,70 @@ scatter_pval <- function(
   for(i in id_data[id_data > 0]){
     p_vals <- append(p_vals, epi_catalogue$p[epi_catalogue$id == i])
   }
-  # plot(coordinates$x, coordinates$y, pch = 19, col = "grey")
-  # points(pos$x[id_data > 0], pos$y[id_data>0], pch = 19, col = rainbow(100)[factor(p_vals)])
-  if(is.null(title)){
-    title <- "P-value of hotspots"
-  }
+ 
+  title <- "P-value on positive cases of hotspots"
   
   pos_filt <- pos[id_data >0,]
   pos_filt$p_vals <- p_vals
-  graph <- ggplot(coordinates,aes(x=x, y=y))+
-    geom_point(color = "grey", size = 2.5)+
-    geom_point(data =pos_filt, aes(colour = p_vals), size = 2.5)+
-    scale_colour_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
-    ggtitle(title) + coord_equal()
   
-  if(!is.null(xlims)){ # Set limits in x & y coordinates
+  if(use_geom_map){
+    my_location <- c(min(coordinates$x),min(coordinates$y), max(coordinates$x), max(coordinates$y))
+    my_map <- get_map(location = my_location, source = "stamen", maptype = "terrain")
+    map_plot <- ggmap::ggmap(my_map)
+    
+    pos_filt <- as.data.table(pos_filt)
+    pos_filt[, label := ifelse(
+      p_vals >= 0 & p_vals <= 0.05, 'PVAL <= 0.05',
+      ifelse(p_vals > 0.05 & p_vals <= 0.15, 'PVAL > 0.05 & <= 0.15', 'PVAL > 0.15'))]
+    coordinates[, label := 'POSITION']
+    
+    graph <- map_plot +
+      geom_point(data =coordinates, aes(x =x, y=y, color = label), size = 2.5)+
+      geom_point(data =pos_filt,  aes(x=x, y=y, colour = label), size = 2.5) +
+      ggtitle(title) + labs(color = "Legend")
+
+  }else{
+    
+    if(!is.null(prevalence)){
+      
+      pos <- as.data.table(pos)
+      coordinates[, prevalence := prevalence]
+      coordinates[, id := paste0(x, "_", y)]
+      
+      pos[, id := paste0(x, "_", y)]
+      pos_filt <- pos[id_data >0,]
+      pos_filt$p_vals <- p_vals
+      pos_filt <- merge(pos_filt, coordinates[,.(id, prevalence)], by = "id", how = "left")
+      graph <- ggplot(coordinates,aes(x=x, y=y, size = prevalence))+
+        geom_point(color = "#F38B8B", shape=21, stroke = 1) +
+        geom_point(
+          data =pos_filt, 
+          aes(color = "#F38B8B", fill = p_vals, size = prevalence), shape=21, stroke = 1)+
+        scale_fill_continuous(limits = c(0, 0.2), low = "grey", high = "blue") +
+        scale_size_continuous(range = c(1, 4), limits = c(0,1)) +
+        ggtitle(title) + coord_equal()
+      
+    }else{
+      
+      pos_filt <- pos[id_data >0,]
+      pos_filt$p_vals <- p_vals
+      graph <- ggplot(coordinates,aes(x=x, y=y))+
+        geom_point(color = "grey", size = 2.5)+
+        geom_point(data = pos_filt, aes(colour = p_vals), size = 2.5)+
+        scale_color_continuous(limits = c(0, 0.2), low = "grey", high = "red") +
+        #scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))+
+        ggtitle(title) + coord_equal()
+      
+    }
+  }
+  
+  if(!is.null(xlims) & (use_geom_map == FALSE)){ # Set limits in x & y coordinates
     graph <- graph + xlim(xlims) + ylim(ylims)
   }
   
   return(graph)
 }
+
 
 #' This method shows a histogram of the size (total number of cases) in foci for foci with p>0.05 and with p<0.05. 
 #'
@@ -93,7 +141,7 @@ scatter_pval <- function(
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
 #' cat <- catalogue(pos, test, 2)
@@ -143,7 +191,7 @@ size_histogram <- function(catalogue){
 #' pos <- data.frame(x,y)
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' #Creation of chron dates vector in format 'y-m-d h:m:s'.
 #' dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
@@ -152,7 +200,7 @@ size_histogram <- function(catalogue){
 #' "2020-10-19 00:01:25")
 #'
 #' # Creation of temporal catalogue for this data.
-#' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
+#' tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 #' 
 #' hist_timelifes(list_catalogues$temporal_catalogues)
 #' 
@@ -205,7 +253,7 @@ hist_timelifes <- function(list_catalogues) {
 #' time_steps = 305
 #'
 #' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
-#' test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' #Creation of chron dates vector in format 'y-m-d h:m:s'.
 #' dates <- c("2020-11-03 05:33:07","2021-05-19 10:29:59","2021-02-09 14:53:20","2021-11-21 02:35:38","2020-11-19 05:57:24",
@@ -256,4 +304,55 @@ lifetime_timeline <- function(list_catalogues, mean_dates, time_steps) {
          title = "Size evolution of the clusters colored by their total lifetime")
   
   return(graph)
+}
+
+
+# Plot the coordinates with different colors for each of the clusters identified by the EpiFRIenDs.
+#'
+#' @param coordinates data frame with the values of the coordinates. 
+#' @param catalogue List of EpiFRIenDs catalogues.
+#' @param only_significant If True, color only the clusters identified as significant by the algorithm.
+#' 
+#' @return  ggplot object with the clusters identified by the EpiFRIenDs algorithm.
+#'
+#' @export
+#' 
+#' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
+#'
+#' @examples
+#' # Required packages
+#' if(!require("RANN")) install.packages("RANN")
+#' library("RANN")
+#'
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
+#' pos <- data.frame(x,y)
+#'
+#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+#' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
+#'
+#' # Creation of catalogue for this positions, linking distance 2 and default values.
+#' cat <- catalogue(pos, test, 2)
+#' 
+#' plot_clusters(pos, cat)
+plot_clusters <- function(coordinates, catalogue, only_significant = FALSE){
+  coords <- data.table::copy(coordinates)
+  coords[, cluster := 0]
+  coords[, index := 1:nrow(coords)]
+  
+  if(only_significant){
+    indexes <- which(categories$epifriends_catalogue$p <= 0.05)
+  }else{
+    indexes <- 1:length(catalogue$epifriends_catalogue$p)
+  }
+  for(clusters in indexes){
+    coords[index %in% catalogue$epifriends_catalogue$indeces[[clusters]], cluster := clusters]
+  }
+  
+  graph_clusters <- ggplot(coords[cluster != 0], aes(x = x, y = y, color = as.factor(cluster))) +
+    geom_point(size = 2.5)  + geom_point(data = coords[cluster == 0], aes(x=x, y=y, color = "#FFFFFF"), shape=21, stroke = 1) +
+    labs(title = "Distribution of Clusters")
+  
+  return(graph_clusters)
 }
