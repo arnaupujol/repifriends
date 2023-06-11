@@ -89,11 +89,12 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
     in_latlon = in_latlon, 
     to_epsg = to_epsg,
     verbose = verbose)
+  positions[, id := 1:nrow(positions)]
 
   # Determine the linking array based on desired linking neighbors
   # If the parameter is NULL, it will automatically use the inverse of the prevalence
   # meaning that all positive positive cases in areas with a prevalence above the mean will be linked.
-  set_NA <- if (use_link_d == FALSE) TRUE else FALSE
+  set_NA <- if (use_link_d == FALSE) FALSE else TRUE
   if (is.null(link_neighbours)){
     link_neighbours = 1 / (sum(test_result[[1]]) / length(test_result[[1]]))
   }

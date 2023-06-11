@@ -15,7 +15,7 @@ find_indeces(positions, positions_eval, link_d, use_link_d, link_array)
 
 \item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
 
-\item{link_array:}{}
+\item{link_array:}{Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.}
 }
 \value{
 List with an array of the indeces of the friends of each position.

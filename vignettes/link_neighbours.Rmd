@@ -11,7 +11,7 @@ output:
 
 We first import the packages required from this RMarkdown.
 
-```{r}
+```{r, message = FALSE}
 library("RANN")
 library("data.table")
 library("doParallel")
@@ -35,7 +35,7 @@ min_neighbours <- 2
 
 Check the distribution of positive and negative cases by plotting its distribution.
 
-```{r}
+```{r, message = FALSE}
 # Plot data
 graph_base <- ggplot(df, aes(x = x, y = y, color = as.factor(test))) +
   geom_point(size = 3) +
@@ -51,16 +51,18 @@ We will now test two different strategies to account for the local radious of an
 
 Run the algorithm using the linking distance approach.
 
-```{r}
+```{r, message = FALSE}
 # Plot data
-cat_link <- catalogue(df[,.(x,y)], df[,.(test)], link_d = link_d,
+cat_link <- catalogue(x = df$x, y = df$y, test = df$test, link_d = link_d,
                       min_neighbours=min_neighbours, use_link_d = TRUE)
 
 graph_link <- scatter_pval(
   df[,.(x,y)], 
   cat_link$cluster_id, 
   (df$test == 1), 
+  NULL,
   cat_link$epifriends_catalogue,
+  FALSE,
   c(0,1),
   c(0,1),
   paste0('P-value each cluster - link_dist: ', link_d))
@@ -71,16 +73,18 @@ graph_link
 
 Run the algorithm using the linking neighbors approach.
 
-```{r}
+```{r, message = FALSE}
 # Plot data
-cat_neighbours <- catalogue(df[,.(x,y)], df[,.(test)], link_d = link_d,
+cat_neighbours <- catalogue(x = df$x, y = df$y, test = df$test, link_d = link_d,
                       min_neighbours=min_neighbours,use_link_d = FALSE)
 
 graph_neigh <- scatter_pval(
   df[,.(x,y)], 
   cat_neighbours$cluster_id, 
   (df$test == 1), 
+  NULL,
   cat_neighbours$epifriends_catalogue,
+  FALSE,
   c(0,1),
   c(0,1),
   paste0('P-value each cluster - link_neigh'))
@@ -92,16 +96,18 @@ graph_neigh
 The next barplot will show the differences in p-values and detected clusters using each of the above mentioned approaches.
 
 
-```{r}
+```{r, message = FALSE}
 # Plot data
-cat_link <- catalogue(df[,.(x,y)], df[,.(test)], link_d = link_d,
+cat_link <- catalogue(x = df$x, y = df$y, test = df$test, link_d = link_d,
                       min_neighbours=min_neighbours, use_link_d = TRUE)
 
 graph_link <- scatter_pval(
   df[,.(x,y)], 
   cat_link$cluster_id, 
   (df$test == 1), 
+  NULL,
   cat_link$epifriends_catalogue,
+  FALSE,
   c(0,1),
   c(0,1),
   paste0('P-value each cluster - link_dist: ', link_d))
@@ -112,7 +118,7 @@ graph_link
 
 Run the algorithm using the linking neighbors approach.
 
-```{r}
+```{r, message = FALSE}
 mean_link <- rbindlist(cat_link$epifriends_catalogue$mean_position_all)
 mean_link[, pvalue := cat_link$epifriends_catalogue$p]
 mean_link[, epifriends := 1:nrow(mean_link)]
@@ -140,7 +146,7 @@ graph_neigh <- ggplot(mean_neigh, aes(x = method, y = pvalue,  fill = pvalue)) +
 mean_neigh <- graph_neigh + geom_hline(yintercept = 0.05, linetype = "dashed")
 ```
 
-```{r}
+```{r, message = FALSE}
 mean_link
 mean_neigh
 ```

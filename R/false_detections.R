@@ -143,7 +143,7 @@ generate_simulations <- function(positions, test_result, link_d, use_link_d = TR
     library(epifriends)
     library(RANN)
     df[, test := stats::rbinom(nrow(df), 1, prevalence)]
-    cat <- catalogue(x = df$x, y = df$y, test_result = df$test, link_d = link_d, 
+    cat <- catalogue(x = df$x, y = df$y, test_result = df$test,
                      link_d = link_d, use_link_d = use_link_d, 
                      link_neighbours = link_neighbours,
                      cluster_id = NULL, min_neighbours = min_neighbours,

@@ -146,7 +146,7 @@ find_indeces <- function(positions, positions_eval, link_d, use_link_d, link_arr
   
   # Determine indeces
   indeces <- lapply(1:nrow(positions), function(row) {
-      indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_f[row])$nn.idx
+      indexes <- nn2(positions_eval[,.(x,y)], positions[row, .(x,y)], k =nrow(positions_eval),searchtype = 'radius', radius = link_f[row])$nn.idx
       indexes <- indexes[indexes != 0]
       return(indexes)
     })

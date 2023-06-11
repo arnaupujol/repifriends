@@ -11,7 +11,7 @@ output:
 
 We first import the packages required from this RMarkdown.
 
-```{r}
+```{r, message = FALSE}
 library("RANN")
 library("data.table")
 library("readxl")
@@ -27,7 +27,7 @@ library("epifriends")
 The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
 
 
-```{r, warning=FALSE}
+```{r, message = FALSE}
 setwd("./../")
 datarand <- data.table(read.csv("./data/mock_data_rand.csv"))
 datasin <- data.table(read.csv("./data/mock_data_sin.csv"))
@@ -36,7 +36,7 @@ dataclus <- data.table(read.csv("./data/mock_data_clustered.csv"))
 
 In order to work better with the data, some subdatasets are created:
 
-```{r}
+```{r, message = FALSE}
 x_rand <- datarand$x
 y_rand <- datarand$y
 test_rand <- datarand$test
@@ -55,7 +55,7 @@ positive_clus = (test_clus == 1)
 
 This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:
 
-```{r}
+```{r, message = FALSE}
 plot(x_rand, y_rand, pch = 19, col = as.factor(test_rand))
 plot(x_sin, y_sin, pch = 19, col = as.factor(test_sin))
 plot(x_clus, y_clus, pch = 19, col = as.factor(test_clus))
@@ -69,14 +69,14 @@ We first define the two main parameters of the method:
 
 - **min_neighbours**, the minimum number of neighbours: one data point is linked to its neighbours (or friends, defined as the data points closer than **link_d** to it) only if there are at least **min_neighbours** (including itself) to link. This parameter ensures that for each cluster we have at least **min_neighbours** within a radius of **link_d**, plus other data points indirectly linked to them. 
 
-```{r}
+```{r, message = FALSE}
 link_d = 0.01
 min_neighbours = 2
 ```
 
 The function **dbscan** uses these two parameters to identify clusters using the Density-based spatial clustering of applications with noise (DBSCAN) algorithm and returns the cluster ID of each data point, with 0 meaning that the data point does not belong to any cluster. In the EpiFRIenDs algorithm, DBSCAN is applied using only the positive cases in order to detect clusters of infections. In the following example, we select the positions of th first mock dataset of the positive cases only using the mask **positive_rand**, a boolean array indicating if the case is positive. We visualise the result showing the scatter distribution of negative cases in grey and the distribution of positive cases colour coded by the cluster ID (0 meaning that they are not assigned to any cluster).
 
-```{r}
+```{r, message = FALSE}
 #Running DBSCAN for the mock data with random distribution
 cluster_id = dbscan(x_rand[positive_rand], y_rand[positive_rand], link_d, min_neighbours)
 
@@ -95,7 +95,7 @@ graph
 ```
 
 
-```{r}
+```{r, message = FALSE}
 #Running DBSCAN for the mock data with sinusoidal distribution
 cluster_id = dbscan(x_sin[positive_sin], y_sin[positive_sin], link_d, min_neighbours)
 
@@ -114,7 +114,7 @@ graph <- ggplot(neg,aes(x=x, y=y))+
 graph
 ```
 
-```{r}
+```{r, message = FALSE}
 #Running DBSCAN for the mock data with cluster distribution
 cluster_id = dbscan(x_clus[positive_clus], y_clus[positive_clus], link_d, min_neighbours)
 
@@ -150,7 +150,7 @@ The method outputs the cluster ID, positivity rate and p-value assigned to each 
 
 In the following example we run the method catalogue for different values of link_d in order to see the impact of this parameter on the detected foci (or clusters).
 
-```{r}
+```{r, message = FALSE}
 #EpiFRIenDs parameters
 link_d_to_analyse = c(.01, .02, .05, .1)
 min_neighbours = 2
@@ -160,7 +160,7 @@ We run EpiFRIenDs for all values or `link_d` and for the three mock data catalog
 
 Here we show the results of applying different `link_d` to the first mock catalogue with random distributions:
 
-```{r}
+```{r, message = FALSE}
 #Random distribution
 for(link_d in link_d_to_analyse){
   cat_rand <- catalogue(x_rand, y_rand, test_rand, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
@@ -173,7 +173,7 @@ for(link_d in link_d_to_analyse){
 
 Now this shows the results applied to the data set with a sinusoidal distribution of positive cases: 
 
-```{r}
+```{r, message = FALSE}
 #Random distribution
 for(link_d in link_d_to_analyse){
   cat_sin <- catalogue(x_sin, y_sin, test_sin, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
@@ -186,7 +186,7 @@ for(link_d in link_d_to_analyse){
 
 Finally, this shows the results applied to the data set with clustered distribution of positive cases: 
 
-```{r}
+```{r, message = FALSE}
 #Random distribution
 for(link_d in link_d_to_analyse){
   cat_clus <- catalogue(x_clus, y_clus, test_clus, link_d, cluster_id = NULL, min_neighbours = min_neighbours)

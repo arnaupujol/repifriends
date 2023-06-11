@@ -10,7 +10,7 @@ dbscan(
   test = NULL,
   link_d,
   use_link_d = TRUE,
-  link_array,
+  link_array = NULL,
   min_neighbours = 2,
   in_latlon = FALSE,
   to_epsg = NULL,

@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 We first import the packages required from this RMarkdown.
 
-```{r}
+```{r, message = FALSE}
 library("RANN")
 library("data.table")
 library("readxl")
@@ -31,7 +31,7 @@ library("epifriends")
 The data created with the temporal_analysis.ipynb file of python and saved on this R project is readed:
 
 
-```{r, warning=FALSE}
+```{r, message = FALSE}
 setwd("./../")
 mock_rand <- data.table(read.csv("./data/mock_data_rand_temp.csv"))
 mock_rand$date <- as.character(mock_rand$date)
@@ -39,7 +39,7 @@ mock_rand$date <- as.character(mock_rand$date)
 
 In order to work better with the data, some subdatasets are created:
 
-```{r}
+```{r, message = FALSE}
 x_rand <- mock_rand$x
 y_rand <- mock_rand$y
 test_rand <- mock_rand$test
@@ -49,7 +49,7 @@ date_rand <-mock_rand$date
 
 The dates are changed to date format:
 
-```{r}
+```{r, message = FALSE}
 dtparts = t(as.data.frame(strsplit(date_rand," ")))
 row.names(dtparts) = NULL
 datesform <- chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
@@ -58,13 +58,13 @@ dates <- as.numeric(datesform)
 
 We also want to discretize the test variable, i.e. to convert it to integers
 
-```{r}
+```{r, message = FALSE}
 tests <- as.integer(test_rand)
 ```
 
 In this plot we visualise the generated mock data. The colours of the points represent the date of the samples, and those marked with a red edge are the positive cases:
 
-```{r}
+```{r, message = FALSE}
 graph <- ggplot(mock_rand,aes(x=x, y=y))+
             geom_point(aes(fill = dates, colour = as.factor(test)), shape = 21, size = 2.5)+
             scale_fill_gradientn(colors = c("midnight blue", "turquoise", "yellow"))+
@@ -76,7 +76,7 @@ graph
 
 Here we define the required parameters to run the method **temporal_catalogue** that outputs an EpiFRIenDs catalogue in each of the defined time steps:
 
-```{r}
+```{r, message = FALSE}
 #Parameters
 #linking distance to link cases in space
 link_d = 0.1
@@ -98,12 +98,21 @@ min_date = min(datesform)
 max_date = max(datesform)
 ```
 
-```{r}
-epi_catalogue_list <- temporal_catalogue(x_rand, y_rand, test_rand, date_rand, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = FALSE)
+```{r, message = FALSE}
+epi_catalogue_list <- temporal_catalogue(
+  x = x_rand, y = y_rand, test_result = test_rand, dates =date_rand, link_d = link_d, prevalence = prevalence,
+  use_link_d = TRUE, link_neighbours = NULL, min_neighbours=min_neighbours, time_width=time_width, 
+  min_date=min_date, max_date=max_date, time_steps=time_steps, add_temporal_id = FALSE
+)
 ```
 
-```{r}
-epi_catalogue_list <- temporal_catalogue(x_rand, y_rand, test_rand, date_rand, link_d,prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = 3, linking_dist = 0.15, get_timelife = TRUE)
+```{r, message = FALSE}
+epi_catalogue_list <- temporal_catalogue(
+  x = x_rand, y = y_rand, test_result = test_rand, dates = date_rand, link_d = link_d,prevalence = prevalence,
+  use_link_d = TRUE, link_neighbours = NULL, min_neighbours=min_neighbours, time_width=time_width,
+  min_date=min_date, max_date=max_date, time_steps=time_steps, add_temporal_id = TRUE, linking_time = 3,
+  linking_dist = 0.15, get_timelife = TRUE
+)
 ```
 
 Here we visualise the detected clusters in each step, showing one scatter plot for each time step with:
@@ -116,7 +125,7 @@ Here we visualise the detected clusters in each step, showing one scatter plot f
 
 Notice that negative cases can in some cases belong to two (or more) different clusters (if they are closer than link_d to two (or more) positive cases from two (or more) different clusters. In this case, the colour has been assigned to the last of the plotted clusters.
 
-```{r}
+```{r, message = FALSE}
 step_num <- 0
 while(min_date + time_steps*step_num + time_width <= max_date){
   print(paste0("Time step number", step_num)) 
@@ -145,7 +154,7 @@ while(min_date + time_steps*step_num + time_width <= max_date){
 
 Here we show the number of clusters detected as a function of time: 
 
-```{r}
+```{r, message = FALSE}
 num_clusters <- c()
 for(i in epi_catalogue_list$temporal_catalogues){
   num_clusters <- append(num_clusters,length(i$id))
@@ -157,14 +166,18 @@ plot(x = epi_catalogue_list$mean_date, y = num_clusters, type = "l", xlab = "Dat
 Once we have the list of temporal **catalogues epi_catalogue_list**, we can add the temporal ID of the EpiFRIenDs clusters. This is done by assigning the same temporal ID to the clusters that are closer in time than the specificed linking time steps **linking_time** and closer in space that a specified **linking_dist**. Notice that **linking_dist** can be different than **link_d**, since the first is used to link clusters from different timesteps as assign to them the same temporal ID, and the latter is used to detect the clusters and assign their EpiFRIenDs ID.
 
 
-```{r}
+```{r, message = FALSE}
 #Number of time steps considered to link their temporal clusters
 linking_time = 3
 #Spatial distance of clusters within this linking_time to assign the same temporal ID
 linking_dist = 0.15
 
 #Get temporal IDs
-epi_catalogue_list_id <- temporal_catalogue(x_rand, y_rand, test_rand, date_rand, link_d, prevalence, min_neighbours, time_width, min_date, max_date, time_steps, add_temporal_id = TRUE, linking_time = linking_time, linking_dist = linking_dist, get_timelife = TRUE)
+epi_catalogue_list_id <- temporal_catalogue(
+  x = x_rand, y = y_rand, test_result = test_rand, dates = date_rand, link_d = link_d, prevalence = prevalence,
+  use_link_d = TRUE, link_neighbours = NULL, min_neighbours = min_neighbours, time_width = time_width, 
+  min_date = min_date, max_date=max_date, time_steps=time_steps, add_temporal_id = TRUE, 
+  linking_time =  linking_time, linking_dist = linking_dist, get_timelife = TRUE)
 ```
 
 

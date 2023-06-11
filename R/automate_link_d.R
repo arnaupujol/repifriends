@@ -134,7 +134,7 @@ quantile_estimation <- function(quantile_est, verbose){
 #' min_distances <- get_min_distances(position, positive, min_neighbors)
 get_min_distances <- function(position, min_neighbors, set_NA = FALSE){
   if(set_NA){
-    return( rep(NA, nrow(positions)))
+    return( rep(NA, nrow(position)))
   }
   
   dist <- c()
