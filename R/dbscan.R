@@ -34,7 +34,7 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- dbscan(pos, 2 ,3)
 #' 
-dbscan <- function(x, y, test = NULL, link_d, use_link_d = TRUE,  link_array, min_neighbours = 2, 
+dbscan <- function(x, y, test = NULL, link_d, use_link_d = TRUE,  link_array = NULL, min_neighbours = 2, 
                    in_latlon = FALSE, to_epsg = NULL, verbose = FALSE){
   
   
@@ -103,7 +103,7 @@ dbscan <- function(x, y, test = NULL, link_d, use_link_d = TRUE,  link_array, mi
 #' @param positions_eval:  A list build with the positions of the target data.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
-#' @param link_array:
+#' @param link_array: Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.
 #'
 #' @return  List with an array of the indeces of the friends of each position.
 #' @export
@@ -139,19 +139,17 @@ find_indeces <- function(positions, positions_eval, link_d, use_link_d, link_arr
   
   # Use linking distance or linking neighbors over each coordinate position.
   if (use_link_d){
-    indeces <- lapply(1:nrow(positions), function(row) {
-      indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_d)$nn.idx
-      indexes <- indexes[indexes != 0]
-      return(indexes)
-    })
+    link_f <- rep(link_d, nrow(positions))
   }else{
-    indeces <- lapply(1:nrow(positions), function(row) {
-      indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_array[row])$nn.idx
+    link_f <- link_array
+  }
+  
+  # Determine indeces
+  indeces <- lapply(1:nrow(positions), function(row) {
+      indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_f[row])$nn.idx
       indexes <- indexes[indexes != 0]
       return(indexes)
     })
-    
-  }
   
   return(indeces)
 }

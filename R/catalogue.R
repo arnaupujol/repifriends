@@ -91,16 +91,14 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
     verbose = verbose)
 
   # Determine the linking array based on desired linking neighbors
-  if(use_link_d == FALSE){
-    if (is.null(link_neighbours)){
-      link_neighbours = 1 / (sum(test_result[[1]]) / length(test_result[[1]]))
-    }
-    link_array <- get_min_distances(positions[,.(x,y)], link_neighbours)
-    link_positive_array <- link_array[test_result$test == 1]
-  }else{
-    link_array <- rep(NA, nrow(positions))
-    link_positive_array <- rep(NA, length(nrow(positions[which(test_result == 1),])))
+  # If the parameter is NULL, it will automatically use the inverse of the prevalence
+  # meaning that all positive positive cases in areas with a prevalence above the mean will be linked.
+  set_NA <- if (use_link_d == FALSE) TRUE else FALSE
+  if (is.null(link_neighbours)){
+    link_neighbours = 1 / (sum(test_result[[1]]) / length(test_result[[1]]))
   }
+  link_array <- get_min_distances(positions[,.(x,y)], link_neighbours, set_NA)
+  link_positive_array <- link_array[test_result$test == 1]
   
   # Optimize linking distance
   if( (optimize_link_d & use_link_d) | (is.null(link_d))){

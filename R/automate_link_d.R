@@ -111,6 +111,7 @@ quantile_estimation <- function(quantile_est, verbose){
 #'
 #' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
 #' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param set_NA If True, set the overall vector as missing. If False, compute the real distances.
 #'
 #' @return Minimum distance for each positive test where a given contrain of min_neighbors is satisfied.
 #'   
@@ -131,7 +132,11 @@ quantile_estimation <- function(quantile_est, verbose){
 #'
 #' # Get minimum distances based on neighbors
 #' min_distances <- get_min_distances(position, positive, min_neighbors)
-get_min_distances <- function(position, min_neighbors){
+get_min_distances <- function(position, min_neighbors, set_NA = FALSE){
+  if(set_NA){
+    return( rep(NA, nrow(positions)))
+  }
+  
   dist <- c()
   for(i in 1:dim(position)[1]){
     query <- nn2(position,position[i,],min_neighbors)
