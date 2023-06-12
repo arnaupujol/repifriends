@@ -153,6 +153,7 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
                                      min_neighbours = min_neighbours, max_p = max_p, 
                                      min_pos = min_pos, min_total = min_total,
                                      min_pr = min_pr, keep_null_tests = keep_null_tests)
+    saveRDS(false_det, "./false_det.rds")
   }else{
     false_det <- NULL
   }
@@ -227,8 +228,8 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
       
     # Adjust p-value based on: adj-pval = (1-p-val) * (1-p-fd)
     if(!is.null(false_det)){
-      if(nrow(fp[num_pos ==npos]) != 0){
-        prob_fd <- max(1-fp[num_pos ==npos]$prob_fd, 0)
+      if(nrow(false_det[num_pos ==npos]) != 0){
+        prob_fd <- max(1-false_det[num_pos ==npos]$prob_fd, 0)
         adj_pval <- (1-pval)*(prob_fd)
         pval <- 1 - adj_pval
       }
