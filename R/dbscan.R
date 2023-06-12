@@ -6,6 +6,8 @@
 #' @param x Vector of x positions.
 #' @param x Vector of y positions.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
+#' @param use_link_d:  If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
+#' @param link_array: Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.
 #' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
@@ -32,7 +34,7 @@
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
 #' db <- dbscan(pos, 2 ,3)
 #' 
-dbscan <- function(x, y, link_d, min_neighbours = 2, test = NULL,
+dbscan <- function(x, y, test = NULL, link_d, use_link_d = TRUE,  link_array = NULL, min_neighbours = 2, 
                    in_latlon = FALSE, to_epsg = NULL, verbose = FALSE){
   
   
@@ -52,7 +54,7 @@ dbscan <- function(x, y, link_d, min_neighbours = 2, test = NULL,
   #Create cluster id
   cluster_id <- integer(dim(positions)[1])
   #Query KDTree
-  indeces <- find_indeces(positions, link_d, positions)
+  indeces <- find_indeces(positions,positions, link_d, use_link_d, link_array)
   #inicialize ID variable
   last_cluster_id = 0
   #Have in count the posible exception of not having any positions
@@ -96,17 +98,16 @@ dbscan <- function(x, y, link_d, min_neighbours = 2, test = NULL,
   return(cluster_id)
 }
 
-
-#' This method returns the indeces of all the friends of each position from positions given a KDTree.
-#'
-#' @param positions Data.frame with x & y coordinates
+#' This method returns the indeces of all the friends of each position from positions given a KDTree.#'
+#' @param positions data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.
+#' @param positions_eval:  A list build with the positions of the target data.
 #' @param link_d: The linking distance to connect cases. Should be in the same scale as the positions.
-#' @param positions_eval: Data.frame from which each x & y coordinate of positions wants to be evaluated
+#' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
+#' @param link_array: Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.
 #'
-#' @details The epifriends package uses the RANN package which gives us the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
-#'
-#' @return List with an array of the indeces of the friends of each position.
+#' @return  List with an array of the indeces of the friends of each position.
 #' @export
+#' #'
 #'
 #' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
 #'
@@ -121,9 +122,9 @@ dbscan <- function(x, y, link_d, min_neighbours = 2, test = NULL,
 #' pos <- data.frame(x,y)
 #'
 #' # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
-#' indeces <- find_indeces(pos, 0.1 ,pos)
+#' indeces <- find_indeces(pos, 2 ,pos, FALSE, NULL)
 #' 
-find_indeces <- function(positions, link_d, positions_eval){
+find_indeces <- function(positions, positions_eval, link_d, use_link_d, link_array){
   #Creation of empty list where the clusters of points will be saved
   indeces <- list()
   #Have in count the posible exception of not having any positions
@@ -135,12 +136,20 @@ find_indeces <- function(positions, link_d, positions_eval){
     indeces[[1]] <- 1
     return(indeces)
   }
-
+  
+  # Use linking distance or linking neighbors over each coordinate position.
+  if (use_link_d){
+    link_f <- rep(link_d, nrow(positions))
+  }else{
+    link_f <- link_array
+  }
+  
+  # Determine indeces
   indeces <- lapply(1:nrow(positions), function(row) {
-    indexes <- nn2(positions_eval, positions[row, ], k =nrow(positions_eval),searchtype = 'radius', radius = link_d)$nn.idx
-    indexes <- indexes[indexes != 0]
-    return(indexes)
-  })
+      indexes <- nn2(positions_eval[,.(x,y)], positions[row, .(x,y)], k =nrow(positions_eval),searchtype = 'radius', radius = link_f[row])$nn.idx
+      indexes <- indexes[indexes != 0]
+      return(indexes)
+    })
   
   return(indeces)
 }

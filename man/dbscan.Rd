@@ -7,9 +7,11 @@
 dbscan(
   x,
   y,
-  link_d,
-  min_neighbours = 2,
   test = NULL,
+  link_d,
+  use_link_d = TRUE,
+  link_array = NULL,
+  min_neighbours = 2,
   in_latlon = FALSE,
   to_epsg = NULL,
   verbose = FALSE
@@ -19,6 +21,10 @@ dbscan(
 \item{x}{Vector of y positions.}
 
 \item{link_d:}{The linking distance to connect cases. Should be in the same scale as the positions.}
+
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{link_array:}{Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.}
 
 \item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
 

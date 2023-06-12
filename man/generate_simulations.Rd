@@ -9,16 +9,15 @@ generate_simulations(
   positions,
   test_result,
   link_d,
-  n_simulations,
+  use_link_d = TRUE,
+  link_neighbours = 10,
+  n_simulations = 500,
   min_neighbours = 2,
   max_p = 1,
   min_pos = 2,
   min_total = 2,
   min_pr = 0,
-  keep_null_tests = FALSE,
-  in_latlon = FALSE,
-  to_epsg = NULL,
-  verbose = FALSE
+  keep_null_tests = FALSE
 )
 }
 \arguments{
@@ -41,6 +40,12 @@ generate_simulations(
 \item{min_pr}{Threshold of minimum positivity rate in clusters applied.}
 
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+
+\item{link_neighbours:}{Number of surrounding neighbors to link.}
 
 \item{cluster_id}{Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.}
 

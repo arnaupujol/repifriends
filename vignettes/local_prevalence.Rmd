@@ -11,7 +11,7 @@ output:
 
 We first import the packages required from this RMarkdown.
 
-```{r}
+```{r, message = FALSE}
 library("RANN")
 library("data.table")
 library("doParallel")
@@ -22,7 +22,7 @@ library("clValid")
 
 ## Read mock data
 
-```{r, warning=FALSE}
+```{r, message = FALSE}
 ## Load auxiliary functions
 
 # Clean data
@@ -63,7 +63,7 @@ get_all_results <- function(catalogue, methods_list){
 
 Read mock data & specify parameters for running Epifriends.
 
-```{r, warning=FALSE}
+```{r, message = FALSE}
 setwd("./../")
 df <- data.table(read.csv("./data/mock_data_local.csv"))
 df[, id := 1:nrow(df)]
@@ -74,7 +74,7 @@ min_neighbours <- 2
 
 Check the distribution of positive and negative cases by plotting its distribution.
 
-```{r}
+```{r, message = FALSE}
 # Plot data
 graph_base <- ggplot(df, aes(x = x, y = y, color = as.factor(test))) +
         geom_point(size = 2.5) +
@@ -88,7 +88,7 @@ There are 3 different approaches used to account for the prevalence:
 · Centroid: Local prevalence computed by increasing the radious of the EpiFRIenDs detected until specific conditions are satisfied.
 
 
-```{r}
+```{r, message = FALSE}
 catalogue_methods <- list()
 ```
 
@@ -97,7 +97,7 @@ catalogue_methods <- list()
 
 We will start by testing the KMeans-approach, call the catalogue() function with the method specified as 'kmeans'.
   
-```{r}
+```{r, message = FALSE}
 method <- "kmeans"
  # Compute Epifriends
 categories <- catalogue(
@@ -112,7 +112,7 @@ Now three plots are generated:
 · Plot with significant clusters using the probability of infection provided by the local prevalence calculus based on identified clusters.
 · Plot of identified raw clusters from KMeans Clustering.
 
-```{r}
+```{r, message = FALSE}
 # Plot of all EpiFRIenDs
 plot_clusters(df[,.(x,y)], categories, only_significant = FALSE)
 # Plot of significant EpiFRIenDs
@@ -132,7 +132,7 @@ k_results
 ```
 Get a summary table of the identified clusters:
 
-```{r}
+```{r, message = FALSE}
 # Table general overview
 general <- data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
 general$pvalue <- categories$epifriends_catalogue$p
@@ -151,7 +151,7 @@ Now let's generate two more statistical plots:
 · Scatter-plot with the coordinates colored by the p-value and the size of the respective local prevalence for the K-Means approach.
 · Histogram of the number of clusters identified for each focci based on the significance of the cluster.
 
-```{r}
+```{r, message = FALSE}
 graphs_prev <- scatter_pval(
             coordinates = data.table::copy(df[,.(x,y)]), 
             id_data = categories$cluster_id, 
@@ -169,7 +169,7 @@ histo
 Let's now evaluate the Centroid Approach by calling the catalogue() function with the method specified as 'centroid'.
 
 
-```{r}
+```{r, message = FALSE}
 method <- "centroid"
  # Compute Epifriends
 categories <- catalogue(
@@ -191,7 +191,7 @@ plot_clusters(df[,.(x,y)], categories, only_significant = TRUE)
 ```
 And now let's generate the table where will be able to compare back the difference in the Mean-Prevalence for each identified EpiFRIenDs versus the KMeans Clustering. Note that EpiFRIenDs identified are the same so cluster_id column will be equal.
 
-```{r}
+```{r, message = FALSE}
 general <- data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
 general$pvalue <- categories$epifriends_catalogue$p
 general$mean_pr <- categories$epifriends_catalogue$mean_pr
@@ -205,7 +205,7 @@ general
 
 Finally let's do a scatter plot of the positions colored by the p-value and the size given by the prevalence.
 
-```{r}
+```{r, message = FALSE}
 
 copy_position <- data.table::copy(df[,.(x,y)])	
 copy_position[, id := 1:nrow(copy_position)]	
@@ -244,7 +244,7 @@ histo
 ## Base Approach with Global Prevalence
 
 Let's now evaluate the Base Approach by calling the catalogue() function with the method specified as 'base'. Note that this approach does not integrate local prevalence but rather global insights for the calculus of the p-value.
-```{r}
+```{r, message = FALSE}
 method <- "base"
  # Compute Epifriends
 categories <- catalogue(
@@ -267,7 +267,7 @@ plot_clusters(df[,.(x,y)], categories, only_significant = TRUE)
 
 And now let's generate the table where can be seen that the Mean-Prevalence per ID is the same due to the fact that 'base' method is not accounting for local prevalence.
 
-```{r}
+```{r, message = FALSE}
 general <- data.table("cluster_id" = 1:length(categories$epifriends_catalogue$p))
 general$pvalue <- categories$epifriends_catalogue$p
 general$mean_pr <- categories$epifriends_catalogue$mean_pr
@@ -282,7 +282,7 @@ general
 Finally let's do a scatter plot of the positions colored by the p-value and the size given by the prevalence.
 
 
-```{r}
+```{r, message = FALSE}
 graphs_prev <- scatter_pval(
             coordinates = data.table::copy(df[,.(x, y)]), 
             id_data = categories$cluster_id, 
@@ -298,7 +298,7 @@ histo
 ## Final comparison of approaches
 
 
-```{r}
+```{r, message = FALSE}
 all_combs <- names(catalogue_methods)
 links_combs <- as.numeric(sapply(all_combs, function(x){ strsplit(x, "_")[[1]][2]}))
 general <- get_all_results(catalogue_methods, names(catalogue_methods)[which(links_combs == link_d)])

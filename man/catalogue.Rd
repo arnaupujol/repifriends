@@ -12,6 +12,8 @@ catalogue(
   prevalence = NULL,
   cluster_id = NULL,
   min_neighbours = 2,
+  use_link_d = TRUE,
+  link_neighbours = NULL,
   max_p = 1,
   min_pos = 2,
   min_total = 2,
@@ -55,6 +57,12 @@ catalogue(
 \item{method}{Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.}
 
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+
+\item{link_neighbours:}{Number of surrounding neighbors to link.}
 
 \item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
 

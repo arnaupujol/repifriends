@@ -11,6 +11,8 @@ temporal_catalogue(
   dates,
   link_d,
   prevalence = NULL,
+  use_link_d = TRUE,
+  link_neighbours = NULL,
   min_neighbours = 2,
   time_width,
   min_date = NULL,
@@ -77,6 +79,10 @@ temporal_catalogue(
 \item{method}{Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.}
 
 \item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{link_neighbours:}{Number of surrounding neighbors to link.}
 
 \item{optimize_link_d:}{If True, optimize the linking distance based on minimum distribution of distances between neighbors.}
 

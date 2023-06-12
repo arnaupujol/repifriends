@@ -2,25 +2,26 @@
 % Please edit documentation in R/dbscan.R
 \name{find_indeces}
 \alias{find_indeces}
-\title{This method returns the indeces of all the friends of each position from positions given a KDTree.}
+\title{This method returns the indeces of all the friends of each position from positions given a KDTree.#'}
 \usage{
-find_indeces(positions, link_d, positions_eval)
+find_indeces(positions, positions_eval, link_d, use_link_d, link_array)
 }
 \arguments{
-\item{positions}{Data.frame with x & y coordinates}
+\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+
+\item{positions_eval:}{A list build with the positions of the target data.}
 
 \item{link_d:}{The linking distance to connect cases. Should be in the same scale as the positions.}
 
-\item{positions_eval:}{Data.frame from which each x & y coordinate of positions wants to be evaluated}
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+
+\item{link_array:}{Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.}
 }
 \value{
 List with an array of the indeces of the friends of each position.
 }
 \description{
-This method returns the indeces of all the friends of each position from positions given a KDTree.
-}
-\details{
-The epifriends package uses the RANN package which gives us the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
+This method returns the indeces of all the friends of each position from positions given a KDTree.#'
 }
 \examples{
 # Required packages
@@ -33,7 +34,7 @@ y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
 
 # Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
-indeces <- find_indeces(pos, 0.1 ,pos)
+indeces <- find_indeces(pos, 2 ,pos, FALSE, NULL)
 
 }
 \author{

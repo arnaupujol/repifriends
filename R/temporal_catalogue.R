@@ -8,7 +8,9 @@
 #' @param test_result vector of test results (0 or 1).
 #' @param dates Vector of the date times of the corresponding data in format 'y-m-d h:m:s'.
 #' @param link_d the linking distance of the DBSCAN algorithm. Should be in the same scale as the positions.
+#' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
 #' @param prevalence Probability of having an infected case for each individual.
+#' @param link_neighbours: Number of surrounding neighbors to link. 
 #' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #' @param time_width Number of days of the time window used to select cases in each time step.
 #' @param min_date Initial date used in the first time step and time window selection. In format 'y-m-d h:m:s'.
@@ -76,8 +78,9 @@
 #' # Creation of temporal catalogue for this data.
 #' tcat <- tcat <- temporal_catalogue(pos, test, dates ,link_d = 2, time_width = 305, time_steps = 305, linking_time = 3, linking_dist = 2)
 #' 
-temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NULL, min_neighbours = 2,
-                               time_width, min_date = NULL, max_date = NULL, time_steps = 1,
+temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NULL, use_link_d = TRUE,
+                               link_neighbours = NULL,min_neighbours = 2, time_width, min_date = NULL, 
+                               max_date = NULL, time_steps = 1,
                                max_p = 1, min_pos = 2, min_total = 2, min_pr = 0,
                                add_temporal_id = TRUE, linking_time, linking_dist, get_timelife = TRUE,
                                optimize_link_d = FALSE, method = "base", keep_null_tests = FALSE, in_latlon = FALSE, 
@@ -138,7 +141,8 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
     #get catalogue
     Newcatalogue <- catalogue(x = selected_positions$x, y = selected_positions$y, 
                               test_result = selected_test_results$test,
-                              link_d = link_d, prevalence=selected_positions$prevalence, cluster_id = NULL,
+                              link_d = link_d, use_link_d = use_link_d,
+                              prevalence=selected_positions$prevalence, cluster_id = NULL,
                               method=method, min_neighbours = min_neighbours,
                               max_p = max_p, min_pos = min_pos, min_total = min_total, min_pr = min_pr,
                               optimize_link_d=optimize_link_d, keep_null_tests = keep_null_tests, 

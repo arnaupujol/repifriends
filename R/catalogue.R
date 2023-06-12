@@ -9,6 +9,9 @@
 #' @param link_d The linking distance to connect cases. Should be in the same scale as the positions.
 #' @param prevalence Probability of having an infected case for each individual.
 #' @param cluster_id Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.
+#' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
+#' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param link_neighbours: Number of surrounding neighbors to link. 
 #' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
 #' @param max_p Maximum value of the p-value to consider the cluster detection.
 #' @param min_pos Threshold of minimum number of positive cases in clusters applied.
@@ -59,8 +62,9 @@
 #' cat <- catalogue(x, y, test, 2)
 #' 
 catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id = NULL,
-                      min_neighbours = 2, max_p = 1, min_pos = 2, min_total = 2,
-                      min_pr = 0, method = "base",keep_null_tests = FALSE,in_latlon = FALSE,
+                      min_neighbours = 2,use_link_d = TRUE, link_neighbours = NULL,
+                      max_p = 1, min_pos = 2, min_total = 2, min_pr = 0, 
+                      method = "base",keep_null_tests = FALSE,in_latlon = FALSE,
                       to_epsg = NULL, max_epi_cont = 0.5, 
                       max_thr_data = 0.1, consider_fd = FALSE, n_simulations= 500,
                       sampling_sim = 1000, optimize_link_d = FALSE, verbose = FALSE){
@@ -77,7 +81,7 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
   positions = clean_unknown_data(positions,to_impute,keep_null_tests,verbose)
   test_result = data.table("test" = positions$test)
   if(!is.null(prevalence)){ prevalence = positions$prevalence}
-  
+
   #Defining 2d-positions
   positions = get_2dpositions(
     x = positions$x, 
@@ -87,8 +91,18 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
     verbose = verbose)
   positions[, id := 1:nrow(positions)]
 
-  # Optimize linking distance if not provided or specified to do so
-  if(optimize_link_d | is.null(link_d)){
+  # Determine the linking array based on desired linking neighbors
+  # If the parameter is NULL, it will automatically use the inverse of the prevalence
+  # meaning that all positive positive cases in areas with a prevalence above the mean will be linked.
+  set_NA <- if (use_link_d == FALSE) FALSE else TRUE
+  if (is.null(link_neighbours)){
+    link_neighbours = 1 / (sum(test_result[[1]]) / length(test_result[[1]]))
+  }
+  link_array <- get_min_distances(positions[,.(x,y)], link_neighbours, set_NA)
+  link_positive_array <- link_array[test_result$test == 1]
+  
+  # Optimize linking distance
+  if( (optimize_link_d & use_link_d) | (is.null(link_d))){
     if(verbose){print("Automating the calculus of the linking distance")}
     link_d <- opt_link_d(df=data.table(x = positions$x, y = positions$y, test = pos$test), 
                          min_neighbors=min_neighbors, cluster_id=cluster_id, 
@@ -100,7 +114,9 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
   positive_positions <- positions[which(test_result == 1), .(x,y)]
   #Computing cluster_id if needed
   if(is.null(cluster_id)){
-    cluster_id = dbscan(x = positive_positions$x, y = positive_positions$y, link_d, min_neighbours = min_neighbours)
+    cluster_id = dbscan(
+      x = positive_positions$x, y = positive_positions$y, link_d = link_d, min_neighbours = min_neighbours,
+      use_link_d=use_link_d, link_array=link_positive_array)
   }
 
   #Define total number of positive cases
@@ -132,11 +148,12 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
   # Generate simulations for false positive detection
   if(consider_fd){
     false_det <- get_false_detection(positions=positions, test_result=test_result$test,
-                                     link_d=link_d, n_simulations=n_simulations,
+                                     link_d=link_d,use_link_d = use_link_d, link_neighbours = link_neighbours,
+                                     n_simulations=n_simulations,
                                      min_neighbours = min_neighbours, max_p = max_p, 
                                      min_pos = min_pos, min_total = min_total,
-                                     min_pr = min_pr, keep_null_tests = keep_null_tests, 
-                                     in_latlon = in_latlon,to_epsg = to_epsg, verbose = verbose)
+                                     min_pr = min_pr, keep_null_tests = keep_null_tests)
+    saveRDS(false_det, "./false_det.rds")
   }else{
     false_det <- NULL
   }
@@ -147,7 +164,9 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
     #get all indeces with this cluster id
     cluster_id_indeces <- which(cluster_id == sort_unici[i])
     #for all these indeces, get list of friends from all positions
-    all_friends_indeces <- find_indeces(positive_positions[cluster_id_indeces,.(x,y)], link_d, positions[,.(x,y)])
+    all_friends_indeces <- find_indeces(
+      positions=positive_positions[cluster_id_indeces,],positions_eval=positions, 
+      link_d=link_d, use_link_d=use_link_d, link_array=link_positive_array[cluster_id_indeces])
     #get unique values of such indeces
     total_friends_indeces <- sort(unique(unlist(all_friends_indeces)))
     #get positivity rate from all the unique indeces
@@ -209,8 +228,8 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
       
     # Adjust p-value based on: adj-pval = (1-p-val) * (1-p-fd)
     if(!is.null(false_det)){
-      if(nrow(fp[num_pos ==npos]) != 0){
-        prob_fd <- max(1-fp[num_pos ==npos]$prob_fd, 0)
+      if(nrow(false_det[num_pos ==npos]) != 0){
+        prob_fd <- max(1-false_det[num_pos ==npos]$prob_fd, 0)
         adj_pval <- (1-pval)*(prob_fd)
         pval <- 1 - adj_pval
       }

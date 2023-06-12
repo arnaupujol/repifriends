@@ -5,9 +5,11 @@
 \title{This method optimizes the linking distance based on the distribution of the minimum distances that satisfy a given
 minimum neighbor restriction.}
 \usage{
-get_min_distances(position, min_neighbors)
+get_min_distances(position, min_neighbors, set_NA = FALSE)
 }
 \arguments{
+\item{set_NA}{If True, set the overall vector as missing. If False, compute the real distances.}
+
 \item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
 
 \item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
