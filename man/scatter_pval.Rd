@@ -2,8 +2,9 @@
 % Please edit documentation in R/plots.R
 \name{scatter_pval}
 \alias{scatter_pval}
-\title{This method shows a scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
-representing their p-value) and in grey the rest of the data.}
+\title{This method shows a scatter plot of the data distribution, showing in colour the 
+positive cases that belong to foci (with the colour  representing their p-value) 
+and in grey the rest of the data.}
 \usage{
 scatter_pval(
   coordinates,
@@ -20,7 +21,8 @@ scatter_pval(
 \arguments{
 \item{coordinates}{data frame with the values of the coordinates}
 
-\item{id_data}{data frame with the cluster ID associated to each positive case, o for no associated cluster}
+\item{id_data}{data frame with the cluster ID associated to each positive case, 
+o for no associated cluster}
 
 \item{positive}{Boolean vector that indicates if the case is infected.}
 
@@ -37,24 +39,24 @@ scatter_pval(
 \item{title:}{Title of the plot. If NULL, it defaults to 'P-value of hotspots'}
 }
 \value{
-Scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
-representing their p-value) and in grey the rest of the data.
+Scatter plot of the data distribution, showing in colour the positive 
+cases that belong to foci (with the colour representing their p-value) and in grey the 
+rest of the data.
 }
 \description{
-This method shows a scatter plot of the data distribution, showing in colour the positive cases that belong to foci (with the colour 
-representing their p-value) and in grey the rest of the data.
+This method shows a scatter plot of the data distribution, showing in colour the 
+positive cases that belong to foci (with the colour  representing their p-value) 
+and in grey the rest of the data.
 }
 \examples{
-# Required packages
-if(!require("RANN")) install.packages("RANN")
-library("RANN")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
 
-# Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+# Creation of test data frame with 0 for negative cases and 1 for positive clases 
+# for each position.
 test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 # Creation of catalogue for this positions, linking distance 2 and default values.

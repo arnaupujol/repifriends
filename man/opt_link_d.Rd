@@ -2,8 +2,8 @@
 % Please edit documentation in R/automate_link_d.R
 \name{opt_link_d}
 \alias{opt_link_d}
-\title{This method optimizes the linking distance based on the distribution of the minimum distances that satisfy a given
-minimum neighbor restriction.}
+\title{This method optimizes the linking distance based on the distribution of the 
+minimum distances that satisfy a given minimum neighbor restriction.}
 \usage{
 opt_link_d(
   df,
@@ -22,21 +22,28 @@ opt_link_d(
 \arguments{
 \item{df}{data.table with coordinates and test results.}
 
-\item{cluster_id}{Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.}
+\item{cluster_id}{Numeric vector with the cluster IDs of each position, with 
+0 for those without a cluster. Give NULL if cluster_id must be calculated.}
 
 \item{dist_prop}{Distance threshold to merge two quantiles due to proximity.}
 
-\item{thr_impr}{Percentage of improvement of the optimization metric to keep iterating.}
+\item{thr_impr}{Percentage of improvement of the optimization metric to 
+keep iterating.}
 
-\item{diff_quantile}{Step increase/decrease of best quantile to avoid local minima.}
+\item{diff_quantile}{Step increase/decrease of best quantile to avoid local 
+minima.}
 
-\item{quantile_est}{If 'fixed', quantiles used will be from 0 to 1 with a step of 0.125. If 'random', a random estimation of the step will be done.}
+\item{quantile_est}{If 'fixed', quantiles used will be from 0 to 1 with a 
+step of 0.125. If 'random', a random estimation of the step will be done.}
 
-\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide
+value to impute.}
 
-\item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+\item{min_neighbours}{Minium number of neighbours in the radius < link_d 
+needed to link cases as friends.}
 
-\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and 
+latitude respectively, otherwise they are treated as cartesian coordinates.}
 
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
@@ -46,24 +53,20 @@ opt_link_d(
 Best linking distance based on optimization metrics
 }
 \description{
-This method optimizes the linking distance based on the distribution of the minimum distances that satisfy a given
-minimum neighbor restriction.
+This method optimizes the linking distance based on the distribution of the 
+minimum distances that satisfy a given minimum neighbor restriction.
 }
 \examples{
-# Required packages
-if(!require("RANN")) install.packages("RANN")
-if(!require("doParallel")) install.packages("doParallel")
-library("RANN")
-library("doParallel")
 
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coords 
+# and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 test <-c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 df <- data.table(x = x, y = y, test = test)
 
-# Creation of catalogue for this positions, linking distance 2 and default values.
+# Creation of catalogue
 link_d <- opt_link_d(df, 2)
 }
 \author{

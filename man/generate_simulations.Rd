@@ -2,8 +2,8 @@
 % Please edit documentation in R/false_detections.R
 \name{generate_simulations}
 \alias{generate_simulations}
-\title{Generate random distributions based on the global prevalence of infections and compute its Epifriends to
-undermine false positive detections.}
+\title{Generate random distributions based on the global prevalence of infections and 
+compute its Epifriends to undermine false positive detections.}
 \usage{
 generate_simulations(
   positions,
@@ -17,19 +17,23 @@ generate_simulations(
   min_pos = 2,
   min_total = 2,
   min_pr = 0,
-  keep_null_tests = FALSE
+  keep_null_tests = FALSE,
+  run_seq = FALSE
 )
 }
 \arguments{
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{positions}{data.frame with the positions of parameters we want to query 
+with shape (n,2) where n is the number of positions.}
 
 \item{test_result}{data.frame with the test results (0 or 1).}
 
-\item{link_d}{The linking distance to connect cases. Should be in the same scale as the positions.}
+\item{link_d}{The linking distance to connect cases. Should be in the same 
+scale as the positions.}
 
 \item{n_simulations}{Number of random simulations to be performed.}
 
-\item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+\item{min_neighbours}{Minium number of neighbours in the radius < link_d needed 
+to link cases as friends.}
 
 \item{max_p}{Maximum value of the p-value to consider the cluster detection.}
 
@@ -39,35 +43,40 @@ generate_simulations(
 
 \item{min_pr}{Threshold of minimum positivity rate in clusters applied.}
 
-\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide 
+value to impute.}
 
-\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. 
+If False, use default linking neighbours based on proximity.}
 
-\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to 
+link cases as friends.}
 
 \item{link_neighbours:}{Number of surrounding neighbors to link.}
 
-\item{cluster_id}{Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.}
+\item{cluster_id}{Numeric vector with the cluster IDs of each position, with 
+0 for those without a cluster. Give NULL if cluster_id must be calculated.}
 
-\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and 
+latitude respectively, otherwise they are treated as cartesian coordinates.}
 
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
+
+\item{run_seq:}{If TRUE, run sequentially instead of parallelizing.}
 }
 \value{
-data.frame with the number of isolated positives detected per iteration and its frequency.
+data.frame with the number of isolated positives detected per iteration 
+and its frequency.
 }
 \description{
-Generate random distributions based on the global prevalence of infections and compute its Epifriends to
-undermine false positive detections.
+Generate random distributions based on the global prevalence of infections and 
+compute its Epifriends to undermine false positive detections.
 }
 \examples{
-# Required packages
-if(!require("RANN")) install.packages("RANN")
-library("RANN")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.frame(x,y)
@@ -76,7 +85,8 @@ pos <- data.frame(x,y)
 test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 # Creation of catalogue for this positions, linking distance 2 and default values.
-cat <- generate_simulations(pos, test, 2, 100)
+cat <- generate_simulations(positions = pos, test_result = test, link_d = 2,
+ n_simulations = 2, run_seq=TRUE)
 
 }
 \author{

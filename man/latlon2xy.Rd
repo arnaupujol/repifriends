@@ -2,7 +2,8 @@
 % Please edit documentation in R/convert_coords.R
 \name{latlon2xy}
 \alias{latlon2xy}
-\title{This method transforms the latitude and longitud coordinates from to cartesian coordinates in meters.}
+\title{This method transforms the latitude and longitud coordinates from to cartesian 
+coordinates in meters.}
 \usage{
 latlon2xy(lon, lat, to_epsg = NULL, verbose = TRUE)
 }
@@ -19,14 +20,12 @@ latlon2xy(lon, lat, to_epsg = NULL, verbose = TRUE)
 List of coordinates x & y converted to cartesian coordinates
 }
 \description{
-This method transforms the latitude and longitud coordinates from to cartesian coordinates in meters.
+This method transforms the latitude and longitud coordinates from to cartesian 
+coordinates in meters.
 }
 \examples{
-# Required packages
-if(!require("data.table")) install.packages("data.table")
-library("data.table")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 

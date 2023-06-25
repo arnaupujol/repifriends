@@ -2,7 +2,9 @@
 % Please edit documentation in R/catalogue.R
 \name{catalogue}
 \alias{catalogue}
-\title{This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.}
+\title{This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the 
+mean positivity rate (PR) of each cluster extended with the non-infected cases 
+closer than the link_d.}
 \usage{
 catalogue(
   x,
@@ -38,13 +40,16 @@ catalogue(
 
 \item{test_result}{vector of test results (0 or 1).}
 
-\item{link_d}{The linking distance to connect cases. Should be in the same scale as the positions.}
+\item{link_d}{The linking distance to connect cases. Should be in the same scale 
+as the positions.}
 
 \item{prevalence}{Probability of having an infected case for each individual.}
 
-\item{cluster_id}{Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.}
+\item{cluster_id}{Numeric vector with the cluster IDs of each position, with 
+0 for those without a cluster. Give NULL if cluster_id must be calculated.}
 
-\item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+\item{min_neighbours}{Minium number of neighbours in the radius < link_d needed to 
+link cases as friends.}
 
 \item{max_p}{Maximum value of the p-value to consider the cluster detection.}
 
@@ -54,31 +59,41 @@ catalogue(
 
 \item{min_pr}{Threshold of minimum positivity rate in clusters applied.}
 
-\item{method}{Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.}
+\item{method}{Method that wants to be used to compute the local prevalence - either 
+'kmeans', 'centroid', or 'base'. Defaults to 'base'.}
 
-\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide value to impute.}
+\item{keep_null_tests}{Whether to remove or not missings. If numeric, provide 
+value to impute.}
 
-\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. 
+If False, use default linking neighbours based on proximity.}
 
-\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to 
+link cases as friends.}
 
 \item{link_neighbours:}{Number of surrounding neighbors to link.}
 
-\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and 
+latitude respectively, otherwise they are treated as cartesian coordinates.}
 
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
-\item{max_epi_cont:}{Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.}
+\item{max_epi_cont:}{Maximum contribution of the detected Epifriends with respect 
+to the total local data selected. Only applies for "centroid" method.}
 
-\item{max_thr_data:}{Percentage of data used to compute the local prevalence. Only applies for "centroid" method.}
+\item{max_thr_data:}{Percentage of data used to compute the local prevalence. 
+Only applies for "centroid" method.}
 
 \item{consider_fd:}{If True, consider false detections and adjust p-value of that.}
 
-\item{n_simulations:}{Numeric value with the number of desired iterations to compute the false-detected clusters.}
+\item{n_simulations:}{Numeric value with the number of desired iterations to 
+compute the false-detected clusters.}
 
-\item{sampling_sim:}{Numeric value with the number of random simulations to be performed to determine the real p-value.}
+\item{sampling_sim:}{Numeric value with the number of random simulations to be 
+performed to determine the real p-value.}
 
-\item{optimize_link_d:}{If True, optimize the linking distance based on minimum distribution of distances between neighbors.}
+\item{optimize_link_d:}{If True, optimize the linking distance based on minimum 
+distribution of distances between neighbors.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
@@ -95,21 +110,18 @@ epifriends_catalogue: List
   Catalogue of the epifriends clusters and their main characteristics.
 }
 \description{
-This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.
-}
-\details{
-The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
+This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the 
+mean positivity rate (PR) of each cluster extended with the non-infected cases 
+closer than the link_d.
 }
 \examples{
-# Required packages
-if(!require("RANN")) install.packages("RANN")
-library("RANN")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude 
+# coordinates and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 
-# Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+# Creation of test data frame with 0 for negative cases and 1 for positive 
+# classes for each position.
 test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 # Creation of catalogue for this positions, linking distance 2 and default values.

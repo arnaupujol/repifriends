@@ -24,8 +24,12 @@ library("epifriends")
 Read mock data & specify parameters for running Epifriends.
 
 ```{r, warning=FALSE}
-setwd("./../")
-df <- data.table(read.csv("./data/mock_data_link_neig.csv"))
+setwd("./../") 
+load("./data/mock_data_linkneigh.rda")
+```
+
+```{r, warning=FALSE}
+df <- mock_data_linkneigh
 position <- df[,.(x,y)]
 positive = (df$test == 1)
 test_result <- df[,.(test)]

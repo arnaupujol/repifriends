@@ -7,28 +7,32 @@
 compute_kmeans(positions, test, seed = 123, coord_cols = c("x", "y"))
 }
 \arguments{
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{positions}{data.frame with the positions of parameters we want to query 
+with shape (n,2) where n is the number of positions.}
 
 \item{seed}{Seed for reproducibility.}
 
-\item{coord_cols}{Vector with the name of the columns corresponding to the x,y coordinates.}
+\item{coord_cols}{Vector with the name of the columns corresponding to the 
+x,y coordinates.}
 
 \item{test_result}{data.frame with the test results (0 or 1).}
 }
 \value{
-Data.table with new columns corresponding to the clusters & the individual prevalence of each coordinate.
+Data.table with new columns corresponding to the clusters & the 
+individual prevalence of each coordinate.
 }
 \description{
 This function performs a KMeans clustering on the coordinates data.
 }
 \examples{
-library(data.table)
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.table("x" = x,"y" = y)
 
-# Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+# Creation of test data frame with 0 for negative cases and 1 for positive 
+# classes for each position.
 test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
 # Creation of catalogue for this positions, linking distance 2 and default values.

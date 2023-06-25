@@ -7,7 +7,8 @@
 quantile_estimation(quantile_est, verbose)
 }
 \arguments{
-\item{quantile_est}{If 'fixed', quantiles used will be from 0 to 1 with a step of 0.125. If 'random', a random estimation of the step will be done.}
+\item{quantile_est}{If 'fixed', quantiles used will be from 0 to 1 with a step 
+of 0.125. If 'random', a random estimation of the step will be done.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }

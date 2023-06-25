@@ -24,8 +24,12 @@ library("epifriends")
 Read mock data & specify parameters for running Epifriends.
 
 ```{r, message = FALSE}
-setwd("./../")
-df <- data.table(read.csv("./data/mock_false_det.csv"))
+setwd("./../") 
+load("./data/mock_false_det.rda")
+```
+
+```{r, message = FALSE}
+df <- mock_false_det
 x <- df$x
 y <- df$y
 test <- df$test

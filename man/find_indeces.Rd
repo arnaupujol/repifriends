@@ -2,39 +2,43 @@
 % Please edit documentation in R/dbscan.R
 \name{find_indeces}
 \alias{find_indeces}
-\title{This method returns the indeces of all the friends of each position from positions given a KDTree.#'}
+\title{This method returns the indeces of all the friends of each position from positions
+given a KDTree.#'}
 \usage{
 find_indeces(positions, positions_eval, link_d, use_link_d, link_array)
 }
 \arguments{
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{positions}{data.frame with the positions of parameters we want to query
+with shape (n,2) where n is the number of positions.}
 
 \item{positions_eval:}{A list build with the positions of the target data.}
 
-\item{link_d:}{The linking distance to connect cases. Should be in the same scale as the positions.}
+\item{link_d:}{The linking distance to connect cases. Should be in the same 
+scale as the positions.}
 
-\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbors.
+If False, use default linking neighbours based on proximity.}
 
-\item{link_array:}{Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.}
+\item{link_array:}{Vector with linking distances for each individual position 
+coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.}
 }
 \value{
 List with an array of the indeces of the friends of each position.
 }
 \description{
-This method returns the indeces of all the friends of each position from positions given a KDTree.#'
+This method returns the indeces of all the friends of each position from positions
+given a KDTree.#'
 }
 \examples{
-# Required packages
-if(!require("RANN")) install.packages("RANN")
-library("RANN")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
-pos <- data.frame(x,y)
+pos <- data.table(x,y)
 
-# Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
-indeces <- find_indeces(pos, 2 ,pos, FALSE, NULL)
+# Computation of clusters of hotspots for positions with dbscan algorithm using 
+# linking distance 2 and minimum 3 neighbours.
+indeces <- find_indeces(pos, pos, 2 , FALSE, NULL)
 
 }
 \author{

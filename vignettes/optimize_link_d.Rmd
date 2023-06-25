@@ -24,9 +24,8 @@ library("epifriends")
 The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
 
 ```{r, warning=FALSE}
-setwd("./../")
-dataclus <- data.table(read.csv("./data/mock_data_clustered.csv"))
-
+setwd("./../") 
+load("./data/dataclus.rda")
 min_neighbors <- 2
 ```
 

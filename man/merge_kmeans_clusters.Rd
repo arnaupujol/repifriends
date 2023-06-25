@@ -2,7 +2,8 @@
 % Please edit documentation in R/define_local_prev.R
 \name{merge_kmeans_clusters}
 \alias{merge_kmeans_clusters}
-\title{Recursively merge KMean clusters based on proximity if percentage of epifriend data is above specific threshold.}
+\title{Recursively merge KMean clusters based on proximity if percentage of epifriend 
+data is above specific threshold.}
 \usage{
 merge_kmeans_clusters(pos_clusters, total_friends_indeces, thr_perc_epi = 0.5)
 }
@@ -10,25 +11,33 @@ merge_kmeans_clusters(pos_clusters, total_friends_indeces, thr_perc_epi = 0.5)
 \item{pos_clusters}{data.frame with the positions.}
 
 \item{total_friends_indeces}{indices of the events detected by the epifriends.}
+
+\item{thr_perc_epi}{percentage allowed contribution of epifriends to the overall cluster.}
 }
 \value{
 Local prevalence based on the positive cases for the closest datapoints to the centroid 
 defined by epifriends indices
 }
 \description{
-Recursively merge KMean clusters based on proximity if percentage of epifriend data is above specific threshold.
+Recursively merge KMean clusters based on proximity if percentage of epifriend 
+data is above specific threshold.
 }
 \examples{
-library(data.table)
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 test <- c(1,1,0,1,0,0,0,1,1,0,1,0,0,1,1,0)
+test_result <- data.table(test = test)
 pos <- data.table("x" = x,"y" = y, "test" = test)
+pos$id <- 1:length(x)
+pos$cluters <- 1
 friends_ind <- c(1,2,3)
 
 # Calculus of prevalence based on the centroid
-pos_rate <- merge_kmeans_clusters(pos, friends_ind)
+# Compute KMeans
+pos_clusters <- compute_kmeans(pos, test_result)
+merged_clusters <- merge_kmeans_clusters(pos_clusters,friends_ind, 0.5)
 
 }
 \author{

@@ -2,32 +2,38 @@
 % Please edit documentation in R/define_local_prev.R
 \name{calc_ind_prev}
 \alias{calc_ind_prev}
-\title{This function is a helper of calc_distance and helps compute the distance of one ID versus the rest}
+\title{This function is a helper of calc_distance and helps compute the distance of 
+one ID versus the rest}
 \usage{
 calc_ind_prev(df, positions, test_result)
 }
 \arguments{
 \item{df}{Dataframe with asked coordinates.}
 
-\item{positions}{data.frame with the positions of parameters we want to query with shape (n,2) where n is the number of positions.}
+\item{positions}{data.frame with the positions of parameters we want to query 
+with shape (n,2) where n is the number of positions.}
 
 \item{test_result}{data.frame with the test results (0 or 1).}
 }
 \value{
-Data.table computed distances resulting from df mapped versus all coordinates in positions.
+Data.table computed distances resulting from df mapped versus all 
+coordinates in positions.
 }
 \description{
-This function is a helper of calc_distance and helps compute the distance of one ID versus the rest
+This function is a helper of calc_distance and helps compute the distance of 
+one ID versus the rest
 }
 \examples{
-library(data.table)
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finaly merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.table("x" = x,"y" = y)
 
-# Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+# Creation of test data frame with 0 for negative cases and 1 for positive clases 
+# for each position.
 test <- data.frame(c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1))
+test_result <- data.table(test = test)
 
 df <- data.table("x" = 1, "y" = 4)
 

@@ -19,15 +19,16 @@ Merge quantiles based on proximity of distances given its distribution.
 }
 \examples{
 
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finaly merge them on a position data frame.
 quantiles <- c(0, 0.125, 0.250, 0.5)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 test <-c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 
-dt <- datatable( quantiles = c(0, 0.125, 0.250, 0.5), distances = c(0.01, 0.02, 0.03, 0.04)
+dt <- data.table(quantiles = quantiles, distances = c(0.01, 0.02, 0.03, 0.04))
 
 # Simplify distributions based on proximity
-dt <- simplify_distributions(dt, 0.1)
+distributions_new <- simplify_distributions(dt, 0.1)
 }
 \author{
 Eric Matamoros.

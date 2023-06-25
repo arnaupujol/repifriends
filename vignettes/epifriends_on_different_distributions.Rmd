@@ -28,10 +28,10 @@ The data created with the epifriends_on_different_distributions.ipynb file of py
 
 
 ```{r, message = FALSE}
-setwd("./../")
-datarand <- data.table(read.csv("./data/mock_data_rand.csv"))
-datasin <- data.table(read.csv("./data/mock_data_sin.csv"))
-dataclus <- data.table(read.csv("./data/mock_data_clustered.csv"))
+setwd("./../") 
+load("./data/datarand.rda")
+load("./data/datasin.rda")
+load("./data/dataclus.rda")
 ```
 
 In order to work better with the data, some subdatasets are created:

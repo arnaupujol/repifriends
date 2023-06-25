@@ -1,35 +1,47 @@
-# This source code is licensed under the GNU GENERAL PUBLIC LICENSE license found in the
-# LICENSE file in the root directory of this source tree.
+# This source code is licensed under the GNU GENERAL PUBLIC LICENSE license 
 
-#' This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the mean positivity rate (PR) of each cluster extended with the non-infected cases closer than the link_d.
+#' This method runs the DBSCAN algorithm (if cluster_id is NULL) and obtains the 
+#' mean positivity rate (PR) of each cluster extended with the non-infected cases 
+#' closer than the link_d.
 #'
 #' @param x Vector of x positions.
 #' @param y Vector of y positions.
 #' @param test_result vector of test results (0 or 1).
-#' @param link_d The linking distance to connect cases. Should be in the same scale as the positions.
+#' @param link_d The linking distance to connect cases. Should be in the same scale 
+#' as the positions.
 #' @param prevalence Probability of having an infected case for each individual.
-#' @param cluster_id Numeric vector with the cluster IDs of each position, with 0 for those without a cluster. Give NULL if cluster_id must be calculated.
-#' @param use_link_d: If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.
-#' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param cluster_id Numeric vector with the cluster IDs of each position, with 
+#' 0 for those without a cluster. Give NULL if cluster_id must be calculated.
+#' @param use_link_d: If True, use linking distance to determine the closest neighbours. 
+#' If False, use default linking neighbours based on proximity.
+#' @param min_neighbours: Minium number of neighbours in the radius < link_d needed to 
+#' link cases as friends.
 #' @param link_neighbours: Number of surrounding neighbors to link. 
-#' @param min_neighbours Minium number of neighbours in the radius < link_d needed to link cases as friends.
+#' @param min_neighbours Minium number of neighbours in the radius < link_d needed to 
+#' link cases as friends.
 #' @param max_p Maximum value of the p-value to consider the cluster detection.
 #' @param min_pos Threshold of minimum number of positive cases in clusters applied.
 #' @param min_total Threshold of minimum number of cases in clusters applied.
 #' @param min_pr Threshold of minimum positivity rate in clusters applied.
-#' @param method Method that wants to be used to compute the local prevalence - either 'kmeans', 'centroid', or 'base'. Defaults to 'base'.
-#' @param keep_null_tests Whether to remove or not missings. If numeric, provide value to impute.
-#' @param in_latlon:  If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.
+#' @param method Method that wants to be used to compute the local prevalence - either 
+#' 'kmeans', 'centroid', or 'base'. Defaults to 'base'.
+#' @param keep_null_tests Whether to remove or not missings. If numeric, provide 
+#' value to impute.
+#' @param in_latlon:  If True, x and y coordinates are treated as longitude and 
+#' latitude respectively, otherwise they are treated as cartesian coordinates.
 #' @param to_epsg: If in_latlon is True, x and y are reprojected to this EPSG.
-#' @param max_epi_cont: Maximum contribution of the detected Epifriends with respect to the total local data selected. Only applies for "centroid" method.
-#' @param max_thr_data: Percentage of data used to compute the local prevalence. Only applies for "centroid" method.
+#' @param max_epi_cont: Maximum contribution of the detected Epifriends with respect 
+#' to the total local data selected. Only applies for "centroid" method.
+#' @param max_thr_data: Percentage of data used to compute the local prevalence. 
+#' Only applies for "centroid" method.
 #' @param consider_fd: If True, consider false detections and adjust p-value of that.
-#' @param n_simulations: Numeric value with the number of desired iterations to compute the false-detected clusters.
-#' @param sampling_sim: Numeric value with the number of random simulations to be performed to determine the real p-value.
-#' @param optimize_link_d: If True, optimize the linking distance based on minimum distribution of distances between neighbors.
+#' @param n_simulations: Numeric value with the number of desired iterations to 
+#' compute the false-detected clusters.
+#' @param sampling_sim: Numeric value with the number of random simulations to be 
+#' performed to determine the real p-value.
+#' @param optimize_link_d: If True, optimize the linking distance based on minimum 
+#' distribution of distances between neighbors.
 #' @param verbose: If TRUE, print information of the process; else, do not print.
-#'
-#' @details The epifriends package uses the RANN package which can gives the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
 #'
 #' @return  List with the next objects:
 #' cluster_id: numeric vector
@@ -47,15 +59,13 @@
 #' @author Mikel Majewski Etxeberria based on earlier python code by Arnau Pujol.
 #'
 #' @examples
-#' # Required packages
-#' if(!require("RANN")) install.packages("RANN")
-#' library("RANN")
-#'
-#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' # Creation of x vector of longitude coordinates, y vector of latitude 
+#' # coordinates and finaly merge them on a position data frame.
 #' x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 #' y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 #'
-#' # Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+#' # Creation of test data frame with 0 for negative cases and 1 for positive 
+#' # classes for each position.
 #' test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
 #'
 #' # Creation of catalogue for this positions, linking distance 2 and default values.
@@ -93,7 +103,8 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
 
   # Determine the linking array based on desired linking neighbors
   # If the parameter is NULL, it will automatically use the inverse of the prevalence
-  # meaning that all positive positive cases in areas with a prevalence above the mean will be linked.
+  # meaning that all positive positive cases in areas with a prevalence above the 
+  # mean will be linked.
   set_NA <- if (use_link_d == FALSE) FALSE else TRUE
   if (is.null(link_neighbours)){
     link_neighbours = 1 / (sum(test_result[[1]]) / length(test_result[[1]]))
@@ -115,7 +126,8 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
   #Computing cluster_id if needed
   if(is.null(cluster_id)){
     cluster_id = dbscan(
-      x = positive_positions$x, y = positive_positions$y, link_d = link_d, min_neighbours = min_neighbours,
+      x = positive_positions$x, y = positive_positions$y, link_d = link_d, 
+      min_neighbours = min_neighbours,
       use_link_d=use_link_d, link_array=link_positive_array)
   }
 
@@ -148,12 +160,12 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
   # Generate simulations for false positive detection
   if(consider_fd){
     false_det <- get_false_detection(positions=positions, test_result=test_result$test,
-                                     link_d=link_d,use_link_d = use_link_d, link_neighbours = link_neighbours,
+                                     link_d=link_d,use_link_d = use_link_d, 
+                                     link_neighbours = link_neighbours,
                                      n_simulations=n_simulations,
                                      min_neighbours = min_neighbours, max_p = max_p, 
                                      min_pos = min_pos, min_total = min_total,
                                      min_pr = min_pr, keep_null_tests = keep_null_tests)
-    saveRDS(false_det, "./false_det.rds")
   }else{
     false_det <- NULL
   }
@@ -244,17 +256,37 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
       mean_pr_cluster[cluster_id_indeces] <- mean_pr
       pval_cluster[cluster_id_indeces] <- pval
       mean_pos <- as.data.table(t(colMeans(positive_positions[cluster_id_indeces,])))
-      epifriends_catalogue[["mean_position_pos"]] <- append(epifriends_catalogue[["mean_position_pos"]], list(mean_pos))
+      epifriends_catalogue[["mean_position_pos"]] <- append(
+        epifriends_catalogue[["mean_position_pos"]], list(mean_pos)
+      )
       mean_pos_ext <-  as.data.table(t(colMeans(positions[total_friends_indeces,])))
-      epifriends_catalogue[["mean_position_all"]] <- append(epifriends_catalogue[["mean_position_all"]], list(mean_pos_ext))
-      epifriends_catalogue[["mean_pr"]] <- append(epifriends_catalogue[["mean_pr"]], mean_pr)
-      epifriends_catalogue[["mean_local_prev"]] <- append(epifriends_catalogue[["mean_local_prev"]], mean_prev)
-      epifriends_catalogue[["positives"]] <- append(epifriends_catalogue[["positives"]], as.integer(npos))
-      epifriends_catalogue[["negatives"]] <- append(epifriends_catalogue[["negatives"]], as.integer(ntotal - npos))
-      epifriends_catalogue[["total"]] <- append(epifriends_catalogue[["total"]], as.integer(ntotal))
-      epifriends_catalogue[["indeces"]] <- append(epifriends_catalogue[["indeces"]], list(total_friends_indeces))
-      epifriends_catalogue[["indeces_local_prev"]] <- append(epifriends_catalogue[["indeces_local_prev"]], list(indices_local))
-      epifriends_catalogue[["p"]] <- append(epifriends_catalogue[["p"]], pval)
+      epifriends_catalogue[["mean_position_all"]] <- append(
+        epifriends_catalogue[["mean_position_all"]], list(mean_pos_ext)
+      )
+      epifriends_catalogue[["mean_pr"]] <- append(
+        epifriends_catalogue[["mean_pr"]], mean_pr
+      )
+      epifriends_catalogue[["mean_local_prev"]] <- append(
+        epifriends_catalogue[["mean_local_prev"]], mean_prev
+      )
+      epifriends_catalogue[["positives"]] <- append(
+        epifriends_catalogue[["positives"]], as.integer(npos)
+      )
+      epifriends_catalogue[["negatives"]] <- append(
+        epifriends_catalogue[["negatives"]], as.integer(ntotal - npos)
+      )
+      epifriends_catalogue[["total"]] <- append(
+        epifriends_catalogue[["total"]], as.integer(ntotal)
+      )
+      epifriends_catalogue[["indeces"]] <- append(
+        epifriends_catalogue[["indeces"]], list(total_friends_indeces)
+      )
+      epifriends_catalogue[["indeces_local_prev"]] <- append(
+        epifriends_catalogue[["indeces_local_prev"]], list(indices_local)
+      )
+      epifriends_catalogue[["p"]] <- append(
+        epifriends_catalogue[["p"]], pval
+      )
     }else{
       cluster_id[cluster_id_indeces] <- 0
     }
@@ -272,17 +304,16 @@ catalogue <- function(x, y, test_result, link_d,  prevalence = NULL,  cluster_id
 #' @param probs Vector of probabilities for each simulation to be performed.
 #'
 #' @return Ratio between the sum of each n and the total number of trials.
+#' 
+#' @importFrom stats pbinom
 #'   
 #' @export
 #' 
 #' @author Eric Matamoros.
 #'
 #' @examples
-#' # Required packages
-#' if(!require("RANN")) install.packages("RANN")
-#' library("RANN")
-#'
-#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+#' # Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+#' # and finally merge them on a position data frame.
 #' n <- 10000
 #' size <- 1
 #' probs <- c(0.3, 0.4)
