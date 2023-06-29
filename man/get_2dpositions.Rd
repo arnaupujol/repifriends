@@ -11,7 +11,8 @@ get_2dpositions(x, y, in_latlon = FALSE, to_epsg = NULL, verbose = TRUE)
 
 \item{y}{list of coordinates y}
 
-\item{in_latlon}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+\item{in_latlon}{If True, x and y coordinates are treated as longitude and latitude 
+respectively, otherwise they are treated as cartesian coordinates.}
 
 \item{to_epsg}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
@@ -24,12 +25,8 @@ Dataframe with cartesian positions based on x,y coordinates
 This method generate a 2d-vector of cartesian positions from the x, y data.
 }
 \examples{
-
-# Required packages
-if(!require("data.table")) install.packages("data.table")
-library("data.table")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 

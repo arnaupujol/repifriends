@@ -16,9 +16,11 @@ clean_unknown_data(
 \arguments{
 \item{positions}{data.table variables to be imputed.}
 
-\item{cols_impute}{Vector of columns that want to be imputed based on keep_null_tests parameter.}
+\item{cols_impute}{Vector of columns that want to be imputed based on 
+keep_null_tests parameter.}
 
-\item{keep_null_tests:}{Whether to remove or not missings. If numeric, provide value to impute.}
+\item{keep_null_tests:}{Whether to remove or not missings. If numeric, provide 
+value to impute.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
@@ -29,20 +31,15 @@ Data.table with cleaned/imputed variables based on user choose.
 This method removes missing data in the coordinates and imputes or removes the values
 over the tests column
 }
-\details{
-This function cleans the position data if contains missing values. User can choose whether to remove the missings or impute them with a specific value.
-}
 \examples{
-# Required packages
-if(!require("data.table")) install.packages("data.table")
-library("data.table")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,NA,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,NA,14,15,30)
 pos <- data.table(x,y)
 
-# Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
+# Computation of clusters of hotspots for positions with dbscan algorithm using 
+# linking distance 2 and minimum 3 neighbours.
 db <- clean_unknown_data(pos)
 
 }

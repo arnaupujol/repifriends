@@ -3,7 +3,13 @@
 .Rapp.history
 
 # Session Data files
-.RData
+*.DS_Store
+*.RData
+*..Rcheck
+*.RHistory
+*.Rproj.user
+*.git
+
 
 # User-specific files
 .Ruserdata
@@ -52,6 +58,7 @@ app/tmp/*
 *www/
 *tmp/
 
-# PDF directories
+# PDF/Animated files directories
 *pdfs/
 *.gif
+

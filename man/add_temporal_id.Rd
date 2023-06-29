@@ -2,7 +2,9 @@
 % Please edit documentation in R/temporal_catalogue.R
 \name{add_temporal_id}
 \alias{add_temporal_id}
-\title{This method generates the temporal ID of EpiFRIenDs clusters by linking clusters from different time frames, assigning the same temporal ID to them when they are close enough in time and space.}
+\title{This method generates the temporal ID of EpiFRIenDs clusters by linking clusters
+from different time frames, assigning the same temporal ID to them when they 
+are close enough in time and space.}
 \usage{
 add_temporal_id(
   catalogue_list,
@@ -12,19 +14,26 @@ add_temporal_id(
 )
 }
 \arguments{
-\item{catalogue_list}{List of EpiFRIenDs catalogues, each element of the list corresponding to the catalogue of each timestep.}
+\item{catalogue_list}{List of EpiFRIenDs catalogues, each element of the list 
+corresponding to the catalogue of each timestep.}
 
-\item{linking_time}{Maximum number of timesteps of distance to link hotspots with the same temporal ID.}
+\item{linking_time}{Maximum number of timesteps of distance to link hotspots 
+with the same temporal ID.}
 
-\item{linking_dist}{Linking distance used to link the clusters from the different time frames.}
+\item{linking_dist}{Linking distance used to link the clusters from the different 
+time frames.}
 
-\item{get_timelife}{It specifies if the time periods and timelife of clusters are obtained.}
+\item{get_timelife}{It specifies if the time periods and timelife of clusters are 
+obtained.}
 }
 \value{
-List of EpiFRIenDs catalogues with the added variable 'tempID' (and optionally the variables 'first_timestep', 'last_timestep' and 'lifetime').
+List of EpiFRIenDs catalogues with the added variable 'tempID' 
+(and optionally the variables 'first_timestep', 'last_timestep' and 'lifetime').
 }
 \description{
-This method generates the temporal ID of EpiFRIenDs clusters by linking clusters from different time frames, assigning the same temporal ID to them when they are close enough in time and space.
+This method generates the temporal ID of EpiFRIenDs clusters by linking clusters
+from different time frames, assigning the same temporal ID to them when they 
+are close enough in time and space.
 }
 \author{
 Eric Matamoros Morales based on earlier python code by Arnau Pujol.

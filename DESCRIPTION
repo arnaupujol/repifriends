@@ -1,25 +1,33 @@
-Package: epifriends
+Package: repifriends
 Type: Package
 Title: Epidemiological Foci Relating Infections by Distance (EpiFRIenDs)
-Version: 0.1.0
+Version: 2.0.0
+Date: 2023-06-24
 Author: Eric Matamoros, Mikel Majewski, Arnau Pujol
 Maintainer: Arnau Pujol <arnau.pujol@isglobal.org>
 Description: This repository contains the R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs), a software to detect and analyse foci (clusters, outbreaks or hotspots) of infections from a given disease.
-License: GNU GENERAL PUBLIC LICENSE
+License: GPL (>=3)
+Standardizable: TRUE
 Encoding: UTF-8
+Language: en-US
 LazyData: true
-RoxygenNote: 7.2.3
 Depends:
-    cluster (>= 2.1.4),
+    R (>= 3.4.0),
+    data.table (>= 1.14.8),
+Imports:
     clValid (>= 0.7),
     chron (>= 2.3-61),
-    data.table (>= 1.14.8),
     doParallel (>= 1.0.17),
     foreach (>= 1.5.2),
     ggmap (>= 3.0.2),
     ggplot2 (>= 3.4.1),
     magick (>= 2.7.4),
+    parallel(>= 4.2.2),
+    proxy(>= 0.4-27),
     sf (>= 1.0-12),
     stats (>= 4.2.2),
-    R (>= 3.4.0),
     RANN (>= 2.6.1)
+Suggests:
+    knitr(>= 1.42)
+RoxygenNote: 7.2.3
+VignetteBuilder: knitr

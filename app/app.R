@@ -81,6 +81,10 @@ ui <- fluidPage(
                                     label = "Number of simulations to perform",
                                     value = 10000, step = 50)
                      ),
+                     selectInput(inputId = "link_neighbors",
+                                 label = "Use linking neighbors instead of linking distance: ",
+                                 choices = c("Yes", "No"),
+                                 selected = "No"),
                      selectInput(inputId = "method",
                                  label = "Select method to account fot local prevalence:",
                                  choices = c("base", "kmeans", "centroid"),
@@ -366,6 +370,12 @@ server <- function(input, output) {
     }
     cluster_id <- NULL
     min_neighbours <- input$min_neighbours
+    link_neighbors <- input$link_neighbors
+    if (link_neighbors == 'Yes'){
+      use_link_d <- FALSE
+    }else{
+      use_link_d <- TRUE
+    }
     max_p <- input$max_p
     min_pos <- input$min_pos
     min_total <- input$min_total
@@ -412,6 +422,7 @@ server <- function(input, output) {
       prevalence = prevalence,
       cluster_id = cluster_id,
       min_neighbours = min_neighbours,
+      use_link_d=use_link_d,
       max_p = max_p,
       min_pos = min_pos,
       min_total = min_total,
@@ -450,6 +461,12 @@ server <- function(input, output) {
     }
     min_neighbours <- input$min_neighbours_temp
     time_width <- input$time_width_temp
+    link_neighbors <- input$link_neighbors
+    if (link_neighbors == 'Yes'){
+      use_link_d <- FALSE
+    }else{
+      use_link_d <- TRUE
+    }
     max_p <- input$max_p_temp
     min_pos <- input$min_pos_temp
     min_total <- input$min_total_temp
@@ -527,6 +544,7 @@ server <- function(input, output) {
       dates = df$date,
       link_d = link_d,
       prevalence = prevalence,
+      use_link_d=use_link_d,
       min_neighbours =  min_neighbours,
       time_width = time_width,
       min_date = min(df$date),

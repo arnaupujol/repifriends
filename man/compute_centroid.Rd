@@ -19,30 +19,34 @@ compute_centroid(
 
 \item{test_result}{data.frame with the test results (0 or 1).}
 
-\item{max_epi_cont}{Maximum percentage contribution of the number of epifriends indices with respect to all the ones.}
+\item{max_epi_cont}{Maximum percentage contribution of the number of epifriends 
+indices with respect to all the ones.}
 
 \item{thr_data}{Percentage of overall data considered for the local prevalence calculus.}
 }
 \value{
-Local prevalence based on the positive cases for the closest datapoints to the centroid 
-defined by epifriends indices
+Local prevalence based on the positive cases for the closest datapoints 
+to the centroid defined by epifriends indices
 }
 \description{
 This function determines the prevalence based on the closest groups to a centroid.
 }
 \examples{
-library(data.table)
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 pos <- data.table("x" = x,"y" = y)
+pos$id <- 1:length(x)
 friends_ind <- c(1,2,3)
 
-# Creation of test data frame with 0 for negative cases and 1 for positive clases for each position.
+# Creation of test data frame with 0 for negative cases and 1 for positive clases 
+# for each position.
 test <- c(0,1,1,0,1,0,1,1,0,0,0,0,1,0,1,1)
+test_result <- data.table(test = test)
 
 # Calculus of prevalence based on the centroid
-pos_rate <- compute_centroid(pos, friends_ind, test)
+pos_rate <- compute_centroid(pos, friends_ind, test_result)
 
 }
 \author{

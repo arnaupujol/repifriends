@@ -20,41 +20,41 @@ dbscan(
 \arguments{
 \item{x}{Vector of y positions.}
 
-\item{link_d:}{The linking distance to connect cases. Should be in the same scale as the positions.}
+\item{link_d:}{The linking distance to connect cases. Should be in the same scale 
+as the positions.}
 
-\item{use_link_d:}{If True, use linking distance to determine the closest neighbours. If False, use default linking neighbours based on proximity.}
+\item{use_link_d:}{If True, use linking distance to determine the closest neighbors.
+If False, use default linking neighbours based on proximity.}
 
-\item{link_array:}{Vector with linking distances for each individual position coordinates that satisfy the link_neighbours condition. Only used if use_link_d is False.}
+\item{link_array:}{Vector with linking distances for each individual position coordinates 
+that satisfy the link_neighbours condition. Only used if use_link_d is False.}
 
-\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link cases as friends.}
+\item{min_neighbours:}{Minium number of neighbours in the radius < link_d needed to link 
+cases as friends.}
 
-\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude respectively, otherwise they are treated as cartesian coordinates.}
+\item{in_latlon:}{If True, x and y coordinates are treated as longitude and latitude 
+respectively, otherwise they are treated as cartesian coordinates.}
 
 \item{to_epsg:}{If in_latlon is True, x and y are reprojected to this EPSG.}
 
 \item{verbose:}{If TRUE, print information of the process; else, do not print.}
 }
 \value{
-cluster_id: Vector of the cluster IDs of each position, with 0 for those without a cluster. Returns empty numeric vector if positions vector is empty.
+cluster_id: Vector of the cluster IDs of each position, with 0 for those 
+without a cluster. Returns empty numeric vector if positions vector is empty.
 }
 \description{
 This method finds the DBSCAN clusters from a set of positions and returns their cluster IDs.
 }
-\details{
-The epifriends package uses the RANN package which gives us the exact nearest neighbours using the friends of friends algorithm. For more information on the RANN library please visit https://cran.r-project.org/web/packages/RANN/RANN.pdf
-}
 \examples{
-# Required packages
-if(!require("RANN")) install.packages("RANN")
-library("RANN")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,13.3,14,15,30)
-pos <- data.frame(x,y)
 
-# Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
-db <- dbscan(pos, 2 ,3)
+# Computation of clusters of hotspots for positions with dbscan algorithm using 
+# linking distance 2 and minimum 3 neighbours.
+db <- dbscan(x=x, y=y, link_d = 3)
 
 }
 \author{

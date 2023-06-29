@@ -20,11 +20,8 @@ Ratio between the sum of each n and the total number of trials.
 Perform binomial simulations with different independent probabilities of success.
 }
 \examples{
-# Required packages
-if(!require("RANN")) install.packages("RANN")
-library("RANN")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 n <- 10000
 size <- 1
 probs <- c(0.3, 0.4)

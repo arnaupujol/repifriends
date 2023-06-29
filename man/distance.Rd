@@ -18,7 +18,8 @@ Distance between positions.
 This method calculates the Euclidean distance between two positions.
 }
 \examples{
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates and 
+# finally merge them on a position data frame.
 pos_a <- c(1,2)
 pos_b <- c(4,7)
 

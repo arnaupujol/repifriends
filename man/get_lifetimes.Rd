@@ -2,18 +2,21 @@
 % Please edit documentation in R/temporal_catalogue.R
 \name{get_lifetimes}
 \alias{get_lifetimes}
-\title{This method obtains the first and last time frames for each temporal ID from a list of EpiFRIenDs catalogues and the corresponding timelife.}
+\title{This method obtains the first and last time frames for each temporal ID from 
+a list of EpiFRIenDs catalogues and the corresponding timelife.}
 \usage{
-get_lifetimes(catalogue_list)
+get_lifetimes(cat_list)
 }
 \arguments{
-\item{catalogue_list}{List of lists (temporal catalogues with temporal_id in our case).}
+\item{cat_list}{List of lists (temporal catalogues with temporal_id in our case).}
 }
 \value{
-List of hotspot catalogues with the added fields 'first_timestep', 'last_timestep' and 'lifetime'.
+List of hotspot catalogues with the added fields 'first_timestep', 
+'last_timestep' and 'lifetime'.
 }
 \description{
-This method obtains the first and last time frames for each temporal ID from a list of EpiFRIenDs catalogues and the corresponding timelife.
+This method obtains the first and last time frames for each temporal ID from 
+a list of EpiFRIenDs catalogues and the corresponding timelife.
 }
 \author{
 Eric Matamoros Morales based on earlier python code by Arnau Pujol.

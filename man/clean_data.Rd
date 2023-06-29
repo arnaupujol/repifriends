@@ -2,36 +2,34 @@
 % Please edit documentation in R/clean_data.R
 \name{clean_data}
 \alias{clean_data}
-\title{Method to clean an input data.table with automatically computing the columns to be imputed.}
+\title{Method to clean an input data.table with automatically computing the columns 
+to be imputed.}
 \usage{
 clean_data(positions, keep_null_tests = FALSE)
 }
 \arguments{
 \item{positions}{data.table variables to be imputed.}
 
-\item{keep_null_tests:}{Whether to remove or not missings. If numeric, provide value to impute.}
+\item{keep_null_tests:}{Whether to remove or not missings. If numeric, provide 
+value to impute.}
 }
 \value{
 Data.table with cleaned/imputed variables based on user choose.
 }
 \description{
-Method to clean an input data.table with automatically computing the columns to be imputed.
-}
-\details{
-This function takes an input data.table and takes all numeric columns non-coordinate related to impute.
+Method to clean an input data.table with automatically computing the columns 
+to be imputed.
 }
 \examples{
-# Required packages
-if(!require("data.table")) install.packages("data.table")
-library("data.table")
-
-# Creation of x vector of longitude coordinates, y vector of latitude coordinates and finaly merge them on a position data frame.
+# Creation of x vector of longitude coordinates, y vector of latitude coordinates 
+# and finally merge them on a position data frame.
 x <- c(1,2,3,4,7.5,8,8.5,9,10,NA,13.1,13.2,13.3,14,15,30)
 y <- c(1,2,3,4,7.5,8,8.5,9,10,13,13.1,13.2,NA,14,15,30)
 test <- c(1,0,1,1,0,NA,NA,0,1,1,1,0,0,1,1,0)
 pos <- data.table(x,y)
 
-# Computation of clusters of hotspots for positions with dbscan algorithm using linking distance 2 and minimum 3 neighbours.
+# Computation of clusters of hotspots for positions with dbscan algorithm 
+# using linking distance 2 and minimum 3 neighbours.
 db <- clean_data(pos, FALSE)
 
 }
