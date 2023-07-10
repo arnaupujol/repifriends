@@ -6,7 +6,8 @@
 
 This repository contains the R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs), a software to detect and analyse foci (clusters, outbreaks or hotspots) of infections from a given disease.
 
-This software is fully open source and all are welcome to use or modify it for any purpose. We would kindly request that any scientific publications making use of this software cite **Pujol A., Brokhattingen N., Matambisso G., et al, 2023, Nature Communications.**.
+This software is fully open source and all are welcome to use or modify it for any purpose. We would kindly request that any scientific publications making use of this software cite **Pujol A., Brokhattingen N., Matambisso G., et al., 2023, Nature Communications, 14(1):4004**. You can find
+[here](https://github.com/arnaupujol/epifriends) a version of EpiFRIenDs in Python. 
 
 Software requirements:
 ----------------------
