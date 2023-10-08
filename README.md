@@ -1,7 +1,7 @@
 # Epidemiological Foci Relating Infections by Distance (EpiFRIenDs)
 
-> Author: **Mikel Majewski Etxeberria, Arnau Pujol**  
-> Year: **2022**  
+> Author: **Mikel Majewski Etxeberria, Eric Matamoros, Arnau Pujol**  
+> Year: **2023**  
 > Version: **1.0**  
 
 This repository contains the R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs), a software 
