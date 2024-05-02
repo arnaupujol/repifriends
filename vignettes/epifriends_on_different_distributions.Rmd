@@ -1,0 +1,199 @@
+---
+title: "epifriends_on_different_distributions"
+author: "Mikel Majewski"
+date: '2022-10-21'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Importing modules
+
+We first import the packages required from this RMarkdown.
+
+```{r, message = FALSE}
+library("RANN")
+library("data.table")
+library("readxl")
+library("chron")
+library("ggplot2")
+library("patchwork")
+library("ggpubr")
+library("epifriends")
+```
+
+## Create mock data 
+
+The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
+
+
+```{r, message = FALSE}
+setwd("./../") 
+load("./data/datarand.rda")
+load("./data/datasin.rda")
+load("./data/dataclus.rda")
+```
+
+In order to work better with the data, some subdatasets are created:
+
+```{r, message = FALSE}
+x_rand <- datarand$x
+y_rand <- datarand$y
+test_rand <- datarand$test
+positive_rand = (test_rand == 1)
+
+x_sin <- datasin$x
+y_sin <- datasin$y
+test_sin <- datasin$test
+positive_sin = (test_sin == 1)
+
+x_clus <- dataclus$x
+y_clus <- dataclus$y
+test_clus <- dataclus$test
+positive_clus = (test_clus == 1)
+```
+
+This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:
+
+```{r, message = FALSE}
+plot(x_rand, y_rand, pch = 19, col = as.factor(test_rand))
+plot(x_sin, y_sin, pch = 19, col = as.factor(test_sin))
+plot(x_clus, y_clus, pch = 19, col = as.factor(test_clus))
+```
+
+## Running EpiFRIenDs 
+
+We first define the two main parameters of the method: 
+
+- **link_d**, the linking distance: this distance is used to link the data points so that points that are closer than this distance are candidates to join and form part of the same cluster. The other parameter, **min_neighbours**, defines if they are actually linked. 
+
+- **min_neighbours**, the minimum number of neighbours: one data point is linked to its neighbours (or friends, defined as the data points closer than **link_d** to it) only if there are at least **min_neighbours** (including itself) to link. This parameter ensures that for each cluster we have at least **min_neighbours** within a radius of **link_d**, plus other data points indirectly linked to them. 
+
+```{r, message = FALSE}
+link_d = 0.01
+min_neighbours = 2
+```
+
+The function **dbscan** uses these two parameters to identify clusters using the Density-based spatial clustering of applications with noise (DBSCAN) algorithm and returns the cluster ID of each data point, with 0 meaning that the data point does not belong to any cluster. In the EpiFRIenDs algorithm, DBSCAN is applied using only the positive cases in order to detect clusters of infections. In the following example, we select the positions of th first mock dataset of the positive cases only using the mask **positive_rand**, a boolean array indicating if the case is positive. We visualise the result showing the scatter distribution of negative cases in grey and the distribution of positive cases colour coded by the cluster ID (0 meaning that they are not assigned to any cluster).
+
+```{r, message = FALSE}
+#Running DBSCAN for the mock data with random distribution
+cluster_id = dbscan(x_rand[positive_rand], y_rand[positive_rand], link_d, min_neighbours)
+
+position_rand <- data.table("x" = x_rand, "y" = y_rand)
+neg <- data.frame(position_rand[!positive_rand,])
+pos <- data.frame(position_rand[positive_rand,],cluster_id)
+# 
+# plot(datarand$x[!positive_rand], datarand$y[!positive_rand], pch = 19, col = "grey")
+# points(datarand$x[positive_rand], datarand$y[positive_rand], pch = 19, col = rainbow(40)[factor(cluster_id)])
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=c("black",rainbow(7)))
+graph
+
+```
+
+
+```{r, message = FALSE}
+#Running DBSCAN for the mock data with sinusoidal distribution
+cluster_id = dbscan(x_sin[positive_sin], y_sin[positive_sin], link_d, min_neighbours)
+
+position_sin <- data.table("x" = x_sin, "y" = y_sin)
+
+neg <- data.frame(position_sin[!positive_sin,])
+pos <- data.frame(position_sin[positive_sin,],cluster_id)
+
+# plot(datasin$x[!positive_sin], datasin$y[!positive_sin], pch = 19, col = "grey")
+# points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=c("black",rainbow(50)))
+graph
+```
+
+```{r, message = FALSE}
+#Running DBSCAN for the mock data with cluster distribution
+cluster_id = dbscan(x_clus[positive_clus], y_clus[positive_clus], link_d, min_neighbours)
+
+position_clus <- data.table("x" = x_clus, "y" = y_clus)
+neg <- data.frame(position_clus[!positive_clus,])
+pos <- data.frame(position_clus[positive_clus,],cluster_id)
+
+# plot(dataclus$x[!positive_clus], dataclus$y[!positive_clus], pch = 19, col = "grey")
+# points(dataclus$x[positive_clus], dataclus$y[positive_clus], pch = 19, col = rainbow(40)[factor(cluster_id)])
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=c("black",rainbow(40)))
+graph
+```
+
+The main method from EpiFRIenDs is the function catalogue, that adds the neighbouring negative cases into the clusters by connecting the negative cases into the clusters when they are closer than link_d to at least one of the positive cases of each cluster. Notice that, with this approach, one negative case can contribute to two different clusters, since it can be closer than link_d to two positive cases from two different clusters that are furthen than link_d between them.
+
+catalogue requires as input the positions and test results of the whole data set and the linking distance link_d. Optionally, the cluster IDs of the positive cases obtained from the method dbscan can be passed as input, otherwise dbscan is run on the positive cases as the first step of the function catalogue. Finally, min_neighbours can also be specified. The default value is 2, corresponding to the case of running the Friends-of-Friends algorithm on the positive cases in the dbscan step.
+
+The method outputs the cluster ID, positivity rate and p-value assigned to each positive case, as well as a geopandas dataframe with the EpiFRIenDs output catalogue, with the following information:
+
+    'id': EpiFRIenDs id of the foci
+    'mean_position_pos': Mean position of positive cases
+    'mean_position_all': Mean position of all cases
+    'mean_pr': Positivity rate of the foci
+    'positives': Number of positive cases
+    'negatives': Number of negative cases
+    'total': Total number of positions
+    'indeces': Indeces of all positions
+    'p': p-value of the detection
+
+In the following example we run the method catalogue for different values of link_d in order to see the impact of this parameter on the detected foci (or clusters).
+
+```{r, message = FALSE}
+#EpiFRIenDs parameters
+link_d_to_analyse = c(.01, .02, .05, .1)
+min_neighbours = 2
+```
+
+We run EpiFRIenDs for all values or `link_d` and for the three mock data catalogues. 
+
+Here we show the results of applying different `link_d` to the first mock catalogue with random distributions:
+
+```{r, message = FALSE}
+#Random distribution
+for(link_d in link_d_to_analyse){
+  cat_rand <- catalogue(x_rand, y_rand, test_rand, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
+  print(paste0("Number of EpiFRIenDs groups in random data with scale = ", link_d, ":", length(cat_rand$epifriends_catalogue$id), ", ", sum(cat_rand$epifriends_catalogue$p < 0.05), " of which with p<0.05"))
+  graph_rand <- scatter_pval(position_rand, cat_rand$cluster_id, positive_rand, prevalence=NULL, cat_rand$epifriends_catalogue)
+  histo_rand <- size_histogram(cat_rand)
+  print(graph_rand + histo_rand)
+}
+```
+
+Now this shows the results applied to the data set with a sinusoidal distribution of positive cases: 
+
+```{r, message = FALSE}
+#Random distribution
+for(link_d in link_d_to_analyse){
+  cat_sin <- catalogue(x_sin, y_sin, test_sin, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
+  print(paste0("Number of EpiFRIenDs groups in sinusoidal data with scale = ", link_d, ":", length(cat_sin$epifriends_catalogue$id), ", ", sum(cat_sin$epifriends_catalogue$p < 0.05), " of which with p<0.05"))
+  graph_sin <- scatter_pval(position_sin, cat_sin$cluster_id, positive_sin, prevalence = NULL, cat_sin$epifriends_catalogue) 
+  histo_sin <- size_histogram(cat_sin)
+  print(graph_sin+histo_sin)
+}
+```
+
+Finally, this shows the results applied to the data set with clustered distribution of positive cases: 
+
+```{r, message = FALSE}
+#Random distribution
+for(link_d in link_d_to_analyse){
+  cat_clus <- catalogue(x_clus, y_clus, test_clus, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
+  print(paste0("Number of EpiFRIenDs groups in sinusoidal data with scale = ", link_d, ":", length(cat_clus$epifriends_catalogue$id), ", ", sum(cat_clus$epifriends_catalogue$p < 0.05), " of which with p<0.05"))
+  graph_clus <- scatter_pval(position_clus, cat_clus$cluster_id, positive_clus,prevalence=NULL,cat_clus$epifriends_catalogue) 
+  histo_clus <- size_histogram(cat_clus)
+  print(graph_clus+histo_clus)
+}
+```
+

@@ -1,0 +1,157 @@
+---
+title: "Linking neighbours"
+author: "Eric Matamoros"
+date: '2022-10-21'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Importing modules
+
+We first import the packages required from this RMarkdown.
+
+```{r, message = FALSE}
+library("RANN")
+library("data.table")
+library("doParallel")
+library("ggplot2")
+library("epifriends")
+```
+
+## Read mock data
+
+Read mock data & specify parameters for running Epifriends.
+
+```{r, warning=FALSE}
+setwd("./../") 
+load("./data/mock_data_linkneigh.rda")
+```
+
+```{r, warning=FALSE}
+df <- mock_data_linkneigh
+position <- df[,.(x,y)]
+positive = (df$test == 1)
+test_result <- df[,.(test)]
+link_d <- 0.02
+min_neighbours <- 2
+```
+
+Check the distribution of positive and negative cases by plotting its distribution.
+
+```{r, message = FALSE}
+# Plot data
+graph_base <- ggplot(df, aes(x = x, y = y, color = as.factor(test))) +
+  geom_point(size = 3) +
+  labs(title = "Distribution of Positive and Negative Cases")
+print(graph_base)
+```
+
+We will now test two different strategies to account for the local radious of an EpiFRIenD:
+  · Use linking distance (link_d): This parameter determines the maximum distance between two positions that will be used to be considered as neighbors. If two points are further than the defined distance, they won't be considered as neighbors.
+  · Use the link_neighbors(link_neighbors): This parameter defines how many closest neighbors we want to define for each coordinate and that will be the defined radious accross the algorithm. Differently from the linking distance, there will be an individual link_d for each positive test.
+
+## Using the linking distance
+
+Run the algorithm using the linking distance approach.
+
+```{r, message = FALSE}
+# Plot data
+cat_link <- catalogue(x = df$x, y = df$y, test = df$test, link_d = link_d,
+                      min_neighbours=min_neighbours, use_link_d = TRUE)
+
+graph_link <- scatter_pval(
+  df[,.(x,y)], 
+  cat_link$cluster_id, 
+  (df$test == 1), 
+  NULL,
+  cat_link$epifriends_catalogue,
+  FALSE,
+  c(0,1),
+  c(0,1),
+  paste0('P-value each cluster - link_dist: ', link_d))
+graph_link
+```
+
+## Using the linking neighbors
+
+Run the algorithm using the linking neighbors approach.
+
+```{r, message = FALSE}
+# Plot data
+cat_neighbours <- catalogue(x = df$x, y = df$y, test = df$test, link_d = link_d,
+                      min_neighbours=min_neighbours,use_link_d = FALSE)
+
+graph_neigh <- scatter_pval(
+  df[,.(x,y)], 
+  cat_neighbours$cluster_id, 
+  (df$test == 1), 
+  NULL,
+  cat_neighbours$epifriends_catalogue,
+  FALSE,
+  c(0,1),
+  c(0,1),
+  paste0('P-value each cluster - link_neigh'))
+graph_neigh
+```
+
+## Comparison between Linking Distance & Linking Neighbors
+
+The next barplot will show the differences in p-values and detected clusters using each of the above mentioned approaches.
+
+
+```{r, message = FALSE}
+# Plot data
+cat_link <- catalogue(x = df$x, y = df$y, test = df$test, link_d = link_d,
+                      min_neighbours=min_neighbours, use_link_d = TRUE)
+
+graph_link <- scatter_pval(
+  df[,.(x,y)], 
+  cat_link$cluster_id, 
+  (df$test == 1), 
+  NULL,
+  cat_link$epifriends_catalogue,
+  FALSE,
+  c(0,1),
+  c(0,1),
+  paste0('P-value each cluster - link_dist: ', link_d))
+graph_link
+```
+
+## Using the linking neighbors
+
+Run the algorithm using the linking neighbors approach.
+
+```{r, message = FALSE}
+mean_link <- rbindlist(cat_link$epifriends_catalogue$mean_position_all)
+mean_link[, pvalue := cat_link$epifriends_catalogue$p]
+mean_link[, epifriends := 1:nrow(mean_link)]
+mean_link[, method := paste0("link_d_", epifriends)]
+
+mean_neigh <- rbindlist(cat_neighbours$epifriends_catalogue$mean_position_all)
+mean_neigh[, pvalue := cat_neighbours$epifriends_catalogue$p]
+mean_neigh[, epifriends := 1:nrow(mean_neigh)]
+mean_neigh[, method := paste0("link_neigh_", epifriends)]
+
+mean_link <- ggplot(mean_link, aes(x = method, y = pvalue,  fill = pvalue)) +
+  geom_bar(stat = "identity") +
+  labs(title = "P-Value for Linking Distance method", 
+       x = "Epifriends-Methodology", y = "P-Value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+mean_link <- mean_link + geom_hline(yintercept = 0.05, linetype = "dashed")
+
+graph_neigh <- ggplot(mean_neigh, aes(x = method, y = pvalue,  fill = pvalue)) +
+  geom_bar(stat = "identity") +
+  labs(title = "P-Value for Linking Neighbors method", 
+       x = "Epifriends-Methodology", y = "P-Value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+mean_neigh <- graph_neigh + geom_hline(yintercept = 0.05, linetype = "dashed")
+```
+
+```{r, message = FALSE}
+mean_link
+mean_neigh
+```
+

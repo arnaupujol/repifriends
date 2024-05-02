@@ -1,0 +1,96 @@
+---
+title: "optimize_link_d"
+author: "Eric Matamoros"
+date: '2022-10-21'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Importing modules
+
+We first import the packages required from this RMarkdown.
+
+```{r, message = FALSE}
+library("RANN")
+library("doParallel")
+library("data.table")
+library("ggplot2")
+library("epifriends")
+```
+
+## Create mock data 
+
+The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
+
+```{r, warning=FALSE}
+setwd("./../") 
+load("./data/dataclus.rda")
+min_neighbors <- 2
+```
+
+In order to work better with the data, some subdatasets are created:
+
+```{r, message = FALSE}
+# Obtain position coordinates & test results
+x = dataclus$x
+y = dataclus$y
+test = dataclus$test
+positive = (test == 1)
+```
+
+This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:
+
+```{r, message = FALSE}
+# Plot data
+graph_base <- ggplot(dataclus, aes(x = x, y = y, color = as.factor(test))) +
+  geom_point(size = 3) +
+  labs(title = "Distribution of Positive and Negative Cases")
+graph_base
+```
+
+Obtain minimum distance between positive tests based on the contrain of the min_neighbors. For each positive test case, the distance with the closes specified neighbors will be computed, which will lead to a distribution of minimum distances.
+```{r, message = FALSE}
+# Plot data
+min_distances <- get_min_distances(dataclus[positive,.(x,y)], min_neighbors)
+hist(min_distances)
+```
+
+Estimate quantiles to work with. If 'fixed', a vector of quantiles from 0 to 1 with a step of 0.125 is created. If 'random', an array from 0 to 1 with a step of 0.25 is first created and then for each range a random number of quantiles is generated.
+```{r, message = FALSE}
+quantile_est <- 'fixed'
+quantiles <- quantile_estimation(quantile_est, FALSE)
+```
+
+Determine the distance for each of the quantiles and merge those quantiles whose distance is lower than a given threshold. In order to account for scale proportions, a normalization of the minimum distances is performed.
+```{r, message = FALSE}
+dist_prop <- 0.1
+min_distances_norm <- (min_distances - min(min_distances)) / (max(min_distances) - min(min_distances))
+quantiles_dist <- quantile(min_distances_norm,probs = c(quantiles),na.rm = TRUE)
+dt = data.table('quantiles' = quantiles, 'distances'= as.numeric(quantiles_dist))
+
+# Simplify estimated quantiles based on distance proxy
+dt <- simplify_distributions(dt[!(quantiles %in% c(0, 1))], dist_prop)
+dt[, distances := quantile(min_distances,probs = c(dt$quantiles),na.rm = TRUE)]
+```
+
+After the distances for each of the remaining quantiles is obtaned, an optimization process is done to determine the optimal quantile, which will lead to an optimal linking distance. The starting quantiles are the ones determined in the previous step and the metric to be optimized is the number of real positive cases computed as: nº positives * (1- p-value). P-value requires the callback of catalogue() function to detect the different hotspots.
+
+```{r, message = FALSE}
+# Optimization
+opt <- optimize_positives(dataclus[,.(x, y)], test, min_neighbors,NULL,min_distances, dt$quantiles)
+opt_link_d <- as.numeric(quantile(min_distances,opt$optimal_link_d,na.rm = TRUE))
+
+print(paste0("Linking Distance: ", opt_link_d))
+
+traces <- unique(opt$traces)
+setorderv(traces, 'quantiles')
+
+traces[, link_d := quantile(min_distances,quantiles,na.rm = TRUE)]
+plot1 <- ggplot(traces, aes(x = link_d, y = metrics)) +
+  geom_line(linewidth = 1) + geom_point(size = 3) +
+  labs(title = "Best metric based on link_d")
+print(plot1)
+```
+
+The result of the optimization is the optimal linking distance.

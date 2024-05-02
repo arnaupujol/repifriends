@@ -3,7 +3,13 @@
 .Rapp.history
 
 # Session Data files
-.RData
+*.DS_Store
+*.RData
+*..Rcheck
+*.RHistory
+*.Rproj.user
+*.git
+
 
 # User-specific files
 .Ruserdata
@@ -23,6 +29,7 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+*.html
 
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
@@ -37,3 +44,21 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Temporary files
+www/*
+tmp/*
+app/www/*
+app/tmp/*
+
+# Mac-env variables
+*.DS_Store
+
+# RShiny directories
+*www/
+*tmp/
+
+# PDF/Animated files directories
+*pdfs/
+*.gif
+
