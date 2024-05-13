@@ -1,6 +1,6 @@
 library(chron)
 library(data.table)
-library(epifriends)
+library(repifriends)
 library(ggmap)
 library(ggplot2)
 library(gridExtra)
