@@ -308,7 +308,7 @@ get_label_list <- function(df_list, label = "tempID"){
 #' @author Eric Matamoros Morales based on earlier python code by Arnau Pujol.
 #'
 get_lifetimes <- function(cat_list){
-  #getting list of temporal IDs appearing in catalogue_list
+  #getting list of temporal IDs appearing in cat_list
   tempid_list <- get_label_list(cat_list, label = "tempID")
   #Creating empty columns for first timestep, last timestep and lifteime
   for(t in 1:length(cat_list)){
@@ -335,7 +335,7 @@ get_lifetimes <- function(cat_list){
         lifetime
     }
   }
-  return(catalogue_list)
+  return(cat_list)
 }
 
 #' This method generates the temporal ID of EpiFRIenDs clusters by linking clusters
