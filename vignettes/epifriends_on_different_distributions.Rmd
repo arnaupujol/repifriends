@@ -1,7 +1,7 @@
 ---
 title: "epifriends_on_different_distributions"
-author: "Mikel Majewski"
-date: '2022-10-21'
+author: "Eric Matamoros, Mikel Majewski, Arnau Pujol"
+date: '2024-05-14'
 output:
   pdf_document: default
   html_document: default
@@ -19,7 +19,7 @@ library("chron")
 library("ggplot2")
 library("patchwork")
 library("ggpubr")
-library("epifriends")
+library("repifriends")
 ```
 
 ## Create mock data 

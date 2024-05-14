@@ -1,7 +1,7 @@
 ---
 title: "optimize_link_d"
-author: "Eric Matamoros"
-date: '2022-10-21'
+author: "Eric Matamoros, Arnau Pujol"
+date: '2024-05-14'
 output:
   pdf_document: default
   html_document: default
@@ -16,7 +16,7 @@ library("RANN")
 library("doParallel")
 library("data.table")
 library("ggplot2")
-library("epifriends")
+library("repifriends")
 ```
 
 ## Create mock data 
