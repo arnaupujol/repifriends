@@ -2,7 +2,7 @@
 
 > Author: **Eric Matamoros, Mikel Majewski, Arnau Pujol**  
 > Year: **2024**  
-> Version: **2.0.1**  
+> Version: **2.0.2**  
 
 This repository contains the R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs), a software to detect and analyse foci (clusters, outbreaks or hotspots) of infections from a given disease.
 
