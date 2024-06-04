@@ -2,7 +2,7 @@
 
 > Author: **Eric Matamoros, Mikel Majewski, Arnau Pujol**  
 > Year: **2024**  
-> Version: **2.0.2**  
+> Version: **2.0.3**  
 
 This repository contains the R package for Epidemiological Foci Relating Infections by Distance (EpiFRIenDs), a software to detect and analyse foci (clusters, outbreaks or hotspots) of infections from a given disease.
 
@@ -26,6 +26,8 @@ The following are packages that need to be imported:
 - foreach (>= 1.5.2)
 - ggmap (>= 3.0.2)
 - magick (>= 2.7.4)
+- parallel (>= 4.2.2)
+- proxy (>= 0.4-27)
 - sf (>= 1.0-12)
 - stats (>= 4.2.2)
 
