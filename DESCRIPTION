@@ -30,5 +30,5 @@ Imports:
     stats (>= 4.2.2),
 Suggests:
     knitr(>= 1.42)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 VignetteBuilder: knitr
