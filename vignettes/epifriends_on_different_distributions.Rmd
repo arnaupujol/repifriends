@@ -174,7 +174,7 @@ for(link_d in link_d_to_analyse){
 Now this shows the results applied to the data set with a sinusoidal distribution of positive cases: 
 
 ```{r, message = FALSE}
-#Random distribution
+#Sinusoidal distribution
 for(link_d in link_d_to_analyse){
   cat_sin <- catalogue(x_sin, y_sin, test_sin, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
   print(paste0("Number of EpiFRIenDs groups in sinusoidal data with scale = ", link_d, ":", length(cat_sin$epifriends_catalogue$id), ", ", sum(cat_sin$epifriends_catalogue$p < 0.05), " of which with p<0.05"))
@@ -187,7 +187,7 @@ for(link_d in link_d_to_analyse){
 Finally, this shows the results applied to the data set with clustered distribution of positive cases: 
 
 ```{r, message = FALSE}
-#Random distribution
+#Clustered distribution
 for(link_d in link_d_to_analyse){
   cat_clus <- catalogue(x_clus, y_clus, test_clus, link_d, cluster_id = NULL, min_neighbours = min_neighbours)
   print(paste0("Number of EpiFRIenDs groups in sinusoidal data with scale = ", link_d, ":", length(cat_clus$epifriends_catalogue$id), ", ", sum(cat_clus$epifriends_catalogue$p < 0.05), " of which with p<0.05"))

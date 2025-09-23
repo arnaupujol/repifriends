@@ -46,6 +46,7 @@ y_rand <- mock_rand$y
 test_rand <- mock_rand$test
 positive_rand = (test_rand == 1)
 date_rand <-mock_rand$date 
+id_rand <- datarand_temp$id
 ```
 
 The dates are changed to date format:
@@ -103,7 +104,7 @@ max_date = max(datesform)
 epi_catalogue_list <- temporal_catalogue(
   x = x_rand, y = y_rand, test_result = test_rand, dates =date_rand, link_d = link_d, prevalence = prevalence,
   use_link_d = TRUE, link_neighbours = NULL, min_neighbours=min_neighbours, time_width=time_width, 
-  min_date=min_date, max_date=max_date, time_steps=time_steps, add_temporal_id = FALSE
+  min_date=min_date, max_date=max_date, time_steps=time_steps, add_temporal_id = FALSE, dataset_ids = id_rand
 )
 ```
 
@@ -112,7 +113,7 @@ epi_catalogue_list <- temporal_catalogue(
   x = x_rand, y = y_rand, test_result = test_rand, dates = date_rand, link_d = link_d,prevalence = prevalence,
   use_link_d = TRUE, link_neighbours = NULL, min_neighbours=min_neighbours, time_width=time_width,
   min_date=min_date, max_date=max_date, time_steps=time_steps, add_temporal_id = TRUE, linking_time = 3,
-  linking_dist = 0.15, get_timelife = TRUE
+  linking_dist = 0.15, get_timelife = TRUE, dataset_ids = id_rand
 )
 ```
 
