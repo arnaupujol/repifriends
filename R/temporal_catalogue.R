@@ -106,7 +106,12 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
                                ){
   
   #Create data.table with all coordinates & test
-  positions = data.table("x" = x, "y" = y, "test" = test_result, "prevalence" = prevalence, "id" = dataset_ids)
+  positions = data.table("x" = x, "y" = y, "test" = test_result, "prevalence" = prevalence)
+
+  # Add column if dataset_ids exist
+  if(!identical(dataset_ids, FALSE) && length(dataset_ids) > 0) {
+    positions[, id := dataset_ids]
+  }
   
   #Case of empty list of dates
   if(length(dates) == 0){
@@ -195,7 +200,7 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
       temporal_catalogues[[step_num+1]] <- Newcatalogue$epifriends_catalogue
 
       # Adds dataset indeces to temporal_catalogue if given
-      if(!identical(dataset_ids, FALSE) && length(dataset_ids) > 0){
+      if(hasName(positions, "id")){
         temporal_catalogues[[step_num+1]] <- add_original_indeces(temporal_catalogues[[step_num+1]], selected_positions)
       }
     }
