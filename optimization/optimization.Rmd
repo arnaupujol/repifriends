@@ -1,0 +1,474 @@
+---
+title: "optimization"
+author: "Mikel Majewski"
+date: '2022-11-14'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("spatstat.core")
+```
+
+```{r}
+library("spatstat.core")
+library("epifriends")
+library("RANN")
+library("ggplot2")
+```
+
+## Create mock data 
+
+The data created with the epifriends_on_different_distributions.ipynb file of python and saved on this R project is readed:
+
+
+```{r, warning=FALSE}
+setwd("C:/Users/user/Desktop/Uni/Master/TFM/repifriends")
+datarand <- read.csv("data\\mock_data_rand.csv")
+datasin <- read.csv("data\\mock_data_sin.csv")
+dataclus <- read.csv("data\\mock_data_clustered.csv")
+```
+
+In order to work better with the data, some subdatasets are created:
+
+```{r}
+position_rand <- datarand[3:4]
+positive_rand = (datarand$test == 1)
+test_rand <- datarand[5]
+
+position_sin <- datasin[3:4]
+positive_sin = (datasin$test == 1)
+test_sin <- datasin[5]
+
+position_clus <- dataclus[3:4]
+positive_clus = (dataclus$test == 1)
+test_clus <- dataclus[5]
+```
+
+This is the spatial distribution of negative (in black) and positive (in red) cases of the three mock data catalogues created:
+
+```{r}
+plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
+plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
+plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+```
+
+For each distribution a positive points distance to each other graph is created:
+
+```{r}
+# distmat <- function(x){
+#   matriu <- matrix(nrow = dim(x)[1], ncol = dim(x)[1])
+#   for(i in 1:(dim(x)[1]-1)){
+#     for(j in (i+1):dim(x)[1]){
+#       matriu[i,j] <- distance(x[i,],x[j,])
+#     }
+#   }
+#   return(matriu)
+# }
+```
+
+```{r}
+# par(mfrow = c(1, 2))                    
+# Mat_rand <- distmat(position_rand[positive_rand,])
+# dist <- as.vector(Mat)
+# hist(dist)
+# plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
+# 
+# par(mfrow = c(1, 2)) 
+# Mat_sin <- distmat(position_sin[positive_sin,])
+# dist <- as.vector(Mat)
+# hist(dist)
+# plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
+# 
+# par(mfrow = c(1, 2)) 
+# Mat_clus <- distmat(position_clus[positive_clus,])
+# dist <- as.vector(Mat)
+# hist(dist)
+# plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+```
+
+And now a nearest neighbor distance graph for positive cases is created:
+
+```{r}
+#Distribució de distancies d'un punt amb el seu més pròxim
+# min_dist <- function(x){
+#   min <- c()
+#   M <- distmat(x)
+#   for(i in 1:dim(M)[1]){
+#     min[i] <- min(c(M[i,],M[,i]),na.rm = TRUE)
+#   }
+#   return(min)
+# }
+min_dist <- function(position){
+  dist <- c()
+  for(i in 1:dim(position)[1]){
+    query <- nn2(position,position[i,],2)
+    dist[i] <- query$nn.dists[length(query$nn.dists)]
+  }
+  return(dist)
+}
+```
+
+```{r}
+min_rand <- min_dist(position_rand[positive_rand,])
+min_sin <- min_dist(position_sin[positive_sin,])
+min_clus <- min_dist(position_clus[positive_clus,])
+
+par(mfrow = c(1, 2))
+hist(min_rand)
+plot(datarand$x, datarand$y, pch = 19, col = as.factor(datarand$test))
+
+par(mfrow = c(1, 2)) 
+hist(min_sin)
+plot(datasin$x, datasin$y, pch = 19, col = as.factor(datasin$test))
+
+par(mfrow = c(1, 2)) 
+hist(min_clus)
+plot(dataclus$x, dataclus$y, pch = 19, col = as.factor(dataclus$test))
+
+```
+
+We take first the median and the 25% and 75% quantiles to analyze those linking distances:
+
+```{r}
+quant_rand <- quantile(min_rand,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+quant_sin <- quantile(min_sin,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+quant_clus <- quantile(min_clus,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+```
+
+Some functions are computed:
+
+```{r}
+#function that, given a points dataset, applying the KNTree method, returns how much points have the N nearest point at distance lower than a given linking distance
+number_dist <- function(position, N, link_d){
+  #inizializatiion of counting variable
+  count <- 0
+  for(i in 1:dim(position)[1]){
+    #search of the N nearest neighboors
+    query <- nn2(position,position[i,],N)
+    dist <- query$nn.dists[length(query$nn.dists)]
+    if(dist < link_d){
+      #increase the count variable if the distance of that neighbor is less than the linking distance
+      count = count +1 
+    }
+  }
+  return(count)
+}
+
+#Given a points dataset, the next function will return how much clusters of size N and linking distance less than link_d have all points positive
+positive_clust_num <- function(position, N, link_d, test){
+  pos <- c()
+  for(i in 1:dim(position)[1]){
+    #search of the N nearest neighboors
+    query <- nn2(position,position[i,],N)
+    dist <- query$nn.dists[length(query$nn.dists)]
+    if(dist < link_d){
+      positive <- 1
+      for(j in query$nn.idx){
+        positive <- positive*test[j] 
+      }
+      pos[i] <- positive
+    }else{
+      pos[i] <- NA
+    }
+  }
+  num <- length(which(pos == 1))
+  return(num)
+}
+
+```
+
+Now the minimum number of neighbors is computed:
+
+```{r}
+num_neig <- function(position, test, link_d, prob=0.9){
+  stop <- 0
+  N <- 2
+  while(stop != 1){
+    #Number of clusters with less distance than linking distance
+    M <- number_dist(position, N, link_d)
+    #prevalence
+    p <- sum(test == 1)/length(test)
+    estim <- M*(p^N)
+    #Real number of positive clusters
+    real <- positive_clust_num(position, N, link_d,test)
+    if(real == 0){
+      return(N-1)
+    }
+    if(estim<(1-prob)*real){
+      stop <- 1
+      return(N)
+    }else{
+      N = N + 1
+    }
+  }
+}
+
+num_neig(position_rand, datarand$test, quant_rand[2],0.9)
+```
+And the catalogue with this parameters can be computed
+```{r}
+cata <- catalogue(position_rand,data.frame(datarand$test), quant_rand[2],min_neighbours = 4)
+```
+
+And now we try to fin the optimum linking distance:
+
+```{r}
+optimum_linkd <- function(position, test, mindist=NULL, cat_med=NULL,f_med=0, prob=0.9){
+  #filter positive positions
+  positives <- position[(test == 1),]
+  if(is.null(mindist)){
+    #distribution of positive points minimum distance to another positive point
+    mindist <- min_dist(positives)
+  }
+  if(length(mindist)<3){
+    #if there are only three distances the algorithm can finish and the best distance is returned
+    return(quantile(mindist,probs = c(0.5),na.rm=TRUE))
+  }
+  #Quantiles of distances are calculated
+  quant <- quantile(mindist,probs = c(0.25,0.5,0.75),na.rm = TRUE)
+  #If is the first iteration, the catalogue with the median linking distance is computed
+  if(is.null(cat_med)){
+    #Calculation of best number of neighbors
+    M_med <- num_neig(position, test, quant[2],prob)
+    #Catalogue
+    cat_med <- catalogue(position,data.frame(test),quant[2],min_neighbours = M_med)
+    #Computation of optimization function
+    f_med <- 0
+    for(j in 1:length(cat_med$cluster_id)){
+      if(cat_med$cluster_id[j]!=0){
+        f_med <- f_med + (1-cat_med$pval_cluster[j])
+      }
+    }
+  }
+  #Same process for 25% quantile distance
+  M_25 <- num_neig(position, test, quant[1],prob)
+  cat_25 <- catalogue(position,data.frame(test),quant[1],min_neighbours = M_25)
+  f_25 <- 0
+  for(j in 1:length(cat_25$cluster_id)){
+    if(cat_25$cluster_id[j]!=0){
+      f_25 <- f_25 + (1-cat_25$pval_cluster[j])
+    }
+  }
+  #Same process for 75% quantile distance
+  M_75 <- num_neig(position, test, quant[3],prob)
+  cat_75 <- catalogue(position,data.frame(test),quant[3],min_neighbours = M_75)
+  f_75 <- 0
+  for(j in 1:length(cat_75$cluster_id)){
+    if(cat_75$cluster_id[j]!=0){
+      f_75 <- f_75 + (1-cat_75$pval_cluster[j])
+    }
+  }
+  if((f_25 == f_med) && (f_med == f_75) && (f_med != 0)){
+    return(quant[2])
+  }else{
+    f <- max(c(f_25,f_med,f_75))
+    if(f==f_25){
+      dis <- mindist[(mindist<quant[2])]
+      return(optimum_linkd(position,test,dis,cat_25,f_25))
+    }
+    if(f==f_med){
+      dis <- mindist[(quant[1]<=mindist)]
+      dis <- dis[(dis<quant[3])]
+      return(optimum_linkd(position,test,dis,cat_med,f_med))
+    }
+    if(f==f_75){
+      dis <- mindist[(quant[2]<mindist)]
+      return(optimum_linkd(position,test,dis,cat_75,f_75))
+    }
+  }
+}
+```
+
+```{r}
+ldist_rand <- optimum_linkd(position_rand, datarand$test)
+ldist_rand
+```
+
+```{r}
+ldist_clus <- optimum_linkd(position_clus, dataclus$test)
+ldist_clus
+```
+
+```{r}
+ldist_sin <- optimum_linkd(position_sin, datasin$test)
+ldist_sin
+```
+
+```{r}
+min_rand <- min_dist(position_rand[positive_rand,])
+min_neihbours <- num_neig(position_rand, datarand$test, ldist_rand)
+
+#Running DBSCAN for the mock data with sinusoidal distribution
+
+cluster_id = dbscan(position_rand[positive_rand,], ldist_rand, min_neighbours)
+
+neg <- data.frame(position_rand[!positive_rand,])
+pos <- data.frame(position_rand[positive_rand,],cluster_id)
+
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=rainbow(7))
+graph
+```
+```{r}
+min_clus <- min_dist(position_clus[positive_clus,])
+min_neihbours <- num_neig(position_clus, dataclus$test, ldist_clus)
+
+#Running DBSCAN for the mock data with sinusoidal distribution
+
+cluster_id = dbscan(position_clus[positive_clus,], ldist_clus, min_neighbours)
+
+neg <- data.frame(position_clus[!positive_clus,])
+pos <- data.frame(position_clus[positive_clus,],cluster_id)
+
+# plot(datasin$x[!positive_sin], datasin$y[!positive_sin], pch = 19, col = "grey")
+# points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=c("black",rainbow(50)))
+graph
+```
+
+```{r}
+min_sin <- min_dist(position_sin[positive_sin,])
+min_neihbours <- num_neig(position_sin, datasin$test, ldist_sin)
+
+#Running DBSCAN for the mock data with sinusoidal distribution
+
+cluster_id = dbscan(position_sin[positive_sin,], ldist_sin, min_neighbours)
+
+neg <- data.frame(position_sin[!positive_sin,])
+pos <- data.frame(position_sin[positive_sin,],cluster_id)
+
+# plot(datasin$x[!positive_sin], datasin$y[!positive_sin], pch = 19, col = "grey")
+# points(datasin$x[positive_sin], datasin$y[positive_sin], pch = 19, col = rainbow(40)[factor(cluster_id)])
+
+graph <- ggplot(neg,aes(x=x, y=y))+
+            geom_point(color = "grey", size = 2.5)+
+            geom_point(data = pos, aes(colour = cluster_id), size = 2.5)+
+            scale_colour_gradientn(colors=c("black",rainbow(7)))
+graph
+```
+
+For all ditances, claculation of f:
+```{r}
+min_rand <- sort(min_rand)
+f_rand <- c()
+for(i in 1:length(min_rand)){
+  M <- num_neig(position_rand, datarand$test, min_rand[i])
+  cat <- catalogue(position_rand,data.frame(datarand$test),min_rand[i],min_neighbours = M)
+  f_rand[i] <- 0
+  for(j in 1:length(cat$cluster_id)){
+    if(cat$cluster_id[j]!=0){
+      f_rand[i] <- f_rand[i] + (1-cat$pval_cluster[j])
+    }
+  }
+  print(f_rand[i])
+}
+plot(f_rand)
+```
+
+```{r}
+min_clus <- sort(min_clus)
+f_clus <- c()
+for(i in 1:length(min_clus)){
+  M <- num_neig(position_clus, dataclus$test, min_clus[i])
+  cat <- catalogue(position_clus,data.frame(dataclus$test),min_clus[i],min_neighbours = M)
+  f_clus[i] <- 0
+  for(j in 1:length(cat$cluster_id)){
+    if(cat$cluster_id[j]!=0){
+      f_clus[i] <- f_clus[i] + (1-cat$pval_cluster[j])
+    }
+  }
+  print(f_clus[i])
+}
+plot(f_clus)
+```
+
+```{r}
+min_sin <- sort(min_sin)
+f_sin <- c()
+for(i in 1:length(min_sin)){
+  M <- num_neig(position_sin, datasin$test, min_sin[i])
+  cat <- catalogue(position_sin,data.frame(datasin$test),min_sin[i],min_neighbours = M)
+  f_sin[i] <- 0
+  for(j in 1:length(cat$cluster_id)){
+    if(cat$cluster_id[j]!=0){
+      f_sin[i] <- f_sin[i] + (1-cat$pval_cluster[j])
+    }
+  }
+  print(f_sin[i])
+}
+plot(f_sin)
+```
+Best distances:
+```{r}
+min_rand[which.max(f_rand)]
+max(f_rand)
+min_clus[which.max(f_clus)]
+max
+
+(f_clus)
+min_sin[which.max(f_sin)]
+max(f_sin)
+f_sin[which(min_sin==ldist_sin)]
+```
+
+
+```{r}
+M_maxclus <- num_neig(position_clus, dataclus$test, min(min_clus))
+dbscan(position_clus[positive_clus,], min(min_clus), min_neighbours = M_maxclus)
+cat <- catalogue(position_clus,data.frame(dataclus$test),min(min_clus),min_neighbours = M_maxclus)
+```
+
+```{r}
+# index <- list()
+# linking_d <- quant_rand[2]
+# #prevalence
+# p <- sum(datarand$test == 1)/length(datarand$test)
+# 
+# dist <- c()
+# positives <- datarand$test
+# 
+# for(i in 1:dim(position_rand)[1]){
+#   query <- nn2(position_rand, position_rand[i,], 2)
+#   dist[i] <- query$nn.dists[length(query$nn.dists)]
+#   if(dist[i]<linking_d){
+#     if(positives[i] == 1 && datarand$test[query$nn.idx[length(query$nn.idx)]] == 1){
+#     }else{
+#       positives[i] <- 0
+#     }
+#   }else{
+#     positives[i] <- NA
+#   }
+# }
+# 
+# npar <- sum(positives,na.rm = TRUE)+sum(positives == 1)
+# npar*(p^2)
+# 
+# hist(dist)
+# hist(positives)
+# for(i in 1:dim(position_rand)[1]){
+#   query <- nn2(position_rand, position_rand[i,], 1)
+#   index[[i]] <- query$nn.idx[length(query$nn.idx)]
+# }
+# for(j in 2:3){
+#   dist <- c()
+#   for(i in 1:dim(position_rand)[1]){
+#     query <- nn2(position_rand, position_rand[i,], j)
+#     index[[i]] <- append(index[[i]],query$nn.idx[length(query$nn.idx)])
+#     dist <- append(dist,query$nn.dists[length(query$nn.dists)])
+#   }
+# }
+# index_ld <- index[which(dist<linking_d)]
+
+
+```
