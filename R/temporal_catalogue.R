@@ -102,11 +102,16 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
                                keep_null_tests = FALSE, in_latlon = FALSE, to_epsg = NULL,
                                consider_fd = FALSE, n_simulations= 500, verbose = FALSE, 
                                store_gif = FALSE, use_geom_map = FALSE, 
-                               out_gif_path = paste0(getwd(),"/www/")
+                               out_gif_path = paste0(getwd(),"/www/"), dataset_ids = FALSE
                                ){
   
   #Create data.table with all coordinates & test
   positions = data.table("x" = x, "y" = y, "test" = test_result, "prevalence" = prevalence)
+
+  # Add column if dataset_ids exist
+  if(!identical(dataset_ids, FALSE) && length(dataset_ids) > 0) {
+    positions[, id := dataset_ids]
+  }
   
   #Case of empty list of dates
   if(length(dates) == 0){
@@ -193,7 +198,13 @@ temporal_catalogue <- function(x, y, test_result, dates, link_d, prevalence = NU
       }
       Newcatalogue$epifriends_catalogue$Date <- (min_date + time_steps*step_num + 0.5*time_width)
       temporal_catalogues[[step_num+1]] <- Newcatalogue$epifriends_catalogue
+
+      # Adds dataset indeces to temporal_catalogue if given
+      if(hasName(positions, "id")){
+        temporal_catalogues[[step_num+1]] <- add_original_indeces(temporal_catalogues[[step_num+1]], selected_positions)
+      }
     }
+    
     step_num = step_num + 1
   }
   if(add_temporal_id == TRUE && length(temporal_catalogues)>1){
@@ -425,3 +436,32 @@ add_temporal_id <- function(
   }
   return(catalogue_list)
 }
+
+#' This method adds the sub-list 'original_indeces' to EpiFRIenDs temporal catalogue,
+#' indicating which IDs from the original dataset correspond to the clusters in
+#' the resulting catalogue.
+#'
+#' @param temp_catalogue An EpiFRIenDs catalogue corresponding to a specific time window.
+#' 
+#' @param selected_positions A data.table containing the data for the corresponding time window,
+#' including the original IDs.
+#' 
+#' @return An EpiFRIenDs catalogue with an added variable 'original_indeces'.
+#' 
+#' @export
+
+add_original_indeces <- function(temp_catalogue, selected_positions){
+
+  if (is.null(temp_catalogue[["original_indeces"]])) {
+    temp_catalogue[["original_indeces"]] <- vector()
+  }
+
+  for(cat_index in seq_along(temp_catalogue$indeces)) {
+    indexes <- temp_catalogue$indeces[[cat_index]]
+    original_indeces <- selected_positions$id[indexes] 
+    temp_catalogue[["original_indeces"]] <- append(temp_catalogue[["original_indeces"]], list(original_indeces))
+  }
+
+  return(temp_catalogue)
+}
+
